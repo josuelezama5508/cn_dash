@@ -113,3 +113,13 @@ footer {
 .relation-select {
     width: 100%; /* ocupa todo el ancho del td */
 }
+#reserva_canal,
+#reserva_rep {
+    cursor: pointer; /* Cambia el cursor al pasar sobre */
+    transition: background-color 0.2s;
+}
+
+#reserva_canal:hover,
+#reserva_rep:hover {
+    opacity: 0.8; /* opcional: un leve efecto visual */
+}

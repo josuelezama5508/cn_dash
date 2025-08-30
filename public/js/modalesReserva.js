@@ -383,6 +383,74 @@ async function confirmReagendar() {
     }
 }
 // ========================
+// REPS Y CHANNELS
+// ========================
+async function openChannelRepModal() {
+    const html = `
+        <div class="mb-3">
+            <label class="form-label fw-bold">Canal</label>
+            <select id="modalChannelSelect" class="form-select">
+                <option value="">Selecciona un canal</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Representante</label>
+            <select id="modalRepSelect" class="form-select">
+                <option value="">Selecciona un representante</option>
+            </select>
+        </div>
+    `;
+
+    document.getElementById("modalGenericContent").innerHTML = html;
+    document.getElementById("modalGenericTitle").innerText = "Editar Canal y Rep";
+
+    // Inicializa modal
+    const modal = new bootstrap.Modal(document.getElementById('modalGeneric'));
+    modal.show();
+    window.currentModal = modal;
+
+    // Carga canales y reps iniciales
+    const channels = await fetch_channels();
+    const $channelSelect = $("#modalChannelSelect");
+    channels.forEach(c => $channelSelect.append(`<option value="${c.id}" ${c.id == modalData.channelId ? 'selected' : ''}>${c.nombre}</option>`));
+
+    const reps = modalData.channelId ? await fetch_reps(modalData.channelId) : [];
+    const $repSelect = $("#modalRepSelect");
+    reps.forEach(r => $repSelect.append(`<option value="${r.id}" ${r.id == modalData.repId ? 'selected' : ''}>${r.nombre}</option>`));
+
+    // Cambiar reps al cambiar de canal
+    $channelSelect.on("change", async function() {
+        const channelId = $(this).val();
+        const reps = channelId ? await fetch_reps(channelId) : [];
+        $repSelect.empty().append('<option value="">Selecciona un representante</option>');
+        reps.forEach(r => $repSelect.append(`<option value="${r.id}">${r.nombre}</option>`));
+    });
+
+    // Guardar cambios
+    document.querySelector("#modalGeneric .btn-primary").onclick = async () => {
+        const channelId = $channelSelect.val();
+        const repId = $repSelect.val();
+        console.log(channelId);
+        console.log(repId);
+        // try {
+        //     const response = await fetchAPI('control', "PUT", {canal:{[{canal: channelId, rep: repId }]}});
+        //     if (response.ok) {
+        //         $("#reserva_canal").text($channelSelect.find(":selected").text());
+        //         $("#reserva_rep").text($repSelect.find(":selected").text());
+        //         modalData.channelId = channelId;
+        //         modalData.repId = repId;
+        //         closeModal();
+        //     } else {
+        //         alert("Error al guardar cambios");
+        //     }
+        // } catch(e) {
+        //     console.error(e);
+        //     alert("Error en la conexión");
+        // }
+    }
+}
+
+// ========================
 // RESERVAS VINCULADAS
 // ========================
 
@@ -525,6 +593,10 @@ document.querySelectorAll('.btn-danger').forEach(btn => {
         openModal(`${window.url_web}/detalles-reserva/form_cancelar`);
     });
 });
+document.getElementById("reserva_canal").addEventListener("click", openChannelRepModal);
+document.getElementById("reserva_rep").addEventListener("click", openChannelRepModal);
+
+
 //FUNCIONA
 async function handleMail() {
     const tipoId = document.querySelector('input[name="notificacion_tipo"]:checked')?.id;

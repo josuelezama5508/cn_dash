@@ -153,6 +153,7 @@
 
 
     </div>
+    <script src="<?= asset('/js/canalesapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/bookingdetail.js') ?>?v=1"></script>
     <script src="<?= asset('/js/modalesReserva.js') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>

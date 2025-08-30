@@ -111,7 +111,7 @@ class Control extends ModelTable
         }
         // Definir campos a seleccionar (usa alias si hay ambigüedad)
         $fields = [
-            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.referencia, C.procesado, C.status' , 
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.referencia, C.procesado, C.status, C.canal' , 
             'S.name AS statusname'
         ];
         // INNER JOIN con bookingdetails
