@@ -19,6 +19,9 @@
 <Files "widgets.php">
     Require all granted
 </Files>
+<Files "prueba2.php">
+    Require all granted
+</Files>
 
 
 RewriteEngine On
@@ -33,6 +36,9 @@ RewriteRule ^ - [L]
 
 
 # #### Redireccionamientos
+
+# Ruta de prueba
+RewriteRule ^prueba/$ prueba2.php [NC,L]
 # Ruta de los widgets
 RewriteRule ^widgets/$ app/helpers/widgets.php [NC,L]
 
@@ -53,7 +59,6 @@ RewriteRule ^form/?(.*)$ index_form.php?url=$1 [QSA,L]
 RewriteRule ^dev/(.*)$ index.php?env=dev&url=$1 [QSA,L]
 # Se detecta como una vista, redirigir al index.php
 RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
-
 
 # Esto permite que el acceso a otros directorios funcionen sin restricciones
 RewriteCond %{REQUEST_URI} !^/cn_dash/
