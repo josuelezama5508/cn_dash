@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto');
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css");
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-size: 14px;
+    font-family: Roboto, sans-serif;
+    color: #333333;
+}
+
+header {
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+}
+
+main {
+    flex: 1;
+}
+
+footer {
+    color: white;
+    text-align: center;
+}
+
+.content {
+    width: 70%;
+    margin: 0 auto;
+    display: flex;
+    gap: 10px;
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+}
+
+.sidebar {
+    width: 260px;
+    top: 80px;
+    padding: 20px;
+    height: fit-content;
+}
+
+.sidebar-sticky {
+    width: 360px;
+    position: sticky;
+    top: 80px;
+    padding: 20px;
+    height: fit-content;
+}
+
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    /* Ajusta según tus necesidades */
+    height: auto;
+    /* O una altura fija si lo prefieres */
+    background: white;
+    /* Por si necesitas contraste */
+    padding: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 99999999;
+    border-radius: 5px;
+}
+
+.modal-header,
+.modal-content {
+    border: none;
+    padding: 10px;
+}
+.modalCombo {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1200px;
+    /* Ajusta según tus necesidades */
+    height: auto;
+    /* O una altura fija si lo prefieres */
+    background: white;
+    /* Por si necesitas contraste */
+    padding: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 99999999;
+    border-radius: 5px;
+}
+
+.modalCombo-header,
+.modalCombo-content {
+    border: none;
+    padding: 10px;
+}
+.relation-td {
+    vertical-align: middle;
+    padding: 8px 10px;
+    width: 300px;
+}
+.relation-select {
+    width: 100%; /* ocupa todo el ancho del td */
+}

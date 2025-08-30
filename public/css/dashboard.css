@@ -1,0 +1,678 @@
+/* ---- Menus ---- */
+/* -- Header -- */
+#menu-container {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+#menu-container ul {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Horizontal */
+#menu-container #horizontal-menu {
+    width: 100%;
+    height: 60px;
+    background-color: #0277BD;
+}
+
+#horizontal-menu ul {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+#horizontal-menu .left {
+    justify-content: flex-start;
+}
+
+#horizontal-menu .right {
+    justify-content: flex-end;
+}
+
+#horizontal-menu li {
+    height: 100%;
+}
+
+#horizontal-menu a {
+    width: 100%;
+    height: 100%;
+    color: #FFF;
+    text-decoration: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+#horizontal-menu .left a:hover {
+    background-color: #337AB7;
+    opacity: .8;
+}
+
+#horizontal-menu .active {
+    background-color: #337AB7;
+}
+
+/* Vertical */
+#menu-container #vertical-menu {
+    width: 330px;
+    height: 100%;
+    background-color: #FFF;
+}
+
+#vertical-menu {
+    top: 0;
+    z-index: 900;
+    position: fixed;
+    left: -500px;
+    transition: left 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+#vertical-menu .top,
+#vertical-menu .bottom {
+    flex: 1;
+}
+
+#vertical-menu .center {
+    flex: 3;
+}
+
+#vertical-menu .header {
+    width: 100%;
+    height: 230px;
+    overflow: hidden;
+    position: relative;
+}
+
+#vertical-menu .background {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+}
+
+/* #vertical-menu .menu-options {
+    padding: 20px;
+} */
+
+#vertical-menu .menu-options li {
+    width: 100%;
+}
+
+#vertical-menu .menu-options a {
+    width: 100%;
+    height: 48px;
+    color: #000000DE;
+    padding: 20px 32px;
+    text-decoration: none;
+}
+
+#vertical-menu .menu-options a:hover {
+    background-color: #EEE;
+    opacity: .8;
+}
+
+#vertical-menu .active {
+    background-color: #EEE;
+}
+
+/*  */
+#overlay2,
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* background: rgba(0, 0, 0, 0); */
+    background-color: #444;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.menu-active #vertical-menu {
+    left: 0;
+}
+
+.menu-active #overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* -- ./Header -- */
+
+/* -- Productos -- */
+#product-menu {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    border: 0;
+}
+
+#product-menu li {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#product-menu a {
+    width: 100%;
+    height: 48px;
+    text-decoration: none;
+    color: #337AB7;
+}
+
+#product-menu a:hover {
+    color: #337AB7;
+    border-bottom: 3px solid #337AB7;
+}
+
+#product-menu .active {
+    color: #23527C;
+    border-bottom: 3px solid #23527C;
+}
+
+/* -- ./Productos -- */
+/* ---- ./Menus ---- */
+
+
+/* ---- Tablas ---- */
+.table-container {
+    overflow-y: auto;
+    display: block;
+}
+
+.table-scrollbar {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-scrollbar thead {
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+.table-scrollbar thead th {
+    /* border-bottom: 1px solid #DDD; */
+    border-bottom: 2px solid #DDD;
+    font-weight: 500;
+}
+
+.table-scrollbar tbody {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.table-scrollbar th,
+.table-scrollbar td {
+    padding: 8px;
+    text-align: left;
+    vertical-align: middle;
+    border: none;
+}
+
+.table-products th,
+.table-products td {
+    padding: 8px 0;
+}
+
+.table-products .item-box {
+    height: 80px;
+    background-color: transparent;
+    padding: 0;
+    padding-bottom: 8px;
+}
+
+.table-products .item-box-container {
+    padding: 0;
+    box-shadow: rgba(0, 0, 0, 0.2) 5px 5px 10px 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-products .item-box-data {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.table-products .item-box-data>div {
+    padding: 30px;
+    height: 98px;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+}
+
+.table-products .item-code {
+    z-index: 100;
+}
+
+.table-products .item-code a {
+    text-decoration: none;
+    font-weight: bold;
+    color: royalblue;
+}
+
+.table-products .item-name {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.table-products .item-status {
+    justify-content: center !important;
+}
+
+/* ---- ./Tablas ---- */
+
+
+/* ---- Vistas ---- */
+select {
+    appearance: none;
+    /* Oculta el diseño predeterminado */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon fill='%23212121' points='0,0 20,0 10,10'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+    padding-right: 30px;
+    /* Espacio para la flecha */
+}
+/* Contenedor general */
+#mainButtons,
+#pagarAhoraOpciones,
+#pagarDespuesOpciones,
+#paymentRadios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+/* Botones principales - color turquesa */
+button {
+    background-color: #1abc9c; /* Turquesa */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 5px rgba(26, 188, 156, 0.5);
+}
+
+button:hover {
+    background-color: #16a085; /* Verde azulado */
+    box-shadow: 0 4px 10px rgba(22, 160, 133, 0.7);
+}
+
+/* Estilos para input y grupo de voucher */
+#voucherInputGroup {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+#voucherCode {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    width: 200px;
+}
+
+/* Radio buttons estilo limpio con color turquesa */
+#paymentRadios label {
+    font-size: 16px;
+    padding: 10px 20px;
+    border: 1px solid #1abc9c;
+    border-radius: 6px;
+    background-color: white;
+    color: #1abc9c;
+    cursor: pointer;
+    margin: 5px;
+    transition: all 0.3s ease;
+}
+
+#paymentRadios label:hover {
+    background-color: #e0f7f5;
+}
+
+#paymentRadios input[type="radio"] {
+    margin-right: 8px;
+}
+
+.btn-icon {
+    display: flex;
+    text-align: left;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px 8px;
+}
+
+.jconfirm-buttons .btn {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    vertical-align: middle;
+    border: none;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid #DEE2E6;
+}
+
+.input-checkbox {
+    background-color: #DADADA;
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+    border: 1px solid #DEE2E6;
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+}
+
+.input-checkbox.checked {
+    background-color: limegreen
+}
+
+.add-btn {
+    width: 37px;
+    height: 37px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    color: white;
+    background-color: #26a69a;
+}
+
+.edit-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 38px;
+    height: 38px;
+    background-color: #03A9F4;
+    color: #FFF;
+    padding: 3px 7px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    cursor: pointer;
+    vertical-align: middle;
+    box-shadow: 1px 1px 3px 0px #111;
+}
+
+.save-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 38px;
+    height: 38px;
+    background-color: #26A69A;
+    color: #FFF;
+    padding: 3px 7px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    cursor: pointer;
+    vertical-align: middle;
+    box-shadow: 1px 1px 3px 0px #111;
+}
+
+.done-btn {
+    display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 38px;
+        height: 38px;
+        background-color: #53E659;
+        color: #FFF;
+        padding: 3px 7px;
+        border-top-left-radius: 3px;
+        border-bottom-left-radius: 3px;
+        cursor: pointer;
+        vertical-align: middle;
+        box-shadow: 1px 1px 3px 0px #111;
+}
+
+.delete-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 38px;
+    height: 38px;
+    background-color: red;
+    color: #FFF;
+    padding: 3px 7px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    cursor: pointer;
+    vertical-align: middle;
+    box-shadow: 1px 1px 3px 0px #111;
+}
+/* ---- ./Vistas ---- */
+
+
+
+.row-content-center {
+    display: flex;
+    flex-direction: row;
+    justify-content: center !important;
+    align-items: center;
+    gap: 10px;
+}
+
+.row-content-left {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start !important;
+    align-items: center;
+    gap: 10px;
+}
+
+.row-content-right {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end !important;
+    align-items: center;
+    gap: 10px;
+}
+
+/*  */
+.chip {
+    display: inline-block;
+    height: 32px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    background-color: #e4e4e4;
+    margin-bottom: 5px;
+    margin-right: 5px;
+}
+
+/* BOOKING */
+.booking-container {
+    width: 100%;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.booking-container .header {
+    padding: 4px 12px;
+}
+
+.booking-container .header i {
+    font-size: 14px;
+}
+
+.booking-container .container {
+    border: 2px solid;
+    padding: 20px 10px;
+    background-color: #FFF;
+    border-radius: 4px;
+}
+
+
+.booking-blue {
+    background-color: #1565C0;
+}
+
+.booking-blue .header {
+    color: #FFF;
+    background-color: #1565C0;
+}
+
+.booking-blue .container {
+    border-color: #1565C0;
+}
+
+
+.booking-salmon {
+    background-color: #FF7E7E;
+}
+.booking-salmon .header {
+    color: #FFF;
+    background-color: #FF7E7E;
+}
+
+.booking-salmon .container {
+    border-color: #FF7E7E;
+    background-color: #F5E4E4;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.booking-container .container .item {
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-bottom: 1px dotted #9E9E9E;
+}
+#currency_label {
+    cursor: pointer;
+}
+
+#currency_label:hover {
+    background-color: #f0f0f0; /* Efecto sutil de hover */
+}
+.status-box strong {
+    display: inline-block;
+    width: 45px;
+}
+
+.status-box {
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.status-box.dash {
+    color: #1e88e5;
+    font-weight: bold;
+}
+
+.status-box.web {
+    color: #43a047;
+    font-weight: bold;
+}
+.badge-success, .badge-danger {
+    color: #000 !important; /* negro */
+}
+.status-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  .status-box .dash {
+    color: #1565c0; /* azul Dash */
+  }
+  
+  .status-box .web {
+    color: #388e3c; /* verde Web */
+  }
+  
+  .status-box i.material-icons {
+    font-size: 18px;
+  }
+/* Scroll mejorado para el contenedor de productos */
+#product-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Estilo personalizado para cada checkbox */
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background-color: #f1f1f1;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.checkbox-item:hover {
+    background-color: #e0e0e0;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #007bff;
+    cursor: pointer;
+}
+/* Estilo para el label de seleccionar todo */
+#modalProductsBody label.select-all,
+#modalCompaniesBody label.select-all {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Un poco de margen para los checkboxes */
+#modalProductsBody label,
+#modalCompaniesBody label {
+    display: block;
+    margin-bottom: 5px;
+}
+

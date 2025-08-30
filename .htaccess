@@ -1,0 +1,59 @@
+# Bloquear acceso directo a archivos PHP excepto los definidos para el dashboard actual
+<FilesMatch "\.(txt|json|php|config)$">
+    Require all denied
+</FilesMatch>
+
+# Permitir solo el acceso en este directorio
+<Files "index.php">
+    Require all granted
+</Files>
+
+<Files "index_api.php">
+    Require all granted
+</Files>
+
+<Files "index_form.php">
+    Require all granted
+</Files>
+
+<Files "widgets.php">
+    Require all granted
+</Files>
+
+
+RewriteEngine On
+RewriteBase /cn_dash/
+
+# ErrorDocument 404 /index.php
+
+# NO redirigir archivos ni carpetas existentes
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+
+# #### Redireccionamientos
+# Ruta de los widgets
+RewriteRule ^widgets/$ app/helpers/widgets.php [NC,L]
+
+# Si empieza por "api/", redirigir a index_api.php
+# Entorno de desarrollo
+RewriteRule ^api/develop/(.*)$ index_api.php?env=dev&url=$1 [QSA,L]
+# Entorno de producción
+RewriteRule ^api/(.*)$ index_api.php?url=$1 [QSA,L]
+
+# Si empieza por "form/", redirigir a index_form.php
+# Entorno de dasarrollo
+RewriteRule ^form/dev/(.*)$ index_form.php?env=dev&url=$1 [QSA,L]
+# Entorno de producción
+RewriteRule ^form/?(.*)$ index_form.php?url=$1 [QSA,L]
+
+## Redireccionamiento de vistas
+# Ruta para entorno de desarrollo
+RewriteRule ^dev/(.*)$ index.php?env=dev&url=$1 [QSA,L]
+# Se detecta como una vista, redirigir al index.php
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+
+# Esto permite que el acceso a otros directorios funcionen sin restricciones
+RewriteCond %{REQUEST_URI} !^/cn_dash/

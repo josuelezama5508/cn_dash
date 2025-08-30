@@ -1,0 +1,15 @@
+.bg-empresa {
+    background-color: var(--color-empresa, #007bff); /* azul por defecto */
+}
+
+.text-primary {
+    color: var(--color-empresa, #007bff);
+}
+
+.sombra-custom {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.card-body {
+    max-height: 70vh; /* Máximo 70% de la altura de la ventana */
+    overflow-y: auto; /* Scroll si el contenido supera la altura */
+}

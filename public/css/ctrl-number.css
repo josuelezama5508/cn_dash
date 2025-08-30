@@ -1,0 +1,119 @@
+/* Ajusta el ancho y display para que las celdas con checkbox tengan el mismo ancho que los controles number */
+td {
+    vertical-align: middle;
+    padding: 8px 10px;
+  }
+  
+  /* Para la celda que contiene el checkbox: usar flexbox para centrar checkbox */
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    justify-content: center; /* centrado horizontal */
+  }
+  
+  /* El checkbox mantiene tamaño y estilo */
+  .ctrl-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #14121d;
+  }
+  
+  /* El label sin cambio */
+  .checkbox-label {
+    user-select: none;
+    cursor: pointer;
+    font-weight: 500;
+    margin-right: 5px;
+  }
+  
+  /* Control number: mantiene tamaño y estilo, pero usar display flex para mejor control */
+  .ctrl-number {
+    min-height: 20px; /* un poco más alto para que coincida mejor */
+    min-width: 130px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  /* Botones control number */
+  .ctrl-number button {
+    border: none;
+    background: #14121d;
+    color: white;
+    height: 100%;
+    min-height: 10px;
+    max-height: 80px;
+    width: 16.6% !important;
+    min-width: 10px;
+    max-width: 80px;
+    padding: 5px;
+    display: inline-block;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  
+  /* Input control number */
+  .ctrl-number input {
+    width: 15.6% !important;
+    max-width: 80px;
+    min-width: 10px;
+    height: 2em;
+    min-height: 10px;
+    max-height: 80px;
+    padding: 5px;
+    margin: 0 5px;
+    text-align: center;
+    background: #FFFF;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+
+  /* Asegura que la celda que contiene el control tenga un ancho fijo */
+  td:nth-child(2) {
+    width: 220px; /* ajusta según tu layout */
+    text-align: center;
+  }
+.td-price {
+    width: 150px; /* ajusta según tu layout */
+    text-align: center;
+  }
+  .td-price {
+    width: 150px; 
+  }  
+  /* Tamaño fijo y alineación para la columna de nombres */
+  .td-addon, .td-pax {
+    width: 210px;     /* Ajusta este valor según tu layout */
+    min-width: 210px;
+    max-width: 210px;
+    text-align: end;
+    vertical-align: middle;
+    padding: 8px 12px;
+    word-break: break-word;
+  }
+
+  .booking-header {
+    width: 100%;
+    padding: 5px;
+    border-bottom: 2px solid #D70000; /* ✅ línea roja */
+    font-weight: bold;
+  }
+  /* Contenedor general centrado para cada bloque */
+    .booking-section {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+  /* Tablas con ancho fijo centradas */
+  .booking-table {
+    width: 70%;
+    margin-top: 10px;
+    border-collapse: collapse;
+  }
+  
+  
+  
