@@ -148,7 +148,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
   
       calcularTotal();
-  
+      cargarDatosUsuario(modalData);
+
     } catch (error) {
       console.error("Error al obtener datos de la reserva:", error);
       alert("Hubo un error al cargar los datos.");
@@ -173,4 +174,78 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
     
   });
-  
+// ========================
+// SECCIÓN: DATOS USUARIO EDITABLES
+// ========================
+let usuarioOriginal = {};
+
+function cargarDatosUsuario(reserva){
+  usuarioOriginal = {
+    email: reserva.email ?? 'N/A',
+    telefono: reserva.telefono ?? 'N/A',
+    hotel: reserva.hotel ?? 'N/A',
+    cuarto: reserva.habitacion ?? 'N/A'
+  };
+
+  $("#usuario_nombre").val(`${reserva.cliente_name ?? 'N/A'} ${reserva.cliente_lastname ?? ''}`).prop("readonly", true);
+  $("#usuario_email").val(usuarioOriginal.email).prop("readonly", true);
+  $("#usuario_telefono").val(usuarioOriginal.telefono).prop("readonly", true);
+  $("#usuario_hotel").val(usuarioOriginal.hotel).prop("readonly", true);
+  $("#usuario_cuarto").val(usuarioOriginal.cuarto).prop("readonly", true);
+}
+
+// Detectar cambios en campos editables
+$("#usuario_email, #usuario_telefono, #usuario_hotel, #usuario_cuarto").on("input", function(){
+  const hayCambio = 
+    $("#usuario_email").val() !== usuarioOriginal.email ||
+    $("#usuario_telefono").val() !== usuarioOriginal.telefono ||
+    $("#usuario_hotel").val() !== usuarioOriginal.hotel ||
+    $("#usuario_cuarto").val() !== usuarioOriginal.cuarto;
+
+  $("#btn_guardar_usuario").toggleClass("d-none", !hayCambio);
+  $("#btn_cancelar_edicion").toggleClass("d-none", !hayCambio);
+});
+
+$("#btn_editar_usuario").on("click", function(){
+  $("#usuario_email, #usuario_telefono, #usuario_hotel, #usuario_cuarto")
+    .prop("readonly", false)       // <-- esto desbloquea
+    .removeClass("bg-light").addClass("bg-white");
+  $("#btn_cancelar_edicion, #btn_guardar_usuario").removeClass("d-none");
+});
+
+
+// Botón cancelar
+$("#btn_cancelar_edicion").on("click", function(){
+  $("#usuario_email").val(usuarioOriginal.email).prop("readonly", true);
+  $("#usuario_telefono").val(usuarioOriginal.telefono).prop("readonly", true);
+  $("#usuario_hotel").val(usuarioOriginal.hotel).prop("readonly", true);
+  $("#usuario_cuarto").val(usuarioOriginal.cuarto).prop("readonly", true);
+
+  $("#btn_guardar_usuario, #btn_cancelar_edicion").addClass("d-none");
+});
+
+// Botón guardar
+$("#btn_guardar_usuario").on("click", async function(){
+  const data = {
+    idpago: modalData.id,
+    email: $("#usuario_email").val(),
+    telefono: $("#usuario_telefono").val(),
+    hotel: $("#usuario_hotel").val(),
+    habitacion: $("#usuario_cuarto").val(),
+    tipo: 'client',
+    module: 'DetalleReservas'
+  };
+
+  try {
+    const response = await fetchAPI("control", "PUT", { client: data });
+    if(response.ok){
+      usuarioOriginal = {...data};
+      $("#usuario_email, #usuario_telefono, #usuario_hotel, #usuario_cuarto").prop("readonly", true);
+      $("#btn_guardar_usuario, #btn_cancelar_edicion").addClass("d-none");
+      alert("Datos actualizados correctamente.");
+    } else alert("Error al guardar los datos.");
+  } catch(error){
+    console.error(error);
+    alert("Error en la conexión al guardar.");
+  }
+});

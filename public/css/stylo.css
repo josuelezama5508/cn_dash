@@ -66,14 +66,13 @@ footer {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 500px;
+    width: 1200px;
     /* Ajusta según tus necesidades */
     height: auto;
     /* O una altura fija si lo prefieres */
-    background: white;
+    background: transparent;
     /* Por si necesitas contraste */
     padding: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     z-index: 99999999;
     border-radius: 5px;
 }
@@ -84,21 +83,14 @@ footer {
     padding: 10px;
 }
 .modalCombo {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 1200px;
-    /* Ajusta según tus necesidades */
-    height: auto;
-    /* O una altura fija si lo prefieres */
+    width: 1600px;
+    max-width: 95%;  /* para pantallas chicas */
     background: white;
-    /* Por si necesitas contraste */
     padding: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    z-index: 99999999;
     border-radius: 5px;
 }
+
 
 .modalCombo-header,
 .modalCombo-content {
@@ -113,12 +105,14 @@ footer {
 .relation-select {
     width: 100%; /* ocupa todo el ancho del td */
 }
+#reserva_tipo,
 #reserva_canal,
 #reserva_rep {
     cursor: pointer; /* Cambia el cursor al pasar sobre */
-    transition: background-color 0.2s;
+    transition: background-color 0.1s;
 }
 
+#reserva_tipo,
 #reserva_canal:hover,
 #reserva_rep:hover {
     opacity: 0.8; /* opcional: un leve efecto visual */

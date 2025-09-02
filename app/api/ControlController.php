@@ -58,7 +58,14 @@ class ControlController extends API
             return ['cancelar', $params['cancelar']];
         }if (isset($params['vinculados'])) {
             return ['vinculados', $params['vinculados']];
+        }if (isset($params['canal'])) {
+            return ['canal', $params['canal']];
+        }if (isset($params['typeservice'])) {
+            return ['typeservice', $params['typeservice']];
+        }if (isset($params['client'])) {
+            return ['client', $params['client']];
         }
+        
         return ['', null];
     }
     public function get($params = [])
@@ -284,7 +291,7 @@ class ControlController extends API
                                                                         'name' => $tagName['en'] ?? $item['name'],
                                                                         'reference' => $linkedTagObj->tag_index,
                                                                         'price' => "0.00",
-                                                                        'tipo' => $linkedTagObj->tagdefine ?? $item['tipo']
+                                                                        'tipo' => $item['tipo']
                                                                     ];
                                                                 }
                                                             }
@@ -409,7 +416,72 @@ class ControlController extends API
                         'correo'  => $resultadoCorreo
                     ], 200);
                 break;
-                    
+                case 'typeservice':
+                    $accionMadre = 'Tipo de servicio update';
+                
+                    $accionHijo = 'Tipo de servicio update Hijos';
+                
+                    $resultado = $this->actualizarReservaConHijos(
+                        $data['idpago'],
+                        $data,
+                        $userData,
+                        'update',
+                        $accionMadre,
+                        $accionHijo
+                    );
+                
+                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
+                
+                    return $this->jsonResponse([
+                        'message' => $accionMadre . ' e hijos correctamente',
+                        'data'    => $resultado,
+                        'correo'  => $resultadoCorreo
+                    ], 200);
+                break;
+                case 'canal':
+                    $accionMadre = 'Canal update';
+                
+                    $accionHijo = 'Canal Hijos';
+                
+                    $resultado = $this->actualizarReservaConHijos(
+                        $data['idpago'],
+                        $data,
+                        $userData,
+                        'update',
+                        $accionMadre,
+                        $accionHijo
+                    );
+                
+                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
+                
+                    return $this->jsonResponse([
+                        'message' => $accionMadre . ' e hijos correctamente',
+                        'data'    => $resultado,
+                        'correo'  => $resultadoCorreo
+                    ], 200);
+                break;
+                case 'client':
+                    $accionMadre = 'Cliente update';
+                
+                    $accionHijo = 'Cliente Hijos';
+                
+                    $resultado = $this->actualizarReservaConHijos(
+                        $data['idpago'],
+                        $data,
+                        $userData,
+                        'update',
+                        $accionMadre,
+                        $accionHijo
+                    );
+                
+                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
+                
+                    return $this->jsonResponse([
+                        'message' => $accionMadre . ' e hijos correctamente',
+                        'data'    => $resultado,
+                        'correo'  => $resultadoCorreo
+                    ], 200);
+                break;
                 
                 
                 case 'voucher':
@@ -448,6 +520,12 @@ class ControlController extends API
             'horario'    => $data['horario'] ?? $controlOld->horario,
             'status'     => $data['status'] ?? $controlOld->status,
             'procesado'  => $data['procesado'] ?? $controlOld->procesado,
+            'canal'      => isset($data['canal']) ? json_encode($data['canal']) : $controlOld->canal,
+            'tipo'       => $data['typeservice'] ?? $controlOld->tipo,
+            'email'      =>  $data['email'] ?? $controlOld->email,
+            'hotel'      =>  $data['hotel'] ?? $controlOld->hotel,
+            'habitacion' =>  $data['habitacion'] ?? $controlOld->habitacion,
+            'telefono'   =>  $data['telefono'] ?? $controlOld->telefono,
         ]);
 
         $this->model_control->update($controlOld->id, $dataUpdateControl);
@@ -479,6 +557,12 @@ class ControlController extends API
                 'horario'    => $data['horario'] ?? $combo->horario,
                 'status'     => $data['status'] ?? $combo->status,
                 'procesado'  => $data['procesado'] ?? $combo->procesado,
+                'canal'      => isset($data['canal']) ? json_encode($data['canal']) : $combo->canal,
+                'tipo'      => $data['typeservice'] ?? $combo->tipo,
+                'email'      =>  $data['email'] ?? $combo->email,
+                'hotel'      =>  $data['hotel'] ?? $combo->hotel,
+                'habitacion' =>  $data['habitacion'] ?? $combo->habitacion,
+                'telefono'   =>  $data['telefono'] ?? $combo->telefono,
             ]);
 
             $this->model_control->update($combo->id, $dataUpdateControlCombo);

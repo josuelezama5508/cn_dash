@@ -16,9 +16,13 @@ async function openModal(url, title = "") {
             document.getElementById("idpago").value = modalData.id;
         }
         // Inicializa y muestra el modal
-        const modal = new bootstrap.Modal(document.getElementById('modalGeneric'));
+        const modalEl = document.getElementById('modalGeneric');
+        modalEl.removeAttribute('aria-hidden'); // ⚡ importante
+        const modal = new bootstrap.Modal(modalEl);
         modal.show();
         window.currentModal = modal;
+        
+
         if (url.includes('form_cancelar')) {
             const total = Number(modalData?.total) || 0;
 
@@ -299,10 +303,13 @@ async function openReagendarModal(modalData) {
     const btnGuardar = document.querySelector("#modalGeneric .btn-primary");
     btnGuardar.onclick = confirmReagendar;
 
-    // Inicializar y mostrar modal
-    const modal = new bootstrap.Modal(document.getElementById('modalGeneric'));
+    // Inicializar y muestra el modal
+    const modalEl = document.getElementById('modalGeneric');
+    modalEl.removeAttribute('aria-hidden'); // ⚡ importante
+    const modal = new bootstrap.Modal(modalEl);
     modal.show();
     window.currentModal = modal;
+
 
     // Inicializa Flatpickr y renderiza horarios
     setupCalendario(modalData.code_company);
@@ -432,21 +439,93 @@ async function openChannelRepModal() {
         const repId = $repSelect.val();
         console.log(channelId);
         console.log(repId);
-        // try {
-        //     const response = await fetchAPI('control', "PUT", {canal:{[{canal: channelId, rep: repId }]}});
-        //     if (response.ok) {
-        //         $("#reserva_canal").text($channelSelect.find(":selected").text());
-        //         $("#reserva_rep").text($repSelect.find(":selected").text());
-        //         modalData.channelId = channelId;
-        //         modalData.repId = repId;
-        //         closeModal();
-        //     } else {
-        //         alert("Error al guardar cambios");
-        //     }
-        // } catch(e) {
-        //     console.error(e);
-        //     alert("Error en la conexión");
-        // }
+        const baseData = [
+            {
+                canal: channelId,
+                rep: repId
+            }
+        ];
+        const data = {
+            idpago: modalData.id,
+            canal: baseData,
+            tipo: 'canal',
+            module: 'DetalleReservas'
+        };
+        console.log(data);
+        try {
+            const response = await fetchAPI('control', "PUT", {
+                canal: data  // 🧠 clave dinámica
+            });
+            if (response.ok) {
+                $("#reserva_canal").text($channelSelect.find(":selected").text());
+                $("#reserva_rep").text($repSelect.find(":selected").text());
+                modalData.channelId = channelId;
+                modalData.repId = repId;
+                closeModal();
+                location.reload();
+            } else {
+                alert("Error al guardar cambios");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error en la conexión");
+        }
+    }
+}
+// ========================
+// REPS Y CHANNELS
+// ========================
+async function openTypeReservationModal() {
+    const html = `
+        <div class="mb-3">
+            <label class="form-label fw-bold">Canal</label>
+            <select id="modalTypeSelect" class="form-select">
+                <option value="">Selecciona el tipo de servicio</option>
+            </select>
+        </div>
+    `;
+
+    document.getElementById("modalGenericContent").innerHTML = html;
+    document.getElementById("modalGenericTitle").innerText = "Editar el tipo de de servicio.";
+
+    // Inicializa modal
+    const modal = new bootstrap.Modal(document.getElementById('modalGeneric'));
+    modal.show();
+    window.currentModal = modal;
+
+    // Carga canales y reps iniciales
+    const types = await fetch_typeServices();
+    const $typeSelect = $("#modalTypeSelect");
+    types.forEach(c => $typeSelect.append(`<option value="${c.nombre}" ${c.nombre == modalData.tipo ? 'selected' : ''}>${c.nombre}</option>`));
+
+    // Guardar cambios
+    document.querySelector("#modalGeneric .btn-primary").onclick = async () => {
+        const typeservice = $typeSelect.val();
+        console.log(typeservice);
+        
+        const data = {
+            idpago: modalData.id,
+            typeservice: typeservice,
+            tipo: 'typeservice',
+            module: 'DetalleReservas'
+        };
+        console.log(data);
+        try {
+            const response = await fetchAPI('control', "PUT", {
+                typeservice: data  // 🧠 clave dinámica
+            });
+            if (response.ok) {
+                $("#modalTypeSelect").text($typeSelect.find(":selected").text());
+                modalData.typeservice = typeservice;
+                closeModal();
+                location.reload();
+            } else {
+                alert("Error al guardar cambios");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error en la conexión");
+        }
     }
 }
 
@@ -522,9 +601,12 @@ async function openModalReservasVinculadas(nog) {
 
         document.getElementById("reservasVinculadasContent").innerHTML = renderizarReservasVinculadas(reservas);
 
-        const modal = new bootstrap.Modal(document.getElementById('modalReservasVinculadas'));
+        const modalEl = document.getElementById('modalReservasVinculadas');
+        modalEl.removeAttribute('aria-hidden');
+        const modal = new bootstrap.Modal(modalEl);
         modal.show();
         window.currentReservasModal = modal;
+
 
         document.querySelectorAll("#reservasVinculadasContent .ver-detalle").forEach(btn => {
             btn.addEventListener("click", () => {
@@ -556,46 +638,42 @@ function closeModalReservas() {
 
 
 
-// Evento botón reagendar
-document.querySelectorAll('.btn-primary').forEach(btn => {
-    if (btn.innerText.includes("Reagendar Reserva")) {
-        btn.addEventListener('click', () => openReagendarModal());
-    }
+// Abrir modal Sapa
+document.getElementById("btnAgregarSapa").addEventListener("click", () => {
+    openModal(`${window.url_web}/detalles-reserva/form_sapa`);
 });
-// Ejemplo: abrir modal de Sapa
-document.querySelectorAll('.btn-info').forEach(btn => {
-    btn.addEventListener('click', () => {
-        openModal(`${window.url_web}/detalles-reserva/form_sapa`);
-    });
+
+// Procesar reserva
+document.getElementById("btnProcesarReserva").addEventListener("click", () => {
+    openModal(`${window.url_web}/detalles-reserva/form_mail`);
 });
-document.querySelectorAll('.btn-success').forEach(btn => {
-    btn.addEventListener('click', () => {
-        openModal(`${window.url_web}/detalles-reserva/form_mail`);
-    });
+
+// Reagendar reserva
+document.getElementById("btnReagendarReserva").addEventListener("click", () => {
+    openReagendarModal(modalData);
 });
-document.querySelectorAll('.btn-primary').forEach(btn => {
-    if (btn.innerText.includes("Reagendar Reserva")) {
-        btn.addEventListener('click', () => openReagendarModal(modalData));
-    }
+
+// Abrir reservas vinculadas
+document.getElementById("btnAbrirReservaVinculada").addEventListener("click", () => {
+    openModalReservasVinculadas(modalData.nog);
 });
-document.querySelectorAll('.btn-dark').forEach(btn => {
-    btn.addEventListener('click', () => {
-        btn.addEventListener('click', openModalReservasVinculadas(modalData['nog']));
-    });
+
+// Enviar notificación
+document.querySelector(".btn-warning").addEventListener("click", () => {
+    openModal(`${window.url_web}/detalles-reserva/form_mail`);
 });
-document.querySelectorAll('.btn-warning').forEach(btn => {
-    btn.addEventListener('click', () => {
-        openModal(`${window.url_web}/detalles-reserva/form_mail`);
-    });
+
+// Cancelar reserva
+document.getElementById("btnCancelarReserva").addEventListener("click", () => {
+    openModal(`${window.url_web}/detalles-reserva/form_cancelar`);
 });
-document.querySelectorAll('.btn-danger').forEach(btn => {
-    btn.addEventListener('click', () => {
-        openModal(`${window.url_web}/detalles-reserva/form_cancelar`);
-    });
-});
+
+// Editar canal y rep
 document.getElementById("reserva_canal").addEventListener("click", openChannelRepModal);
 document.getElementById("reserva_rep").addEventListener("click", openChannelRepModal);
 
+// Editar tipo de reserva
+document.getElementById("reserva_tipo").addEventListener("click", openTypeReservationModal);
 
 //FUNCIONA
 async function handleMail() {

@@ -14,29 +14,51 @@
 
         <!-- BOTONES -->
         <div class="mb-4 d-flex flex-wrap gap-2">
-            <button class="btn btn-info text-white"><i class="fas fa-plus-circle"></i> Agregar Sapa</button>
-            <button class="btn btn-success"><i class="fas fa-check"></i> Procesar Reserva</button>
-            <button class="btn btn-primary"><i class="fas fa-envelope"></i> Reagendar Reserva</button>
-            <button class="btn btn-dark"><i class="fas fa-link"></i> Reservas vinculadas</button>
+            <button class="btn btn-info text-white" id="btnAgregarSapa"><i class="fas fa-plus-circle"></i> Agregar Sapa</button>
+            <button class="btn btn-success" id="btnProcesarReserva"><i class="fas fa-check"></i> Procesar Reserva</button>
+            <button class="btn btn-primary" id="btnReagendarReserva"><i class="fas fa-envelope"></i> Reagendar Reserva</button>
+            <button class="btn btn-dark" id="btnAbrirReservaVinculada"><i class="fas fa-link"></i> Reservas vinculadas</button>
             <button class="btn btn-warning text-white"><i class="fas fa-bell"></i> Enviar Notificación</button>
-            <button class="btn btn-danger"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
+            <button class="btn btn-danger" id="btnCancelarReserva"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
         </div>
         
 
         <!-- INFORMACIÓN USUARIO + RESERVA -->
         <div class="row mb-4">
-            <!-- Usuario -->
-            <div class="col-md-4">
-                <div class="card sombra-custom">
-                    <div class="card-header bg-primary text-white"><strong>Datos Usuario</strong></div>
-                    <div class="card-body">
-                        <p><i class="fas fa-user"></i> <strong>Nombre:</strong> <span id="usuario_nombre"></span></p>
-                        <p><i class="fas fa-envelope"></i> <strong>Email:</strong> <span id="usuario_email"></span></p>
-                        <p><i class="fas fa-phone"></i> <strong>Teléfono:</strong> <span id="usuario_telefono"></span></p>
-                        <p><i class="fas fa-hotel"></i> <strong>Hotel:</strong> <span id="usuario_hotel"></span></p>
-                        <p><i class="fas fa-door-closed"></i> <strong>Cuarto:</strong> <span id="usuario_cuarto"></span></p>
+        <div class="col-md-4">
+            <div class="card sombra-custom">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <strong>Datos Usuario</strong>
+                    <div class="btn-group">
+                        <button id="btn_editar_usuario" class="btn btn-sm btn-warning">Editar</button>
+                        <button id="btn_cancelar_edicion" class="btn btn-sm btn-secondary d-none">Cancelar</button>
+                        <button id="btn_guardar_usuario" class="btn btn-sm btn-success d-none">Guardar</button>
                     </div>
                 </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-user"></i> Nombre</label>
+                        <input type="text" id="usuario_nombre" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="usuario_email" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-phone"></i> Teléfono</label>
+                        <input type="text" id="usuario_telefono" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-hotel"></i> Hotel</label>
+                        <input type="text" id="usuario_hotel" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-door-closed"></i> Cuarto</label>
+                        <input type="text" id="usuario_cuarto" class="form-control" readonly>
+                    </div>
+                </div>
+            </div>
+
                 <!-- REFERENCIA DE PAGO -->
                 <div class="card sombra-custom mb-4">
                     <div class="card-header bg-warning text-dark"><strong>Referencia de Pago</strong></div>
@@ -110,27 +132,24 @@
                 </div>
             </div>
             <!-- Modal independiente para Reservas Vinculadas -->
-            <div class="modalCombo fade" id="modalReservasVinculadas" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-xl"> <!-- xl = extra ancho -->
+            <div class="modal fade" id="modalReservasVinculadas" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class="modal-content">
-                        <div class="modal-header bg-dark text-white">
-                            <h5 class="modal-title">Reservas Vinculadas</h5>
-                            <button type="button" class="btn-close" onclick="closeModalReservas()"></button>
-                        </div>
-                        <div class="modal-body" id="reservasVinculadasContent">
-                            <div id="modalNotificationContainer"></div>
-                            <div id="reservasVinculadasContent"></div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" onclick="closeModalReservas()">Cerrar</button>
-                        </div>
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title">Reservas Vinculadas</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="reservasVinculadasContent"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
                     </div>
                 </div>
             </div>
-
-
         </div>
-        <div class="modal fade" id="modalGeneric" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalGeneric" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -153,6 +172,7 @@
 
 
     </div>
+    <script src="<?= asset('/js/tiposerviciosapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/canalesapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/bookingdetail.js') ?>?v=1"></script>
     <script src="<?= asset('/js/modalesReserva.js') ?>?v=1"></script>
