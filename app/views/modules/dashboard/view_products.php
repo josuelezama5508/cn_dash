@@ -31,21 +31,22 @@
             </div>
             <!--  -->
         </div>
+
+        <div id="modalProducts" class="modal" style="width: 900px;">
+            <div class="modal-header">
+                <h4>Crear producto</h4>
+                <button class="btn-close"></button>
+            </div>
+            <div class="modal-content">
+                <?php include(__DIR__ . '/../../forms/form_create_products.php') ?>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success">Aceptar</button>
+                <button class="btn btn-danger">Cancelar</button>
+            </div>
+        </div>
     </main>
 
-    <div id="modalProducts" class="modal" style="width: 900px;">
-        <div class="modal-header">
-            <h4>Crear producto</h4>
-            <button class="btn-close"></button>
-        </div>
-        <div class="modal-content">
-            <?php include(__DIR__ . '/../../forms/form_create_products.php') ?>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-success">Aceptar</button>
-            <button class="btn btn-danger">Cancelar</button>
-        </div>
-    </div>
 
     <script src="<?= asset('/js/products.js') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>

@@ -14,10 +14,11 @@
                         <li><a class="row-content-center" href="<?= route('canales') ?>">Canales</a></li>
                         <li><a class="row-content-center" href="<?= route('productos') ?>">Productos</a></li>
                         <li><a class="row-content-center" href="<?= route('dispo_test') ?>">Horarios</a></li>
+                        <li><a class="row-content-center" href="<?= route('transportation') ?>">Hoteles</a></li>
                     </ul>
-                    <ul class="right">
+                    <ul class="right" style="align-self: center;">
                         <li id="button-collapse">
-                            <a class="row-content-center"><i class="material-icons" style="font-size: 40px;">person_pin</i></a>
+                            <button class="row-content-center" ><i class="material-icons" style="font-size: 40px; background: #0277BD; color: white;">person_pin</i></button>
                         </li>
                     </ul>
                 </div>
@@ -25,7 +26,7 @@
             <div id="vertical-menu">
                 <ul class="top">
                     <li class="header">
-                        <img class="background" src="https://www.totalsnorkelcancun.com/dash/sources/img/background1.jpg">
+                        <img class="background" src="https://www.totalsnorkelcancun.com/dash/sources/img/background1.jpg" alt="Fondo decorativo del menú lateral">
                     </li>
                 </ul>
                 <ul class="center menu-options"></ul>

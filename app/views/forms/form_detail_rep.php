@@ -251,8 +251,8 @@
     function createRep() {
         $("#FDetailRep").html('');
 
-        let isValid = validate_rep();
-        if (!isValid) return;
+        // let isValid = validate_rep();
+        // if (!isValid) return;
 
         $("#FNewReps").append(`
             <tr class="rep-item-${itemCount}">

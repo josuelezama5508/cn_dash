@@ -60,7 +60,15 @@ class ProductController extends API
                     break;
                 case 'codedata':
                     $product = $this->model_product->getProductByCode($search);
-                    $response = $product[0];
+                    $response = $product;
+                    break;
+                case 'codedataLang':
+                    $decoded = json_decode($search, true);
+                    $productcode=$decoded['productcode'];
+                    $lang = $decoded['lang'] ?? 'en';
+                    $langId = ($lang === 'en') ? 1 : 2;
+                    $product = $this->model_product->getProductByCodeLang($productcode, $langId);
+                    $response = $product;
                     break;
                 case 'productsByCompany':
                     $products = $this->model_product->getGroupedByProductCode($search);
@@ -136,16 +144,111 @@ class ProductController extends API
                     );
                     
                     break;
+                case 'langdata':  // Obtener todos los productos por busqueda
+                    $decoded = json_decode($search, true);
+                    if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+                        return $this->jsonResponse(['message' => 'Parámetro langdata inválido'], 400);
+                    }
+                
+                    $code = $decoded['code'] ?? null;
+                    $lang = $decoded['lang'] ?? 'en';
+                    $platform = $decoded['platform'] ?? 'dash';
+                
+                    if (!$code) {
+                        return $this->jsonResponse(['message' => 'El campo code es requerido en langdata'], 400);
+                    }
+                
+                    // aquí conviertes lang en id si tu modelo lo necesita
+                    $langId = ($lang === 'en') ? 1 : 2;
+                
+                    $products = $this->model_product->getByLanguagePlatform($code, $langId, $platform);
+                
+                    $response = $products;
+                    break;
+                case 'allDataLang':
+                    $decoded = json_decode($search, true);
+                    if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+                        return $this->jsonResponse(['message' => 'Parámetro langdata inválido'], 400);
+                    }
+                    $company_code = $decoded['companycode'] ?? null;
+                    // $code = $decoded['code'] ?? null;
+                    $lang = $decoded['lang'] ?? 'en';
+                    $platform = $decoded['platform'] ?? 'dash';
+                
+                    if (!$company_code) {
+                        return $this->jsonResponse(['message' => 'El company_code es requerido en langdata'], 400);
+                    }
+                
+                    // aquí conviertes lang en id si tu modelo lo necesita
+                    $langId = ($lang === 'en') ? 1 : 2;
+                
+                    $products = $this->getCompanyProductsByPlatformAndLanguage($company_code, $langId, $platform);
+                
+                    $response = $products;
+                    break;
                     
             }
             if (empty($response)) {
-                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.'], 404);
+                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.', 'DATA: '=>$response, 'action'=>$action, 'search'=>$decoded], 404);
             }
             return $this->jsonResponse(['data' => $response], $httpCode);
         } catch (Exception $e) {
             return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
         }
     }
+    public function getCompanyProductsByPlatformAndLanguage($company_code, $language_id, $platform) {
+        // 1. Validar empresa activa y con disponibilidad_api=1
+        $companyData = $this->model_company->where(
+            "company_code = :company_code AND disponibilidad_api = '1' AND active = '1'",
+            ['company_code' => $company_code]
+        );
+    
+        if (!count($companyData)) {
+            return ['error' => 'Empresa no válida'];
+        }
+        $company = $companyData[0];
+    
+        // 2. Obtener lista de productos desde la empresa (JSON decodificado)
+        $productosEmpresa = json_decode($company->productos);
+        if (!$productosEmpresa || !is_array($productosEmpresa)) {
+            return ['error' => 'No hay productos asignados a la empresa'];
+        }
+    
+        $productosFiltrados = [];
+    
+        // 3. Por cada producto, verificamos y obtenemos producto en idioma solicitado
+        foreach ($productosEmpresa as $productoEmpresa) {
+            $product_code = $productoEmpresa->codigoproducto;
+    
+            // 4. Validar que exista al menos un producto activo y visible en la plataforma para este product_code
+            $existeBase = $this->model_product->where(
+                "product_code = :product_code AND active = '1' AND show_{$platform} = '1'",
+                ['product_code' => $product_code]
+            );
+    
+            if (!count($existeBase)) {
+                // No existe producto base válido, saltar
+                continue;
+            }
+    
+            // 5. Buscar cualquier producto con ese product_code y lang_id solicitado (no importa si está activo o no)
+            $productoIdioma = $this->model_product->where(
+                "product_code = :product_code AND lang_id = :lang_id",
+                ['product_code' => $product_code, 'lang_id' => $language_id],
+                ["product_name AS productname", "product_code AS productcode"]
+            );
+    
+            if (!count($productoIdioma)) {
+                // No hay producto con ese idioma, saltar
+                continue;
+            }
+    
+            $productosFiltrados[] = $productoIdioma[0];
+        }
+    
+        return $productosFiltrados;
+    }
+    
     private function get_params($params = [])
     {
         $action = '';
@@ -172,7 +275,17 @@ class ProductController extends API
         }else if (isset($params['productsByCompany'])) {
             $action = 'productsByCompany';
             $search = $params['productsByCompany'];
+        }else if (isset($params['langdata'])) {
+            $action = 'langdata';
+            $search = $params['langdata'];
+        }else if (isset($params['allDataLang'])) {
+            $action = 'allDataLang';
+            $search = $params['allDataLang'];
+        }else if (isset($params['codedataLang'])) {
+            $action = 'codedataLang';
+            $search = $params['codedataLang'];
         }
+
 
         return [$action, $search];
     }

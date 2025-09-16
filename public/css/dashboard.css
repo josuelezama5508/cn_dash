@@ -182,6 +182,40 @@
 }
 
 /* -- ./Productos -- */
+/* -- Transportacion -- */
+#transportation-menu {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    border: 0;
+}
+
+#transportation-menu li {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#transportation-menu a {
+    width: 100%;
+    height: 48px;
+    text-decoration: none;
+    color: #337AB7;
+}
+
+#transportation-menu a:hover {
+    color: #337AB7;
+    border-bottom: 3px solid #337AB7;
+}
+
+#transportation-menu .active {
+    color: #23527C;
+    border-bottom: 3px solid #23527C;
+}
+
+/* -- ./Transportacion -- */
 /* ---- ./Menus ---- */
 
 
@@ -290,58 +324,112 @@ select {
     /* Espacio para la flecha */
 }
 /* Contenedor general */
+/* Animaciones generales */
+.anim-container {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.anim-container.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Botones principales estilo premium */
+button.btn-primary {
+    background: linear-gradient(145deg, #0277BD, #0277BD);
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    font-size: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+button.btn-primary span {
+    position: relative;
+    z-index: 2;
+}
+
+
+
+/* Botones volver con neumorphism */
+button.btn-back {
+    background: rgb(225, 23, 23);
+    color: rgb(255, 255, 255);
+    border-radius: 12px;
+    /* padding: 12px 24px; */
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 6px 6px 10px #d1d9e6, -6px -6px 10px #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.4s ease;
+}
+button.btn-back i {
+    margin-right: 8px;
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+button.btn-back:hover i {
+    transform: translateX(-3px);
+}
+
+
+/* Contenedor de botones y flex wrap */
 #mainButtons,
 #pagarAhoraOpciones,
-#pagarDespuesOpciones,
 #paymentRadios {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 5px;
     justify-content: center;
+    position: relative;
 }
 
-/* Botones principales - color turquesa */
-button {
-    background-color: #1abc9c; /* Turquesa */
-    color: white;
-    border: none;
-    padding: 12px 20px;
+/* Textarea estilo premium */
+#voucherInputGroup textarea {
+    padding: 12px;
     font-size: 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 2px 5px rgba(26, 188, 156, 0.5);
+    border-radius: 12px;
+    border: none;    
+    width: -webkit-fill-available;
+    resize: vertical;
+    background: #ecf0f3;
+    box-shadow: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+    transition: all 0.3s ease;
 }
 
-button:hover {
-    background-color: #16a085; /* Verde azulado */
-    box-shadow: 0 4px 10px rgba(22, 160, 133, 0.7);
+#voucherInputGroup textarea:focus {
+    outline: none;
+    box-shadow: inset 2px 2px 6px #d1d9e6, inset -2px -2px 6px #ffffff;
 }
-
-/* Estilos para input y grupo de voucher */
 #voucherInputGroup {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
-#voucherCode {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #bbb;
-    border-radius: 4px;
-    width: 200px;
+#voucherInputGroup .btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
 }
 
-/* Radio buttons estilo limpio con color turquesa */
+/* Radio buttons estilo limpio con turquesa */
 #paymentRadios label {
     font-size: 16px;
     padding: 10px 20px;
     border: 1px solid #1abc9c;
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: white;
     color: #1abc9c;
     cursor: pointer;
@@ -356,6 +444,39 @@ button:hover {
 #paymentRadios input[type="radio"] {
     margin-right: 8px;
 }
+/* Centra los botones azules */
+#pagarAhoraOpciones, #paymentRadios {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Estilo general para los botones */
+#pagarAhoraOpciones button.btn-primary{
+    margin: 10px;
+    width: 150px;
+}
+
+/* Botón 'Volver' en esquina inferior derecha */
+.corner-button {
+    position: static;
+    right: 20px;
+    padding: 7px;
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    /* box-shadow: 0 2px 5px rgba(0,0,0,0.2); */
+}
+
+/* Oculta el texto del botón */
+.corner-button span,
+.corner-button::after {
+    display: none;
+}
+
 
 .btn-icon {
     display: flex;
@@ -483,8 +604,12 @@ button:hover {
     justify-content: center !important;
     align-items: center;
     gap: 10px;
+    border: 0px solid #FF7E7E;
 }
-
+.row-content-center button{
+    background: transparent;
+    border: transparent;
+}
 .row-content-left {
     display: flex;
     flex-direction: row;
@@ -676,3 +801,206 @@ button:hover {
     margin-bottom: 5px;
 }
 
+#modalDetallesReserva th {
+    background-color: #007bff; /* Bootstrap primary */
+    color: white;
+    text-transform: uppercase;
+    font-size: 0.75rem; /* similar a Bootstrap small */
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+.input-error {
+    border: 2px solid #ff4d4f !important;
+    /* box-shadow: 0 0 6px rgba(255, 77, 79, 0.7), 0 0 12px rgba(255, 77, 79, 0.5); */
+    background-color: #fff5f5;
+    transition: box-shadow 0.3s ease, border 0.3s ease;
+    /* animation: inputPulseError 1s ease-in-out infinite alternate; */
+    border-radius: 6px;
+}
+
+/* Animación de resplandor */
+@keyframes inputPulseError {
+    0% {
+        box-shadow: 0 0 6px rgba(255, 77, 79, 0.6), 0 0 12px rgba(255, 77, 79, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.9), 0 0 20px rgba(255, 0, 0, 0.6);
+    }
+}
+/* select.form-control {
+    padding-right: 2rem;
+    background-position: right 0.75rem center;
+    background-size: 0.65rem;
+    text-align: left;
+    line-height: 1.5;
+} */
+ /* Contenedor de tarjetas */
+.transportation-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: stretch;
+  }
+  
+  /* Tarjeta */
+  .transportation-card {
+    flex: 1 1 300px;
+    height: 100%;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 18px 20px;
+    /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); */
+    /* transition: box-shadow 0.2s ease, transform 0.2s ease; */
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+  }
+  
+  /* .transportation-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+  } */
+  
+  .transportation-title {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #222;
+  }
+  
+  .transportation-location,
+  .transportation-address {
+    font-size: 0.95em;
+    color: #555;
+    margin: 2px 0;
+  }
+  
+  .transportation-schedule {
+    font-size: 0.85em;
+    color: #444;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  
+  .color-box {
+    display: inline-block;
+    width: 24px;
+    height: 14px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  
+  .text-color {
+    margin-left: 6px;
+    font-weight: 500;
+  }
+  
+  /* Botones */
+  .transportation-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+  
+  .transportation-actions button {
+    background: none;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .transportation-actions button i.material-icons {
+    font-size: 16px;
+  }
+  
+  .transportation-actions button:hover {
+    background-color: #f0f0f0;
+    border-color: #888;
+  }
+  
+@media (max-width: 1400px) {
+    .content {
+      width: 90%; /* 1 columna en pantallas pequeñas */
+    }
+}
+/* Contenedor de cada item en el modal */
+.detalles-modal-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+/* Label con texto en negrita y espacio */
+.detalles-modal-label {
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #222;
+}
+
+/* Inputs de tipo número para pax */
+.detalles-pax-input {
+    width: 100%;
+    max-width: 80px;
+    padding: 0.3rem 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    transition: border-color 0.3s ease;
+}
+
+.detalles-pax-input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0,123,255,0.5);
+}
+
+/* Checkbox estilo bootstrap-like */
+.detalles-pax-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Texto cuando no hay control definido */
+.detalles-no-control {
+    font-style: italic;
+    color: #999;
+}
+#hotelDropdown li:hover,
+  #hotelDropdown li.active {
+    background-color: #007bff;
+    color: #fff;
+  }
+/* Para un diseño responsive simple */
+@media (min-width: 576px) {
+    .detalles-modal-item {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .detalles-modal-label {
+        margin-bottom: 0;
+        flex: 1 1 auto;
+    }
+    .detalles-pax-input, .detalles-pax-checkbox {
+        flex-shrink: 0;
+    }
+}

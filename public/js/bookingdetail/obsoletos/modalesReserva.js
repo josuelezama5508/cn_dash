@@ -368,7 +368,8 @@ async function confirmReagendar() {
             idpago: parseInt(reservaId),
             datepicker: nuevaFecha,
             horario: nuevoHorario,
-            tipo: 'reagendacion'
+            tipo: 'reagendacion',
+            module: 'DetalleReservas'
         }
     };
     try {
@@ -473,7 +474,7 @@ async function openChannelRepModal() {
     }
 }
 // ========================
-// REPS Y CHANNELS
+// Type Services
 // ========================
 async function openTypeReservationModal() {
     const html = `
@@ -612,7 +613,7 @@ async function openModalReservasVinculadas(nog) {
             btn.addEventListener("click", () => {
                 const nog = btn.dataset?.nog;
                 if (nog) {
-                    window.location.href = `${window.url_web}/detalles-reserva/view?nog=${nog}`;
+                    window.location.href = `${window.url_web}/detalles-reserva/view/${nog}/`;
                 } else {
                     showNotification("NOG inválido para esta reserva.", 'warning');
                 }
@@ -656,11 +657,6 @@ document.getElementById("btnReagendarReserva").addEventListener("click", () => {
 // Abrir reservas vinculadas
 document.getElementById("btnAbrirReservaVinculada").addEventListener("click", () => {
     openModalReservasVinculadas(modalData.nog);
-});
-
-// Enviar notificación
-document.querySelector(".btn-warning").addEventListener("click", () => {
-    openModal(`${window.url_web}/detalles-reserva/form_mail`);
 });
 
 // Cancelar reserva

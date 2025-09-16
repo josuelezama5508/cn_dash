@@ -67,7 +67,7 @@ const show_availability = async (condition) => {
                                 <div style="display: flex; flex-direction: column; gap: 14px;">${productcard}</div>
                             </div>
                             <div style="flex: 1; padding: 0 20px;">
-                                <table class="table" style="margin: 0;" style="width: 100%;">
+                                <table class="table" style="margin: 0; style=width: 100%; text-align: center;">
                                     <thead>
                                         <th scope="col">Horario</th>
                                         <th scope="col" style="width: 58px">Cupo</th>

@@ -41,7 +41,7 @@
 
         </form>
         <!-- Modal -->
-        <div id="modal-products" class="modal" style="display: none;">
+        <div id="modal-products" class="modalhome" style="display: none;">
             <div class="modal-content" style="max-width: 700px; width: 100%;">
                 <h4>Selecciona productos</h4>
                 <div style="margin-bottom: 10px;">
@@ -57,7 +57,7 @@
                 <button id="close-modal" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
-        <div id="modal-companies" class="modal" style="display: none;">
+        <div id="modal-companies" class="modalhome" style="display: none;">
             <div class="modal-content" style="max-width: 700px; width: 100%;">
                 <h4>Selecciona productos</h4>
                 <div style="margin-bottom: 10px;">

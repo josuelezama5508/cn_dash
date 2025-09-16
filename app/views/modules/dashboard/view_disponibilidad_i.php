@@ -59,7 +59,7 @@
                             <div id="RProducts" style="display: flex; flex-direction: column; gap: 16px;"></div>
                         </div>
                         <div id="schedules-section">
-                            <table class="table table-scrollbar" style="margin: 0;">
+                            <table class="table table-scrollbar" style="margin: 0; ">
                                 <thead>
                                     <tr style="color: black; font-size:16px;">
                                         <th scope="col" style="width: 100px;">Horario</th>

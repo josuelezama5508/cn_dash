@@ -7,12 +7,26 @@ $(document).ready(function() {
     $("#activandomodal").on("click", function() { initBookingForm(this); });
 
     incoming_bookings("");
+    configurarDatepickerResumen();
     $("[name='search']").on("input", function() { incoming_bookings($(this).val()); });
     cargarReservasDelDia(); // Al cargar la página
-
+    cargarResumenOperacion(); 
     $("[name='today']").on("click", function () {
-        cargarReservasDelDia();
+        // cargarReservasDelDia();
+        cargarResumenOperacion(); 
     });
+    $("[name='tomorrow']").on("click", function () {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+    
+        const yyyy = tomorrow.getFullYear();
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const dd = String(tomorrow.getDate()).padStart(2, '0');
+    
+        const formatted = `${yyyy}-${mm}-${dd}`;
+        cargarResumenOperacion(formatted);
+    });
+    
 });
 
 const cargarReservasDelDia = async () => {
@@ -38,35 +52,178 @@ const cargarReservasDelDia = async () => {
         `);
     }
 };
+const cargarResumenOperacion = async (fecha = null) => {
+    let startdate = '';
+    let enddate = '';
+
+    if (typeof fecha === 'string') {
+        // Una sola fecha
+        startdate = enddate = fecha;
+    } else if (typeof fecha === 'object' && fecha !== null) {
+        startdate = fecha.start;
+        enddate = fecha.end;
+    } else {
+        const hoy = new Date().toISOString().split("T")[0];
+        startdate = enddate = hoy;
+    }
+
+    const endpoint = `control?getByDatePickup[startdate]=${startdate}&getByDatePickup[enddate]=${enddate}`;
+
+    try {
+        const response = await fetchAPI(endpoint, "GET");
+        const data = await response.json();
+        const status = response.status;
+
+        if (status === 200 && data.data && data.data.length > 0) {
+            renderResumenOperacion(data.data);
+        } else {
+            document.getElementById('resumen-operacion-container').innerHTML = `
+                <div class="alert alert-info">No hay reservas programadas para este periodo.</div>
+            `;
+        }
+    } catch (error) {
+        console.error("Error al cargar resumen de operación:", error);
+        document.getElementById('resumen-operacion-container').innerHTML = `
+            <div class="alert alert-danger">Error al obtener los datos.</div>
+        `;
+    }
+};
+/**
+ * Carga el resumen de operación entre dos fechas
+ * @param {string} startDate - Fecha inicio en formato YYYY-MM-DD
+ * @param {string} endDate - Fecha fin en formato YYYY-MM-DD
+ */
+function cargarResumenOperacionDesdePicker(startDate, endDate) {
+    if (!startDate || !endDate) {
+        console.warn("Fechas no válidas.");
+        return;
+    }
+
+    const params = new URLSearchParams({
+        'getByDatePickup[startdate]': startDate,
+        'getByDatePickup[enddate]': endDate,
+    });
+
+    const endpoint = `control?${params.toString()}`;
+
+    fetchAPI(endpoint, "GET")
+        .then(async (response) => {
+            const data = await response.json();
+            const status = response.status;
+
+            if (status === 200 && data.data && data.data.length > 0) {
+                renderResumenOperacion(data.data);
+            } else {
+                document.getElementById('resumen-operacion-container').innerHTML = `
+                    <div class="alert alert-info">No hay reservas programadas en el rango seleccionado.</div>
+                `;
+            }
+        })
+        .catch((error) => {
+            console.error("Error al cargar resumen:", error);
+            document.getElementById('resumen-operacion-container').innerHTML = `
+                <div class="alert alert-danger">Error al obtener los datos.</div>
+            `;
+        });
+}
+
+
+/**
+ * Configura el datepicker para cargar resumen al aplicar
+ */
+function configurarDatepickerResumen() {
+    const $input = $("[name='daterange']");
+
+    if (!$input.length || typeof $.fn.daterangepicker !== "function") {
+        console.error("DateRangePicker no está cargado o el input no existe.");
+        return;
+    }
+
+    $input.daterangepicker({
+        autoUpdateInput: false,
+        locale: {
+            format: 'DD/MM/YYYY',
+            cancelLabel: 'Cancelar',
+            applyLabel: 'Aplicar',
+            fromLabel: "Desde",
+            toLabel: "Hasta",
+            customRangeLabel: "Personalizado",
+            daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+            monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+            firstDay: 1
+        },
+        linkedCalendars: false,
+        showCustomRangeLabel: false,
+        alwaysShowCalendars: true
+
+    });
+    // CSS para ocultar el segundo calendario
+    $(".drp-calendar.right").hide();
+    $input.on('apply.daterangepicker', function (ev, picker) {
+        const formatted = `${picker.startDate.format('DD/MM/YYYY')} TO ${picker.endDate.format('DD/MM/YYYY')}`;
+        $(this).val(formatted);
+
+        const start = picker.startDate.format('YYYY-MM-DD');
+        const end = picker.endDate.format('YYYY-MM-DD');
+
+        cargarResumenOperacionDesdePicker(start, end);
+    });
+
+    $input.on('cancel.daterangepicker', function () {
+        $(this).val('');
+    });
+}
+function formatearMoneda(monto) {
+    if (!monto) return "-";
+    return `$${parseFloat(monto).toFixed(2)}`;
+}
+
+function formatearEstado(estado) {
+    const clases = {
+        "Pendiente": "warning",
+        "Confirmado": "success",
+        "Cancelado": "danger"
+    };
+
+    const clase = clases[estado] || "secondary";
+    return `<span class="badge bg-${clase}">${estado}</span>`;
+}
+
 function renderizarReservas(reservas) {
     const $tbody = $("#RBuscador");
     $tbody.empty();
 
-    reservas.forEach(r => {
+    if (!Array.isArray(reservas) || reservas.length === 0) {
+        $tbody.html(`<tr><td colspan="10" class="text-center">No hay reservas disponibles.</td></tr>`);
+        return;
+    }
+
+    const rowsHtml = reservas.map(r => {
         let items = '-';
         let totalPax = 0;
+
         try {
-            const detalles = JSON.parse(r.items_details);
-            items = detalles.map(d => `${d.name} (${d.price})`).join(', ');
-            totalPax = detalles.reduce((acc, d) => acc + Number(d.item), 0);
-        } catch {
-            items = '';
-            totalPax = 0;
+            const detalles = JSON.parse(r.items_details || '[]');
+            if (Array.isArray(detalles) && detalles.length > 0) {
+                items = detalles.map(d => `${d.name} <small class="text-muted">(${d.price})</small>`).join(', ');
+                totalPax = detalles.reduce((acc, d) => acc + Number(d.item || 0), 0);
+            }
+        } catch (err) {
+            console.warn("Error al parsear items_details:", err);
         }
 
-
-        const row = `
+        return `
             <tr>
-                <td>${r.datepicker }</td>
-                <td>${r.horario}</td>
-                <td>${r.company_name }</td>
-                
-                <td>${totalPax} PAX</td>
-                <td>${r.actividad}</td>
-                <td>${r.cliente_name} ${r.cliente_lastname}</td>
-                <td>${r.nog}</td>
-                <td>${r.total}</td>
-                <td>${r.status}</td>
+                <td>${r.datepicker || '-'}</td>
+                <td>${r.horario || '-'}</td>
+                <td>${r.company_name || '-'}</td>
+                <td><strong>${totalPax}</strong> PAX</td>
+                <td>${r.actividad || '-'}</td>
+                <td>${(r.cliente_name || '')} ${(r.cliente_lastname || '')}</td>
+                <td><span class="badge bg-secondary">${r.nog || '-'}</span></td>
+                <td>${formatearMoneda(r.total)}</td>
+                <td>${formatearEstado(r.status)}</td>
                 <td>
                     <button class="btn btn-sm btn-primary ver-detalle" data-nog="${r.nog}">
                         <i class="fas fa-eye"></i>
@@ -74,16 +231,15 @@ function renderizarReservas(reservas) {
                 </td>
             </tr>
         `;
-        $tbody.append(row);
-        $(".ver-detalle").on("click", function () {
-            const nog = $(this).data("nog");
-            console.log("Booking ID (nog) enviado:", nog);
-            window.location.href = `${window.url_web}/detalles-reserva/view?nog=${nog}`;
-            // Aquí puedes redirigir, abrir modal, hacer fetch, etc.
-            // window.location.href = `${window.url_web}/detalles-reserva/view?id=${nog}`;
-            // o:
-            // mostrarDetalleReserva(nog);
-        });
+    });
+
+    $tbody.html(rowsHtml.join(""));
+
+    // Asignar eventos solo una vez después del render
+    $tbody.off("click", ".ver-detalle").on("click", ".ver-detalle", function () {
+        const nog = $(this).data("nog");
+        console.log("Booking ID (nog) enviado:", nog);
+        window.location.href = `${window.url_web}/detalles-reserva/view/${nog}`;
     });
 }
 
@@ -183,17 +339,28 @@ function createSelectProduct(companycode) {
       .fail((error) => {});
 }
 
-
 function createBooking(input) {
-    let companyCode = $("#modalBooking #company :selected").val();
-    let productCode = $("#modalBooking #product :selected").val();
+    const companyCode = $("#modalBooking #company :selected").val();
+    const productCode = $("#modalBooking #product :selected").val();
 
-    if (companyCode == '0' || productCode == '0') {
+    if (companyCode === '0' || productCode === '0') {
         $(input).removeClass("processed");
         return;
     }
-    window.location.href = window.url_web + "/datos-reserva/create/" + companyCode + '/' + productCode;
+
+    // Crear y enviar formulario oculto
+    const form = $('<form>', {
+        method: 'POST',
+        action: window.url_web + '/datos-reserva/create/'
+    });
+
+    form.append($('<input>', { type: 'hidden', name: 'company', value: companyCode }));
+    form.append($('<input>', { type: 'hidden', name: 'product', value: productCode }));
+
+    $('body').append(form);
+    form.submit();
 }
+
 
 
 function activandomodalEvent() {

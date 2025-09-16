@@ -98,7 +98,7 @@ $token = $_SESSION['user'];
         </div>
     </main>
         <!-- Modal RelationCombo -->
-    <div id="relationComboModal" class="modal" style="display:none;">
+    <div id="relationComboModal" class="modalhome" style="display:none;">
         <div class="modal-content">
             <h4>Relation Combo</h4>
             <div id="relationComboContent"></div>

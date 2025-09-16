@@ -44,7 +44,7 @@ $token = $_SESSION['user'];
                                         <th scope="col">Estado</th>
                                     </tr>
                                 </thead>
-                                <tbody id="RBuscador" style="height: 52vh;"></tbody>
+                                <tbody id="RBuscador"></tbody>
                             </table>
                         </div>
                     </div>
@@ -70,6 +70,7 @@ $token = $_SESSION['user'];
                                             <span style="float: left;padding: 0px 20px;">Mañana</span>
                                         </button>
                                     </div>
+                                    
                                 </div>
                                 <div div style="gap: 10px; align-items: center; justify-content: right;">
                                     <div style="margin-left: 10px;">
@@ -77,6 +78,29 @@ $token = $_SESSION['user'];
                                     </div>
                                 </div>
                             </div>
+                            <!-- Contenedor de tarjetas resumen -->
+                            <div id="resumen-operacion-container" style="padding-top: 15px;"></div>
+
+                                <!-- Modal reutilizable para detalles -->
+                                <div class="modal fade" id="modalDetallesReserva" tabindex="-1" aria-labelledby="modalHorario" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Detalle de reservas para <span id="modalHorario"></span></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                            </div>
+                                            <div class="modal-body" id="modalContent">
+                                                <!-- Render dinámico aquí -->
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button class="btn btn-danger" data-bs-dismiss="modal">CERRAR</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
                         </div>
                     </div>
                     <!--  -->
@@ -112,7 +136,8 @@ $token = $_SESSION['user'];
             <button class="btn btn-danger">Cancelar</button>
         </div>
     </div>
-
+    <script src="<?= asset('/js/routesapi.js') ?>?v=1"></script>
+    <script src="<?= asset('/js/home/resumen-operacion.js') ?>?v=1"></script>
     <script src="<?= asset('/js/home.js') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>
 </body>

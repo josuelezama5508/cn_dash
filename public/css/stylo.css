@@ -34,7 +34,7 @@ footer {
 }
 
 .content {
-    width: 70%;
+    width: 80%;
     margin: 0 auto;
     display: flex;
     gap: 10px;
@@ -70,13 +70,27 @@ footer {
     /* Ajusta según tus necesidades */
     height: auto;
     /* O una altura fija si lo prefieres */
+    background: white;
+    /* Por si necesitas contraste */
+    padding: 10px;
+    z-index: 99999999;
+    border-radius: 5px;
+}
+.modalhome {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1200px;
+    /* Ajusta según tus necesidades */
+    height: auto;
+    /* O una altura fija si lo prefieres */
     background: transparent;
     /* Por si necesitas contraste */
     padding: 10px;
     z-index: 99999999;
     border-radius: 5px;
 }
-
 .modal-header,
 .modal-content {
     border: none;
@@ -117,3 +131,257 @@ footer {
 #reserva_rep:hover {
     opacity: 0.8; /* opcional: un leve efecto visual */
 }
+.hidden {
+    display: none !important;
+}
+.horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* siempre 2 columnas */
+    gap: 10px;
+    width: 100%;
+    max-width: 800px; /* opcional */
+  }
+  
+  .horario-card {
+    border: 1px solid #4CAF50;
+    padding: 10px;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .horario-card.seleccionado {
+    border: 2px solid #D70000;
+  }
+  .select2-search--dropdown {
+    display: block; /* se verá cuando abras */
+  }
+  .select2-search__field {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+  .section-newreserva-description {
+    list-style: none;
+    padding: 20px 10px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .section-newreserva-description > li {
+    border-bottom: 1px dotted #9E9E9E;
+    padding-bottom: 10px;
+  }
+  
+  /* .section-newreserva-description > li:last-child {
+    border-bottom: none;
+  } */
+  
+  .section-newreserva-description ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay,
+.flatpickr-day.flatpickr-disabled {
+    color: #555; /* Más oscuro que #ccc */
+}
+/* Aumentar contraste de placeholders de Select2 */
+.select2-selection__placeholder {
+    color: #555 !important; /* Gris más oscuro */
+}
+
+/* Headers y títulos en booking-salmon */
+.booking-salmon header, 
+.booking-salmon h2{
+    color: #222; /* si lo quieres blanco sobre salmon, verificar contraste */
+}
+
+/* Textos en spans sobre fondos claros */
+span, p,  .booking-salmon h2 span {
+    color: #222; /* asegurar suficiente contraste */
+}
+.section-header-new-reserva p{
+    color: #fff;
+}
+
+/* Sólo dentro del tbody con id RBuscador */
+#RBuscador tr.channel-row {
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+}
+/* #RBuscador tr.channel-row:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+} */
+
+/* Celdas con padding y texto */
+#RBuscador tr.channel-row td {
+    padding: 18px 20px;
+    vertical-align: middle;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* Nombre canal destacado */
+#RBuscador tr.channel-row td.channel-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1a1a1a;
+}
+
+/* Botón representantes */
+#RBuscador tr.channel-row td .rep-btn {
+    background: linear-gradient(135deg, #4a90e2, #357ABD);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    /* box-shadow:
+        0 0 6px rgba(74, 144, 226, 0.7),
+        inset 0 -3px 5px rgba(255, 255, 255, 0.3); */
+    /* transition: box-shadow 0.4s ease; */
+    position: relative;
+    overflow: hidden;
+}
+/* #RBuscador tr.channel-row td .rep-btn:hover {
+    box-shadow:
+        0 0 12px rgba(74, 144, 226, 1),
+        inset 0 -4px 7px rgba(255, 255, 255, 0.5);
+    animation: pulse-blue 1.5s infinite;
+} */
+
+/* Animación sutil para el botón reps */
+@keyframes pulse-blue {
+    0%, 100% {
+        box-shadow:
+            0 0 12px rgba(74, 144, 226, 1),
+            inset 0 -4px 7px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+        box-shadow:
+            0 0 20px rgba(74, 144, 226, 1.5),
+            inset 0 -5px 9px rgba(255, 255, 255, 0.7);
+    }
+}
+
+/* Icono del grupo más grande */
+#RBuscador tr.channel-row td .rep-btn i.material-icons {
+    font-size: 1.6rem;
+}
+
+/* Badge contador */
+#RBuscador tr.channel-row td .rep-count {
+    background: #ff4757;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: white;
+    box-shadow: 0 2px 6px rgba(255, 71, 87, 0.5);
+    user-select: none;
+}
+
+/* Teléfono y tipo con color gris suave */
+#RBuscador tr.channel-row td.channel-phone,
+#RBuscador tr.channel-row td.channel-type {
+    font-size: 1rem;
+    color: #666;
+}
+
+/* Acciones */
+#RBuscador tr.channel-row td .channel-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+}
+
+#RBuscador tr.channel-row td .channel-actions button {
+    background: #f0f0f0;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #555;
+    font-size: 1.5rem;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+#RBuscador tr.channel-row td .channel-actions button:hover {
+    background-color: #357ABD;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 10px rgba(53, 122, 189, 0.6);
+}
+
+/* Fila para agregar canal */
+#RBuscador tr.add-channel-cell td {
+    text-align: center;
+    padding: 25px 0;
+}
+
+/* Botón nuevo canal estilo neumorfismo */
+#RBuscador tr.add-channel-cell td .neumorphic-btn {
+    background: #e0e5ec;
+    border-radius: 40px;
+    border: none;
+    padding: 14px 32px;
+    font-size: 1.2rem;
+    color: #357ABD;
+    font-weight: 700;
+    box-shadow:
+        8px 8px 15px #babecc,
+        -8px -8px 15px #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: box-shadow 0.3s ease, color 0.3s ease;
+}
+#RBuscador tr.add-channel-cell td .neumorphic-btn:hover {
+    color: #234a7a;
+    box-shadow:
+        inset 4px 4px 6px #babecc,
+        inset -4px -4px 6px #ffffff;
+}
+@media (max-width: 1400px) {
+    .horarios-grid {
+      grid-template-columns: repeat(1, 1fr); /* 1 columna en pantallas pequeñas */
+    }
+}
+.lds-dual-ring {
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+  }
+  .lds-dual-ring:after {
+    content: " ";
+    display: block;
+    width: 46px;
+    height: 46px;
+    margin: 1px;
+    border-radius: 50%;
+    border: 5px solid #3498db;
+    border-color: #3498db transparent #3498db transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+  }
+  @keyframes lds-dual-ring {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  #modalLoader .modal-backdrop.show {
+    background-color: rgba(0, 0, 0, 0.8);
+  }

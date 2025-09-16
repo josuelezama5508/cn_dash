@@ -2,9 +2,9 @@
     <div id="overlay2" style="background-color: #444;"></div>
 
     <footer>
-        <div style="background: #c1c1c1;">
+        <div style="background: #757575;">
             <div class="content">
-                <div style="background: #c1c1c1; width: 100%;">
+                <div style="width: 100%;">
                     <p style="text-align: center;padding-bottom: 10px;padding-top: 10px;margin: 0;color: white;">Panel de reserva | 2022 </p>
                 </div>
             </div>

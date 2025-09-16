@@ -3,27 +3,27 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
     const data = { create: {} };
     const create = data.create;
 
-    create.actividad      = $("#productname").text().trim();
-    create.code_company   = $("#companycode").val();
-    create.product_id     = $("#productname").data("product-id");
+    create.actividad      = $("#PrintProductname").text().trim();
+    create.code_company   = $("#companySelect").val();
+    create.product_id     = $("#productSelect option:selected").data("product-id");
     create.datepicker     = $("#datepicker")[0]?._flatpickr?.selectedDates[0]?.toISOString().slice(0,10) || null;
-    create.horario        = $('#horariosDisponibles .btn-success').data('hora') || null;
+    create.horario        = $('#horariosDisponibles .horario-card.seleccionado').data('hora') || null;
 
     create.cliente_name   = $('input[placeholder="Nombre"]').val() || null;
     create.cliente_lastname = $('input[placeholder="Apellidos"]').val() || null;
     create.telefono       = $('input[placeholder="Telefono Cliente"]').val() || null;
-    create.hotel          = $("#hoteltype").val() || null;
+    create.hotel = $("#hotelSelect").val() || 'PENDIENTE'; 
     create.habitacion     = $('input[placeholder="Numero Hotel"]').val() || null;
     create.nota           = $("textarea.ds-input").val() || null;
 
     create.codepromo      = check ? $('#promoCode').val() : null;
-    create.total          = $('#PrintTotal').text() || null;
+    create.total          = $('#totalPaxPrice').val() || null;
     create.statusCliente  = null;
     create.accion         = null;
 
     create.canal = JSON.stringify([{
         canal: $('#channelSelect').val() || null,
-        rep: $('#repSelect').val() || null,
+        rep: $('#repSelect').val() || 'N/A',
     }]);
 
     create.balance    = $('#RBalanced').val() || null;
@@ -60,16 +60,26 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
     });
 
     create.items_details  = JSON.stringify(itemsDetails);
-    create.fecha_details  = create.datepicker;
+    // Obtener la fecha actual
+    let hoy = new Date();
+
+    // Normalizar a YYYY-MM-DD
+    let fechaFormateada = hoy.toISOString().split("T")[0];
+
+    // Guardar en create.fecha_details
+    create.fecha_details = fechaFormateada;
+
+
     create.total_details  = create.total;
     create.tipo           = $('#tourtype').val() || null;
     create.service        = 'reserva';
     create.usuario        = 0;
-    create.proceso        = "pendiente";
+    create.proceso        = (estatus === 1) ? "pagado" : ((estatus === 3) ? "balance" : "pendiente")
+
     create.status         = estatus;
-    create.referencia     = (estatus === 6) ? voucherCode : null;
+    create.referencia     = (estatus === 1 && voucherCode != "") ? voucherCode : null;
     create.platform       = platform;
-    create.lang           = 1;
+    create.lang           = $("#language").val();
     return data;
 }
 
@@ -77,6 +87,7 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
 async function send_reservation(estatus, voucherCode = "", platform = "dash") {
     try {
         const data = build_reservationData(estatus, voucherCode, platform);
+        console.log(data);
         const response = await fetchAPI("control", "POST", data);
         const result = await response.json();
 
@@ -88,13 +99,32 @@ async function send_reservation(estatus, voucherCode = "", platform = "dash") {
 }
 
 // 🔹 Maneja la respuesta y redirige o muestra error
+// function render_reservationResponse(buttonId, responseObj) {
+//     const { ok, result } = responseObj;
+
+//     if (ok) {
+//         console.log(responseObj);
+//         window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
+//     } else {
+//         alert(`Error al procesar ${buttonId}: ${result.message || "Error inesperado."}`);
+//     }
+// }
+
 function render_reservationResponse(buttonId, responseObj) {
     const { ok, result } = responseObj;
 
     if (ok) {
-        console.log(responseObj);
-        window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
+        console.log("✅ Reserva exitosa:", result);
+
+        // Esperar 2 segundos antes de redirigir
+        // setTimeout(() => {
+        //     hideLoadingModal(); // ⬅️ Ocultar modal justo antes de redirigir
+        //     window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
+        // }, 2000);
+
     } else {
+        console.error("❌ Error al procesar reserva:", result);
+        hideLoadingModal(); // ⬅️ Ocultar solo si hubo error
         alert(`Error al procesar ${buttonId}: ${result.message || "Error inesperado."}`);
     }
 }
@@ -104,8 +134,28 @@ async function enviarReservaConEstatus(buttonId, estatus, voucherCode, platform 
     const $btn = $('#' + buttonId);
     $btn.prop('disabled', true);
 
-    const responseObj = await send_reservation(estatus, voucherCode, platform);
-    render_reservationResponse(buttonId, responseObj);
+    // 🔹 Validación
+    if (!ReservationValidator.validateAll()) {
+        $btn.prop('disabled', false);
+        return;
+    }
 
-    $btn.prop('disabled', false);
+    try {
+        // 🔹 Mostrar modal de carga
+        showLoadingModal();
+
+        // 🔹 Enviar la reserva
+        const responseObj = await send_reservation(estatus, voucherCode, platform);
+
+        // 🔹 Manejar la respuesta
+        render_reservationResponse(buttonId, responseObj);
+
+    } catch (error) {
+        console.error("❌ Error inesperado en enviarReservaConEstatus:", error);
+        alert("Ocurrió un error inesperado al enviar la reserva.");
+    }finally {
+        $btn.prop('disabled', false); // ✅ Solo reactivamos el botón aquí
+    }
+    
 }
+

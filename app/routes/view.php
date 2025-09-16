@@ -28,8 +28,13 @@ return [
         // Disponibilidad
         "dispo_test" => ["controller" => "DisponibilidadController", "method" => "index"],
         "dispo_test/details" => ["controller" => "DisponibilidadController", "method" => "read"],
+        //Transportaciones
+         "transportation" => ["controller" => "TransportationController", "method" => "index"],
+         "transportation/details" => ["controller" => "TransportationController", "method" => "read"],
+         //Camioneta
+         "camioneta" => ["controller" => "CamionetaController", "method" => "index"],
         //Detalles Reserva
-        "detalles-reserva/view" =>["controller" => "DetallesReservaController", "method" => "index"],
+        "detalles-reserva/view" =>["controller" => "DetallesReservaController", "method" => "viewdetails"],
         "detalles-reserva/form_sapa" => ["controller" => "DetallesReservaController","method" => "formSapa"],
         "detalles-reserva/form_mail" => ["controller" => "DetallesReservaController","method" => "formMails"],
         "detalles-reserva/form_cancelar" => ["controller" => "DetallesReservaController","method" => "formCancel"],

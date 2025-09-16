@@ -35,6 +35,131 @@ class Control extends ModelTable
         // Ejecutar la consulta
         return $this->consult($fields, $join, $condicion, ['fecha' => $date]);
     }
+    public function getByDatePickup($startDate = null, $endDate = null)
+    {
+        if ($startDate === null) $startDate = date('Y-m-d');
+        if ($endDate === null) $endDate = $startDate;
+
+        // --- 1. Traer todas las reservas entre fechas ---
+        $sql = "
+            SELECT 
+                C.idpago, C.actividad, C.datepicker, C.horario, 
+                C.cliente_name, C.cliente_lastname, C.nog, C.code_company, 
+                C.balance, C.checkin, C.canal,
+                B.items_details, B.*,
+                CO.company_name, S.name AS status,
+                U.user_name AS username
+            FROM control C
+            INNER JOIN bookingdetails B ON C.idpago = B.idpago
+            INNER JOIN companies CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN estatus S ON C.status = S.id_status
+            INNER JOIN users U ON B.usuario = U.user_id
+            WHERE DATE(C.datepicker) BETWEEN :startDate AND :endDate AND C.status !=2 AND C.status !=0
+            ORDER BY C.datepicker, C.horario, C.actividad
+        ";
+
+        $rows = $this->SqlQuery(
+            ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
+            $sql,
+            ['startDate' => $startDate, 'endDate' => $endDate]
+        );
+
+        // --- 2. Lookup de canales y reps ---
+        $canales = $this->SqlQuery(
+            ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
+            "SELECT id_channel, nombre FROM channel"
+        );
+        $reps = $this->SqlQuery(
+            ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
+            "SELECT idrep, nombre FROM rep"
+        );
+
+        $canalesMap = [];
+        foreach ($canales as $c) $canalesMap[$c['id_channel']] = $c['nombre'];
+        $repsMap = [];
+        foreach ($reps as $r) $repsMap[$r['idrep']] = $r['nombre'];
+
+        // --- 3. Agrupar por fecha y horario ---
+        $result = [];
+        foreach ($rows as $row) {
+            $fecha = $row['datepicker'];
+            $horario = $row['horario'];
+
+            if (!isset($result[$fecha])) $result[$fecha] = [];
+            if (!isset($result[$fecha][$horario])) {
+                $result[$fecha][$horario] = [
+                    'horario' => $horario,
+                    'cantidad' => 0,
+                    'conteo_items' => [],
+                    'detalles_reservas' => [],
+                    'tickets'=>0
+                ];
+            }
+
+            $result[$fecha][$horario]['cantidad']++;
+
+            // --- Contar items tipo "tour" ---
+            $items = json_decode($row['items_details'], true) ?: [];
+
+            foreach ($items as $item) {
+                $tipo = $item['tipo'] ?? '';
+                $price = $item['price'] ?? 0;
+                $qty   = intval($item['item'] ?? 0);
+            
+                // Validaciones extra
+                if ($tipo === 'tour' 
+                    && $qty > 0 
+                    && floatval($price) > 0.0
+                ) {
+                    // Entonces contamos
+                    $ref = $item['reference'] ?? null;
+                    $name = $item['name'] ?? 'Unknown';
+            
+                    // Aquí tickets se refiere al número total de personas/items que pasan las condiciones
+                    $result[$fecha][$horario]['tickets'] += $qty;
+            
+                    // Contar por nombre
+                    if (!isset($nameByRef)) {
+                        $nameByRef = [];
+                    }
+                    if ($ref && !isset($nameByRef[$ref])) {
+                        $nameByRef[$ref] = $name;
+                    }
+                    if ($ref) {
+                        $finalName = $nameByRef[$ref];
+                        $result[$fecha][$horario]['conteo_items'][$finalName] = 
+                            ($result[$fecha][$horario]['conteo_items'][$finalName] ?? 0) + $qty;
+                    }
+                }
+            }
+            
+
+            // Convertir canal y rep a nombres
+            $canalData = json_decode($row['canal'], true) ?: [];
+            $row['canal_nombre'] = [];
+            $row['rep_nombre'] = [];
+            foreach ($canalData as $c) {
+                $id_canal = $c['canal'] ?? null;
+                $id_rep   = $c['rep'] ?? null;
+                $row['canal_nombre'][] = $canalesMap[$id_canal] ?? null;
+                $row['rep_nombre'][]   = $repsMap[$id_rep] ?? null;
+    }
+
+
+            $result[$fecha][$horario]['detalles_reservas'][] = $row;
+        }
+
+        // --- 4. Reestructurar array final ---
+        $final = [];
+        foreach ($result as $fecha => $horarios) {
+            $final[] = [
+                'fecha' => $fecha,
+                'horarios' => array_values($horarios)
+            ];
+        }
+
+        return $final;
+    }
     public function getByNog($nog)
     {
         if ($nog === null) {
@@ -48,13 +173,14 @@ class Control extends ModelTable
             'CO.company_name',
             'S.name AS status',
             'CH.nombre AS canal_nombre',
-            'R.nombre AS rep_nombre'
+            'R.nombre AS rep_nombre',
+            'P.product_code'
         ];
         // INNER JOIN con bookingdetails
         $join = "C INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
         INNER JOIN bookingdetails AS B ON C.idpago = B.idpago INNER JOIN estatus AS S ON C.status = S.id_status
         LEFT JOIN channel CH ON CH.id_channel = JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].canal'))
-        LEFT JOIN rep R ON R.idrep = JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].rep'))
+        LEFT JOIN rep R ON R.idrep = JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].rep')) INNER JOIN products AS P ON P.product_id = C.product_id
             ";
         // Condición: solo los registros con fecha de hoy en `bookingdetails.fecha_details`
         $condicion = "C.nog = :nog";
@@ -219,6 +345,9 @@ class Productos extends ModelTable
     function getProductByCode($code){
         return $this->where('product_code = :code', ['code' => $code]);
     }
+    function getProductByCodeLang($code, $lang){
+        return $this->where("product_code = :code AND lang_id = :lang AND active = '1' ", ['code' => $code, 'lang' => $lang]);
+    }
     function getProductByCodeGroup($code){
         return $this->where('product_code = :code GROUP BY product_code', ['code' => $code]);
     }
@@ -245,6 +374,56 @@ class Productos extends ModelTable
     function getByClavePlatform($clave, $platform = 'web', $lang = 1){
         return $this->where("product_code = :clave AND active = '1' AND show_{$platform} = '1' AND lang_id = :lang", ['clave' => $clave, 'lang' => $lang]);
     }
+    function getByClavePlatformLang($clave, $lang = 1){
+        return $this->where("product_code = :clave AND active = '1' AND lang_id = :lang", ['clave' => $clave, 'lang' => $lang]);
+    }
+    public function getByLanguagePlatform($product_code, $lang_id, $platform = 'web') {
+        if (!in_array($platform, ['web', 'dash'])) {
+            throw new InvalidArgumentException("Plataforma inválida: debe ser 'web' o 'dash'");
+        }
+    
+        $campo_platform = "show_" . $platform;
+    
+        $resultados = $this->where("product_code = :code AND lang_id = :lang AND active = '1'", [
+            'code' => $product_code,
+            'lang' => $lang_id
+        ]);
+    
+        return count($resultados) ? $resultados[0] : null;
+    }
+    public function getActiveProductsByPlatformInLanguage($lang_id, $platform) {
+        $showField = "show_" . $platform;
+    
+        // 1. Obtener productos base activos y visibles en la plataforma
+        $productos_base = $this->where("active = '1' AND {$showField} = '1'", []);
+    
+        if (empty($productos_base)) {
+            return [];
+        }
+    
+        // 2. Extraer los códigos únicos
+        $productCodes = array_unique(array_map(function($prod) {
+            return $prod->product_code;
+        }, $productos_base));
+    
+        // 3. Construir placeholders para IN
+        $placeholders = [];
+        $params = ['lang_id' => $lang_id];
+        foreach ($productCodes as $i => $code) {
+            $key = "code_" . $i;
+            $placeholders[] = ":$key";
+            $params[$key] = $code;
+        }
+    
+        $inClause = implode(",", $placeholders);
+    
+        // 4. Obtener la versión en el idioma específico, solo si está activa
+        $where = "product_code IN ($inClause) AND lang_id = :lang_id AND active = '1'";
+        $productos_idioma = $this->where($where, $params);
+    
+        return $productos_idioma;
+    }
+    
     function getByIdPlatform($id){
         return $this->where("product_id = :id", ['id' => $id]);
     }
@@ -508,16 +687,117 @@ class Hotel extends ModelTable
     function __construct()
     {
         $this->table = 'hoteles';
-        $this->id_table = 'id';
-    }
-    function getAllDefault(){
-        return $this->where("origen = 'default'");
-    }
-    function getAllAgregado(){
-        return $this->where("origen = 'agregado'");
+        $this->id_table = 'id_hotel';
     }
     function getAll(){
         return $this->where("1 = 1");
     }
+}
+class Transportation extends ModelTable
+{
+    function __construct()
+    {
+        $this->table = 'transportation';
+        $this->id_table = 'id_transportacion';
+    }
+    function getTransportationByName($hotel) {
+        return $this->where('hotel LIKE :hotel', ['hotel' => '%' . $hotel . '%']);
+    }
+    function getAllDataDefault(){
+        $campos = ["*"];
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 0"; //ACTIVADOS
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 1"; //DESACTIVADOS
+        $join = ""; //AMBOS
+        $cond = "1=1 ORDER BY id_transportacion ASC";
+        $params = [];
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    function searchTransportation($search = '')
+    {
+        if ($search === '') {
+            return $this->getAllDataDefault();
+        }
+        $campos = ["*"];
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 0"; //ACTIVADOS
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 1"; //DESACTIVADOS
+        $join = ""; //AMBOS
+
+        $cond = "LOWER(hotel) IS NOT NULL AND hotel <> ''";
+        $params = [];
+        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search)  ORDER BY id_transportacion ASC";
+        $params['search'] = "%$search%";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    function searchTransportationEnable($search = '')
+    {
+        if ($search === '') {
+            return $this->getAllDataDefault();
+        }
+        $campos = ["*"];
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 0"; //ACTIVADOS
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 1"; //DESACTIVADOS
+        $join = ""; //AMBOS
+
+        $cond = "LOWER(hotel) IS NOT NULL AND hotel <> ''";
+        $params = [];
+        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search) AND mark = 0  ORDER BY id_transportacion ASC";
+        $params['search'] = "%$search%";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    function searchTransportationDisable($search = '')
+    {
+        if ($search === '') {
+            return $this->getAllDataDefault();
+        }
+        $campos = ["*"];
+        $join = ""; //AMBOS
+
+        $cond = "LOWER(hotel) IS NOT NULL AND hotel <> ''";
+        $params = [];
+        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search) AND mark = 1 ORDER BY id_transportacion ASC";
+        $params['search'] = "%$search%";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+}
+class Camioneta extends ModelTable
+{
+    function __construct()
+    {
+        $this->table = 'camioneta';
+        $this->id_table = 'id';
+    }
+    function getAll(){
+        return $this->where("1 = 1");
+    }
+    function getAllDispo(){
+        return $this->where("active = '0' ORDER BY id DESC");
+    }
+    function searchCamionetaEnable($search = '')
+    {
+        if ($search === '') {
+            return $this->getAllDispo();
+        }
+        $campos = ["*"];
+        $join = ""; //AMBOS
+
+        $cond = "LOWER(matricula) IS NOT NULL AND matricula <> ''";
+        $params = [];
+        $cond .= " AND (LOWER(matricula) LIKE :search OR LOWER(descripcion) LIKE :search OR LOWER(descripcion) LIKE :search OR LOWER(clave) LIKE :search) AND active = '0'  ORDER BY id DESC";
+        $params['search'] = "%$search%";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    function searchCoincidencias($matricula = '', $clave = '')
+    {
+        $campos = ["*"];
+        $join = ""; //AMBOS
+
+        $cond = "LOWER(matricula) IS NOT NULL AND matricula <> ''";
+        $params = [];
+        $cond .= " AND (LOWER(matricula) LIKE :matricula AND LOWER(clave) LIKE :clave)  ORDER BY id DESC";
+        $params['search'] = "%$matricula%";
+        $params['clave'] = "%$clave%";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    
 }
 ?>

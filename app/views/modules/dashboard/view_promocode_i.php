@@ -68,7 +68,7 @@
                         </div>
                     </form>
                         <!-- Modal Productos -->
-                    <div class="modal" id="modalProducts" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal" id="modalProducts" tabindex="-1" role="dialog" aria-hidden="true" style="width: 30%; border: 2px solid #1565C0">
                         <div class="modal-dialog" role="document" style="max-width: 600px;">
                             <div class="modal-content">
                                 <div class="modal-header">
@@ -87,7 +87,7 @@
                     </div>
 
                         <!-- Modal Empresas -->
-                    <div class="modal" id="modalCompanies" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal" id="modalCompanies" tabindex="-1" role="dialog" aria-hidden="true" style="width: 30%; border: 2px solid #1565C0">
                         <div class="modal-dialog" role="document" style="max-width: 600px;">
                             <div class="modal-content">
                                 <div class="modal-header">

@@ -2,17 +2,20 @@
 require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../models/Models.php";
 
+require_once __DIR__ . '/../models/UserModel.php';
 
 class RepController extends API
 {
     private $model_channel;
     private $model_rep;
 
+    private $model_user;
 
     function __construct()
     {
         $this->model_channel = new Canal();
         $this->model_rep = new Rep();
+        $this->model_user = new UserModel();
     }
 
 
@@ -72,126 +75,124 @@ class RepController extends API
 
     public function post($params = [])
     {
-        // Validar usuario
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
-        if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $user_id = Token::validateToken($token);
-        if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
+    
+        // Validar token con el modelo user
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+    
+        $userData = $validation['data'];
         $data = json_decode(file_get_contents("php://input"), true);
-        if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-
-        $idcanal = isset($data['channelid']) ? validate_id($data['channelid']) : 0;
+        if (!isset($data)) {
+            return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
+        }
+    
+        // Canal existente
+        $idcanal = validate_id(safe_array_get($data, 'channelid', 0));
         $channel = $this->model_channel->where("id_channel = '$idcanal' AND activo = '1'");
-        if (!count($channel)) return $this->jsonResponse(["message" => "El canal al que se hace referencia no existe."], 404);
-
-        $rep_nameArray = isset($data['repname']) ? (array) $data['repname'] : [];
-        $rep_emailArray = isset($data['repemail']) ? (array) $data['repemail'] : [];
-        $rep_phoneArray = isset($data['repphone']) ? (array) $data['repphone'] : [];
-        $rep_commissionArray = isset($data['repcommission']) ? (array) $data['repcommission'] : [];
-
-        $ids = array();
+        if (!count($channel)) {
+            return $this->jsonResponse(["message" => "El canal al que se hace referencia no existe."], 404);
+        }
+    
+        // Arrays de reps
+        $rep_nameArray       = (array)safe_array_get($data, 'repname', []);
+        $rep_emailArray      = (array)safe_array_get($data, 'repemail', []);
+        $rep_phoneArray      = (array)safe_array_get($data, 'repphone', []);
+        $rep_commissionArray = (array)safe_array_get($data, 'repcommission', []);
+    
+        $ids = [];
         for ($i = 0; $i < count($rep_nameArray); $i++) {
-            $rep_name = validate_repname($rep_nameArray[$i]);
-            $rep_phone = validate_phone($rep_phoneArray[$i]);
-            $rep_email = validate_email($rep_emailArray[$i]);
-            $rep_commission = validate_int($rep_commissionArray[$i]);
-
-            if ($rep_name && $rep_commission) {
-                $old_data = $this->model_rep->insert(array(
-                    "nombre" => $rep_name,
-                    "telefono" => $rep_phone,
-                    "email" => $rep_email,
-                    "idcanal" => $idcanal,
+            $rep_name       = validate_repname(safe_array_index($rep_nameArray, $i, null));
+            $rep_phone      = validate_phone(safe_array_index($rep_phoneArray, $i, null));
+            $rep_email      = validate_email(safe_array_index($rep_emailArray, $i, null));
+            $rep_commission = validate_int(safe_array_index($rep_commissionArray, $i, null));
+    
+            // Validación obligatoria
+            if (!empty($rep_name)) {
+                $new_rep = $this->model_rep->insert([
+                    "nombre"   => $rep_name,
+                    "telefono" => $rep_phone ?: null,
+                    "email"    => $rep_email ?: null,
+                    "idcanal"  => $idcanal,
                     "comision" => $rep_commission,
-                ));
-                if (count((array) $old_data)) {
-                    // $this->history($old_data->id, $user_id, "create", []);
-                    $ids[] = $old_data->id;
+                ]);
+    
+                if (count((array)$new_rep)) {
+                    $ids[] = $new_rep->id;
                 }
+            } else {
+                return $this->jsonResponse([
+                    "message" => "Cada rep debe incluir nombre y comisión obligatorios."
+                ], 400);
             }
         }
+    
         if (count($ids)) {
-            $httpCode = 201;
-            $response = ["message" => "El recurso fue creado con éxito."];
+            return $this->jsonResponse(["message" => "El recurso fue creado con éxito."], 201);
         } else {
-            $httpCode = 400;
-            $response = ["message" => ""];
+            return $this->jsonResponse(["message" => "No se crearon reps, faltan datos obligatorios."], 400);
         }
-
-        return $this->jsonResponse($response, $httpCode);
     }
-
-
+    
     public function put($params = [])
     {
-        // Validar usuario
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
-        if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $user_id = Token::validateToken($token);
-        if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $idrep = isset($params['id']) ? validate_id($params['id']) : 0;
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+        $userData = $validation['data'];
+    
+        $idrep = validate_id(safe_array_get($params, 'id', 0));
         $old_data = $this->model_rep->find($idrep);
-        if (!count((array) $old_data)) return $this->jsonResponse(["message" => "El representante que intentas eliminar no existe."], 404);
-
+        if (!count((array)$old_data)) return $this->jsonResponse(["message" => "El representante que intentas modificar no existe."], 404);
+    
         $data = json_decode(file_get_contents("php://input"), true);
         if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-
-        $nombre = isset($data['repname']) ? validate_repname($data['repname']) : '';
-        $telefono = isset($data['repphone']) ? validate_phone($data['repphone']) : '';
-        $email = isset($data['repemail']) ? validate_email($data['repemail']) : '';
-        $comision = isset($data['repcommission']) ? validate_int($data['repcommission']) : 0;
-
-        if ($nombre && $email) {
-            $_rep = $this->model_rep->update($idrep, array(
-                "nombre" => $nombre,
-                "telefono" => $telefono,
-                "email" => $email,
+    
+        $nombre   = validate_repname(safe_array_get($data, 'repname', null));
+        $telefono = validate_phone(safe_array_get($data, 'repphone', null));
+        $email    = validate_email(safe_array_get($data, 'repemail', null));
+        $comision = validate_int(safe_array_get($data, 'repcommission', null));
+    
+        if (!empty($nombre) && !empty($comision)) {
+            $_rep = $this->model_rep->update($idrep, [
+                "nombre"   => $nombre,
+                "telefono" => $telefono ?: null,
+                "email"    => $email ?: null,
                 "comision" => $comision
-            ));
+            ]);
             if ($_rep) {
-                // $this->history($old_data->id, $user_id, "update", $old_data);
                 return $this->jsonResponse(["message" => "Actualización exitosa del recurso."], 204);
             }
         }
-
-        return $this->jsonResponse(["message" => ""], 400);
+    
+        return $this->jsonResponse(["message" => "Nombre y comisión son obligatorios para actualizar."], 400);
     }
-
-
+    
     public function delete($params = [])
     {
-        // Validar usuario
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
-        if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $user_id = Token::validateToken($token);
-        if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $idrep = isset($params['id']) ? validate_id($params['id']) : 0;
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+        $userData = $validation['data'];
+    
+        $idrep = validate_id(safe_array_get($params, 'id', 0));
         $old_data = $this->model_rep->find($idrep);
-        if (!count((array) $old_data)) return $this->jsonResponse(["message" => "El representante que intentas eliminar no existe."], 404);
-
+        if (!count((array)$old_data)) return $this->jsonResponse(["message" => "El representante que intentas eliminar no existe."], 404);
+    
         $_rep = $this->model_rep->delete($idrep);
         if ($_rep) {
-            // $this->history($old_data->id, $user_id, "delete", $old_data);
-            $httpCode = 204;
-            $response = ["message" => "Eliminación exitosa del recurso."];
+            return $this->jsonResponse(["message" => "Eliminación exitosa del recurso."], 204);
         } else {
-            $httpCode = 400;
-            $response = ["message" => ""];
+            return $this->jsonResponse(["message" => "No se pudo eliminar el representante."], 400);
         }
-
-        return $this->jsonResponse($response, $httpCode);
     }
-
-
+    
     /*
     private function history($id, $user_id, $action, $old_data, $timestamp = null)
     {

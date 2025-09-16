@@ -86,14 +86,15 @@ td {
   }  
   /* Tamaño fijo y alineación para la columna de nombres */
   .td-addon, .td-pax {
-    width: 210px;     /* Ajusta este valor según tu layout */
-    min-width: 210px;
-    max-width: 210px;
+    width: auto;          /* Se ajusta al contenido o al contenedor */
+    min-width: 140px;     /* ancho mínimo para no colapsar */
+    max-width: 100%;      /* no sobrepasa el contenedor */
     text-align: end;
     vertical-align: middle;
     padding: 8px 12px;
     word-break: break-word;
-  }
+}
+
 
   .booking-header {
     width: 100%;
@@ -105,7 +106,7 @@ td {
     .booking-section {
         width: 100%;
         display: flex;
-        justify-content: center;
+        justify-content: left;
         margin-bottom: 20px;
     }
   /* Tablas con ancho fijo centradas */
@@ -113,6 +114,9 @@ td {
     width: 70%;
     margin-top: 10px;
     border-collapse: collapse;
+  }
+  #productdetailspax {
+    width: auto;
   }
   
   

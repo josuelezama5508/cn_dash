@@ -1,0 +1,117 @@
+/* ===== Estilos de Camionetas ===== */
+#divCamioneta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .camioneta-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 16px;
+    /* transition: transform 0.2s ease, box-shadow 0.2s ease; */
+    position: relative;
+  }
+  
+  /* .camioneta-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  } */
+  
+  .camioneta-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .camioneta-location,
+  .camioneta-address {
+    margin: 6px 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .camioneta-schedule {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #444;
+  }
+  
+  .camioneta-schedule strong {
+    color: #222;
+  }
+  
+  .color-box {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+  
+  .text-color {
+    font-weight: 500;
+    margin-left: 6px;
+  }
+  
+  .camioneta-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .camioneta-actions button {
+    background: #f4f4f4;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.2s ease;
+  }
+  
+  .camioneta-actions button i {
+    font-size: 18px;
+  }
+  
+  .camioneta-actions button:hover {
+    background: #e0e0e0;
+  }
+  
+  .camioneta-actions .btn-delete {
+    background: #ffeaea;
+    color: #d9534f;
+  }
+  
+  .camioneta-actions .btn-delete:hover {
+    background: #ffcccc;
+  }
+  
+  .camioneta-actions .btn-edit {
+    background: #eaf4ff;
+    color: #0275d8;
+  }
+  
+  .camioneta-actions .btn-edit:hover {
+    background: #cce5ff;
+  }
+  
+  /* Mensaje vacío */
+  #divCamioneta .empty-message {
+    width: 100%;
+    text-align: center;
+    padding: 30px;
+    font-size: 1rem;
+    color: #888;
+  }
+  

@@ -81,12 +81,16 @@ class ModelTable
     public function insert(array $values)
     {
         $return = (object) array();
-        $inset_data = $this->_create($values);
-        if ($inset_data != null) {
-            $return = $this->find($inset_data);
+        $insert_id = $this->_create($values);
+        if ($insert_id != null) {
+            $return = $this->find($insert_id);
+        } else {
+            // Aquí puedes registrar el error
+            error_log("Error insertando en " . $this->table . ": " . print_r($this->getError(), true));
         }
-        return   $return;
+        return $return;
     }
+
 
     public function update(int $id, array $values)
     {
@@ -97,14 +101,16 @@ class ModelTable
         return $this->_delete($id);
     }
 
-    public function consult(array $campos = [], string $innerjoin = '', string $condicion = '1', array $replace =  [])
+    public function consult(array $campos = [], string $innerjoin = '', string $condicion = '1', array $replace =  [], bool $removeId = true)
     {
         $response = array();
         foreach ($this->_get($campos, "WHERE $condicion", $replace, $innerjoin) as $result_) {
 
             $result_ = (object)$result_;
             $id = $this->id_table;
-            unset($result_->$id);
+            if ($removeId && isset($result_->$id)) {
+                unset($result_->$id);
+            }
             array_push($response, $result_);
         }
         return  $response;

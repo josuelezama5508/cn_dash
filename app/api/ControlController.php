@@ -40,6 +40,8 @@ class ControlController extends API
             return ['deleteRegister', $params['deleteRegister']];
         }if (isset($params['getByDate'])) {
             return ['getByDate', $params['getByDate']];
+        }if (isset($params['getByDatePickup'])) {
+            return ['getByDatePickup', $params['getByDatePickup']];
         }if (isset($params['nog'])) {
             return ['nog', $params['nog']];
         }if (isset($params['getByDispo'])) {
@@ -64,6 +66,8 @@ class ControlController extends API
             return ['typeservice', $params['typeservice']];
         }if (isset($params['client'])) {
             return ['client', $params['client']];
+        }if (isset($params['pax'])) {
+            return ['pax', $params['pax']];
         }
         
         return ['', null];
@@ -135,10 +139,13 @@ class ControlController extends API
                     case 'vinculados':
                         $dataControl =  $this->model_control->getLinkedReservations($search);
                         break;
+                    case 'getByDatePickup':
+                        $dataControl = $this->model_control->getByDatePickup($search['startdate'], $search['enddate']);
+                        break;
                        
             }
             if (empty($dataControl)) {
-                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor. DATA: '. $search ], 404);
+                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.', "DATA"=> $dataControl], 404);
             }
             return $this->jsonResponse(['data' => $dataControl], $httpCode);
         } catch (Exception $e) {
@@ -238,6 +245,8 @@ class ControlController extends API
                     
                     $combosArray = [];
                     $productosHijos = [];
+                    $productoHijoLang = [];
+                    $data_langId= ($data['lang'] == 'en') ?  1 : 2 ;
                     $combosData = $this->model_combo->getByClave($productoPrincipal[0]->product_code ?? '');
                     if (!empty($combosData[0]->combos)) {
                         $combosArray = json_decode($combosData[0]->combos, true);
@@ -246,12 +255,11 @@ class ControlController extends API
                                 $clave = $comboItem['productcode'] ?? null;
                                 if (!$clave) continue;
                             
-                                $productoHijo = $this->model_product->getByClavePlatform(
+                                $productoHijo = $this->model_product->getByClavePlatformLang(
                                     $clave,
-                                    $data['platform'],
-                                    $data['lang']
+                                    $data_langId
                                 );
-                            
+                                $productoHijoLang[] = $productoHijo;
                                 $dataControlHijo = (array) $controlInsert;
                                 unset($dataControlHijo['id']); // por si acaso viene heredado
                             
@@ -336,7 +344,8 @@ class ControlController extends API
                         'control' => $controlInsert,
                         'booking_details' => $bookingDetailsInsert,
                         'combosArray' => $combosArray,
-                        'productosHijos' => $productosHijos
+                        'productosHijos' => $productosHijos,
+                        'pructoHijosLang' => $productoHijoLang
                     ], 201);
                     break;
                 
@@ -345,7 +354,13 @@ class ControlController extends API
                     // Respuesta exitosa con ambos IDs y datos
                     return $this->jsonResponse(['data' => $dataControl,], 200);
             
-                    break; 
+                    break;
+                case 'getByDatePickup':
+                    $dataControl = $this->model_control->getByDatePickup($data);
+                    // Respuesta exitosa con ambos IDs y datos
+                    return $this->jsonResponse(['data' => $dataControl,], 200);
+            
+                    break;  
                 case 'nog':
                     $dataControl = $this->model_control->getByNog($data);
                     // Respuesta exitosa con ambos IDs y datos
@@ -490,6 +505,29 @@ class ControlController extends API
                     $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
                     return $this->jsonResponse($resultadoCorreo, 200);
                     break;
+                case 'pax':
+                    
+                    $accionMadre = 'Tipo de pax update';
+                
+                    $accionHijo = 'Tipo de pax update Hijos';
+                
+                    $resultado = $this->actualizarReservaConHijos(
+                        $data['idpago'],
+                        $data,
+                        $userData,
+                        'update',
+                        $accionMadre,
+                        $accionHijo
+                    );
+                
+                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
+                
+                    return $this->jsonResponse([
+                        'message' => $accionMadre . ' e hijos correctamente',
+                        'data'    => $resultado,
+                        'correo'  => $resultadoCorreo
+                    ], 200);
+                    break;
                 
                 default:
                     return $this->jsonResponse(['message' => 'Acción no reconocida: ' . $action], 400);
@@ -526,13 +564,70 @@ class ControlController extends API
             'hotel'      =>  $data['hotel'] ?? $controlOld->hotel,
             'habitacion' =>  $data['habitacion'] ?? $controlOld->habitacion,
             'telefono'   =>  $data['telefono'] ?? $controlOld->telefono,
+            'cliente_name'   =>  $data['cliente_name'] ?? $controlOld->cliente_name,
+            'cliente_lastname'   =>  $data['cliente_lastname'] ?? $controlOld->cliente_lastname,
+            'total'   =>  $data['total'] ?? $controlOld->total,
         ]);
 
         $this->model_control->update($controlOld->id, $dataUpdateControl);
-
-        foreach ($detailsOld as $detail) {
-            $this->model_bookingDetails->update($detail->id, $extraUpdatesDetails);
+        // Verificar si 'items_details' está presente en los datos entrantes
+        // Antes de usar $detailsOld, obtenemos el primer detalle para usar como "valor antiguo"
+        $oldItemsDetails = null;
+        $oldTotal = null;
+        if (!empty($detailsOld)) {
+            // Tomamos el primer elemento
+            $first = $detailsOld[0];
+            if (is_object($first)) {
+                // Si es objeto
+                if (isset($first->items_details)) {
+                    $oldItemsDetails = $first->items_details;
+                }
+                if (isset($first->total)) {
+                    $oldTotal = $first->total;
+                }
+            } elseif (is_array($first)) {
+                // Si es array
+                if (array_key_exists('items_details', $first)) {
+                    $oldItemsDetails = $first['items_details'];
+                }
+                if (array_key_exists('total', $first)) {
+                    $oldTotal = $first['total'];
+                }
+            }
         }
+
+        // Validar items_details
+        if (isset($data['items_details'])) {
+            $newItemsDetails = is_string($data['items_details'])
+                ? $data['items_details']
+                : json_encode($data['items_details'], JSON_UNESCAPED_UNICODE);
+        } else {
+            // Si no viene, usar valor antiguo si existe, sino null o string vacío
+            $newItemsDetails = $oldItemsDetails !== null ? $oldItemsDetails : '';  
+        }
+
+        // Validar total
+        if (isset($data['total'])) {
+            $newTotal = $data['total'];
+        } else {
+            $newTotal = $oldTotal !== null ? $oldTotal : 0;  // Puedes usar 0 o algún otro valor por defecto
+        }
+
+        // Preparar el array para actualizar detalles
+        $dataUpdateDetails = array_merge($extraUpdatesDetails, [
+            'items_details' => $newItemsDetails,
+            'total' => $newTotal,
+        ]);
+
+        // Actualizar todos los detalles de la madre
+        foreach ($detailsOld as $detail) {
+            $this->model_bookingDetails->update($detail->id, $dataUpdateDetails);
+}
+
+
+        // foreach ($detailsOld as $detail) {
+        //     $this->model_bookingDetails->update($detail->id, $extraUpdatesDetails);
+        // }
 
         // Historial madre
         $controlNew = $this->model_control->find($controlOld->id);
@@ -563,13 +658,60 @@ class ControlController extends API
                 'hotel'      =>  $data['hotel'] ?? $combo->hotel,
                 'habitacion' =>  $data['habitacion'] ?? $combo->habitacion,
                 'telefono'   =>  $data['telefono'] ?? $combo->telefono,
+                'cliente_name'   =>  $data['cliente_name'] ?? $combo->cliente_name,
+                'cliente_lastname'   =>  $data['cliente_lastname'] ?? $combo->cliente_lastname,
             ]);
 
             $this->model_control->update($combo->id, $dataUpdateControlCombo);
 
-            foreach ($detailsComboOld as $detail) {
-                $this->model_bookingDetails->update($detail->id, $extraUpdatesDetails);
+           // Verificar si 'items_details' está presente en los datos entrantes
+            if (isset($data['items_details'])) {
+                // Si 'items_details' es un string, usarlo directamente
+                // Si no es un string, convertirlo a JSON
+                $newItemsDetails = is_string($data['items_details'])
+                    ? $data['items_details']
+                    : json_encode($data['items_details'], JSON_UNESCAPED_UNICODE);
+            } else {
+                // Si 'items_details' no está presente, usar el valor antiguo
+                // Verificar si $detailsComboOld es un arreglo o un objeto
+                if (is_array($detailsComboOld) && array_key_exists('items_details', $detailsComboOld)) {
+                    $newItemsDetails = $detailsComboOld['items_details'];
+                } elseif (is_object($detailsComboOld) && isset($detailsComboOld->items_details)) {
+                    $newItemsDetails = $detailsComboOld->items_details;
+                } else {
+                    // Si no existe, asignar un valor por defecto o manejar el error
+                    $newItemsDetails = null; // O el valor que consideres apropiado
+                }
             }
+
+            // Verificar si 'total' está presente en los datos entrantes
+            if (isset($data['total'])) {
+                // Si 'total' está presente, usarlo
+                $newTotal = $data['total'];
+            } else {
+                // Si 'total' no está presente, usar el valor antiguo
+                // Verificar si $detailsComboOld es un arreglo o un objeto
+                if (is_array($detailsComboOld) && array_key_exists('total', $detailsComboOld)) {
+                    $newTotal = $detailsComboOld['total'];
+                } elseif (is_object($detailsComboOld) && isset($detailsComboOld->total)) {
+                    $newTotal = $detailsComboOld->total;
+                } else {
+                    // Si no existe, asignar un valor por defecto o manejar el error
+                    $newTotal = null; // O el valor que consideres apropiado
+                }
+            }
+
+            // Preparar los datos para la actualización
+            $dataUpdateDetailsCombo = array_merge($extraUpdatesDetails, [
+                'items_details' => $newItemsDetails,
+                'total' => $newTotal,
+            ]);
+
+            // Actualizar los detalles del combo
+            foreach ($detailsComboOld as $detail) {
+                $this->model_bookingDetails->update($detail->id, $dataUpdateDetailsCombo);
+            }
+
 
             // Historial hijo
             $comboNew = $this->model_control->find($combo->id);

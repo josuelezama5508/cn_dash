@@ -1,30 +1,32 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../models/Models.php";
-
-
+require_once __DIR__ . '/../models/HistoryModel.php';
+require_once __DIR__ . '/../models/UserModel.php';
 class CanalesController extends API
 {
     private $model_channel;
     private $model_rep;
-
-
+    private $model_history;
+    private $model_user;
     function __construct()
     {
         $this->model_channel = new Canal();
         $this->model_rep = new Rep();
+        $this->model_history = new HistoryModel();
+        $this->model_user = new UserModel();
     }
 
 
     public function get($params = [])
     {
-        // Validación de usuario (comentada actualmente)
         // $headers = getallheaders();
-        // $token = $headers['Authorization'] ?? null;
-        // if (!$token) return $this->jsonResponse(['message' => 'No tienes permisos para acceder al recurso.'], 403);
-        // $user_id = Token::validateToken($token);
-        // if (!$user_id) return $this->jsonResponse(['message' => 'No tienes permisos para acceder al recurso.'], 403);
-
+        // // Validar token con el modelo user
+        // $validation = $this->model_user->validateUserByToken($headers);
+        // if ($validation['status'] !== 'SUCCESS') {
+        //     return $this->jsonResponse(['message' => $validation['message']], 401);
+        // }
+        // $userData = $validation['data'];
         [$action, $search] = $this->get_params($params);
         $response = null;
         $httpCode = 200;
@@ -47,7 +49,7 @@ class CanalesController extends API
             case 'getRepById':
                     $response = $this->getRepById($search);
                 break;
-            default:
+            case 'getById':
                 $response = $this->getChannelById($search);
                 break;
         }
@@ -77,7 +79,11 @@ class CanalesController extends API
         } else if (isset($params['getRepById'])) {
             $action = 'getRepById';
             $search = $params['getRepById'];
-        } 
+        } else if (isset($params['getById'])) {
+            $action = 'getById';
+            $search = $params['getById'];
+        }  
+
 
         return [$action, $search];
     }
@@ -124,14 +130,13 @@ class CanalesController extends API
     }
     public function post($params = [])
     {
-        // Validar usuario
-        // $headers = getallheaders();
-        // $token = $headers['Authorization'] ?? null;
-        // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        // $user_id = Token::validateToken($token);
-        // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
+        $headers = getallheaders();
+        // Validar token con el modelo user
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+        $userData = $validation['data'];
         $data = json_decode(file_get_contents("php://input"), true);
         if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
 
@@ -139,7 +144,7 @@ class CanalesController extends API
         $tipo = isset($data['channeltype']) ? validate_channeltype ($data['channeltype']) : '';
         $telefono = isset($data['channelphone']) ? $data['channelphone'] : '';
 
-        if ($nombre && $tipo) {
+        if ($nombre) {
             $_channel = $this->model_channel->insert(array(
                 "nombre" => $nombre,
                 "tipo" => $tipo,
@@ -155,24 +160,31 @@ class CanalesController extends API
 
             if (count($nombreArray)) {
                 for ($i = 0; $i < count($nombreArray); $i++) {
-                    $nombre = $nombreArray[$i];
-                    $telefono = $telefonoArray[$i];
-                    $email = $emailArray[$i];
-                    $comision = $comisionArray[$i];
-
-                    if ($nombre && $comision) {
-                        $_rep = $this->model_rep->insert(array(
-                            "nombre" => $nombre,
-                            "telefono" => $telefono,
-                            "email" => $email,
-                            "idcanal" => $idcanal,
-                            "comision" => $comision,
-                        ));
+                    $nombreRep   = $nombreArray[$i] ?? null;
+                    $telefonoRep = $telefonoArray[$i] ?? null;
+                    $emailRep    = $emailArray[$i] ?? null;
+                    $comisionRep = $comisionArray[$i] ?? null;
+            
+                    // Aquí se valida que nombre y comisión no sean null/empty
+                    if (!empty($nombreRep)) {
+                        $this->model_rep->insert([
+                            "nombre"   => $nombreRep,
+                            "telefono" => $telefonoRep,
+                            "email"    => $emailRep,
+                            "idcanal"  => $idcanal,
+                            "comision" => $comisionRep,
+                        ]);
+                    } else {
+                        // si quieres, puedes responder error en vez de ignorar
+                        return $this->jsonResponse([
+                            "message" => "Cada rep debe tener nombre y comisión obligatorios."
+                        ], 400);
                     }
                 }
             }
             
-            return $this->jsonResponse(["message" => "El recurso fue creado con éxito."], 204);
+            
+            return $this->jsonResponse(["message" => "El recurso fue creado con éxito.","data" => $_channel], 201);
         } else {
             return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
         }
@@ -183,14 +195,13 @@ class CanalesController extends API
 
     public function put($params = [])
     {
-        // Validar usuario
-        // $headers = getallheaders();
-        // $token = $headers['Authorization'] ?? null;
-        // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        // $user_id = Token::validateToken($token);
-        // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
+        $headers = getallheaders();
+            // Validar token con el modelo user
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+        $userData = $validation['data'];
         $id_channel = isset($params['id']) ? validate_id($params['id']) : 0;
         $old_data = $this->model_channel->where("id_channel = '$id_channel' AND activo = '1'");
         if (!count($old_data)) return $this->jsonResponse(array('message' => 'El recurso no existe en el servidor.'), 404);
@@ -224,23 +235,87 @@ class CanalesController extends API
 
     public function delete($params = [])
     {
-        // Validar usuario
-        // $headers = getallheaders();
-        // $token = $headers['Authorization'] ?? null;
-        // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        // $user_id = Token::validateToken($token);
-        // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
+        $headers = getallheaders();
+        // Validar token con el modelo user
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+        $userData = $validation['data'];
         $id_channel = isset($params['id']) ? validate_id($params['id']) : 0;
-        $old_data = $this->model_channel->where("id_channel = '$id_channel' AND activo = '1'");
-        if (!count($old_data)) return $this->jsonResponse(array('message' => 'El recurso que intentas eliminar no existe.'), 404);
-        $old_data = $old_data[0];
+        $rep_ids = isset($params['reps']) ? $params['reps'] : [];
 
-        // $_channel = $this->model_channel->delete($id_channel);
-        $_channel = $this->model_channel->update($id_channel, array("activo = '0'"));
-        if (!$_channel) return $this->jsonResponse(["message" => ""], 403);
+        if (!$id_channel || !is_array($rep_ids)) {
+            return $this->jsonResponse(['message' => 'Parámetros inválidos.'], 400);
+        }
 
-        return $this->jsonResponse(["message" => "Eliminación exitosa del recurso."], 204);
+        // Obtener canal
+        $old_channel_data = $this->model_channel->where("id_channel = '$id_channel'");
+        if (!count($old_channel_data)) {
+            return $this->jsonResponse(['message' => 'El canal que intentas eliminar no existe.'], 404);
+        }
+        $old_channel_data = $old_channel_data[0];
+
+        // Obtener reps antes de eliminarlos
+        $old_rep_data = [];
+        foreach ($rep_ids as $rep_id) {
+            $rep = $this->model_rep->find((int)$rep_id);
+            if ($rep) {
+                $old_rep_data[] = $rep;
+            }
+        }
+
+        // Eliminar reps
+        foreach ($rep_ids as $rep_id) {
+            $this->model_rep->delete((int)$rep_id);
+        }
+
+        // Eliminar canal
+        $channel_deleted = $this->model_channel->delete($id_channel);
+        if (!$channel_deleted) {
+            return $this->jsonResponse([
+                'message' => 'No se pudo eliminar el canal.',
+                'DESCRIPTION' => $old_channel_data
+            ], 403);
+        }
+
+        // Registrar historial (canal)
+        $this->registrarHistorial(
+            'channel',
+            $id_channel,
+            'delete',
+            'Eliminación de canal y sus reps',
+            $userData->id,
+            $old_channel_data,
+            [] // No hay datos nuevos
+        );
+
+        // Registrar historial (reps)
+        foreach ($old_rep_data as $rep) {
+            $this->registrarHistorial(
+                'rep',
+                $rep->id, // Ajusta si tu campo clave no es "id"
+                'delete',
+                'Eliminación de rep asociado al canal',
+                $userData->id,
+                $rep,
+                []
+            );
+        }
+
+        return $this->jsonResponse(['message' => 'Eliminación exitosa del canal y sus reps.'], 204);
+    }
+
+    private function registrarHistorial($module, $row_id, $action, $details, $user_id, $oldData, $newData)
+    {
+        $this->model_history->insert([
+            "module" => $module,
+            "row_id" => $row_id,
+            "action" => $action,
+            "details" => $details,
+            "user_id" => $user_id,
+            "old_data" => json_encode($oldData),
+            "new_data" => json_encode($newData),
+        ]);
     }
 }

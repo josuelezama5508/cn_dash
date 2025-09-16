@@ -40,7 +40,7 @@
     function registered_selected_channel() {
         let condition = $("[name='channelid']").val();
 
-        fetchAPI(`canales?id=${condition}`, 'GET')
+        fetchAPI(`canales?getById=${condition}`, 'GET')
             .then(async (response) => {
                 const status = response.status;
                 const text = await response.json();
@@ -64,7 +64,7 @@
         let condition = $("[name='channelid']").val();
         let formData = new FormData(document.getElementById("form-edit-channel"));
 
-        fetchAPI(`canales?id=${condition}`, 'PUT', formData)
+        fetchAPI(`canales?getById=${condition}`, 'PUT', formData)
             .then(async (response) => {
                 const status = response.status;
                 // const text = await response.json();

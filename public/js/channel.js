@@ -1,64 +1,91 @@
 var instance_of_modal = null;
 var updateView = false;
-
+let allowAddChannel = false;
 
 $(document).ready(function() {
     $("#activandomodal").css("display", "block");
     $("#activandomodal").on("click", function() { activandomodalEvent(); });
-
     registered_channel('');
     $("[name='search']").on("input", function() { registered_channel($(this).val()); });
-});
+    // Después de inyectar el HTML en #RBuscador
+    $("#RBuscador").off("click", ".rep-btn").on("click", ".rep-btn", function() {
+        btnRepEvent(this);
+    });
+    console.log('¿Existe #RBuscador?', $('#RBuscador').length); // Debe ser 1
 
+});
 const registered_channel = async (condition) => {
     fetchAPI(`canales?search=${condition}`, 'GET')
       .then(async (response) => {
-        const status = response.status;
-
-        if (status == 200) {
+        if (response.status === 200) {
             const text = await response.json();
             let rows = "";
-            
-            (text.data).forEach((element) => {
+
+            text.data.forEach((element) => {
                 rows += `
-                    <tr style="min-height: 70px;" id="item-channle-${element.id}">
-                        <td style="padding: 20px 0;">${element.name}</td>
-                        <td style="padding: 20px 0;">
-                            <div style="display: flex; flex-direction: row;">
-                                <span class="rep-btn" style="display:inlineblock;padding:3px 7px;border-top-left-radius:3px;border-bottom-left-radius:3px;background:#444;color:#FFF;cursor:pointer;vertical-align:middle;box-shadow:1px 1px 3px 0px #111;height:35px;" id="rep-${element.id}">
-                                    <i class="material-icons">group</i>
-                                </span>
-                                <span style="margin-left:0px;padding:0px 0px;background:#0277bd;color:#FFF;max-width:30px;width:30px;display:inline-block;text-align:center;border-top-right-radius:3px;height:35px;border-bottom-right-radius:3px;vertical-align:middle;font-size:24px;">
-                                    <span>${element.totalreps}</span>
-                                </span>
+                    <tr class="channel-row" id="item-channel-${element.id}">
+                        <td class="channel-name">${element.name}</td>
+                        <td>
+                            <button class="rep-btn" id="rep-${element.id}">
+                                <i class="material-icons">group</i>
+                                <span class="rep-count">${element.totalreps}</span>
+                            </button>
+                        </td>
+                        <td class="channel-phone">${element.phone || '-'}</td>
+                        <td class="channel-type">${element.type}</td>
+                        <td>
+                            <div class="channel-actions">
+                                <button class="edit-btn" id="channel-${element.id}">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button class="delete-btn" id="channel-${element.id}">
+                                    <i class="material-icons">delete</i>
+                                </button>
                             </div>
                         </td>
-                        <td style="padding: 20px 0;">${element.phone}</td>
-                        <td style="padding: 20px 0;">${element.type}</td>
-                        <td style="padding: 20px 0;">
-                            <div class="row-content-right">
-                                <div class="form-group edit-btn" id="channel-${element.id}"><i class="material-icons">edit</i></div>
-                                <div class="form-group delete-btn" id="channel-${element.id}"><i class="material-icons">delete</i></div>
-                            </div>
+                    </tr>
+                `;
+
+            });
+
+            if (allowAddChannel) {
+                rows += `
+                    <tr>
+                        <td colspan="5" class="add-channel-cell">
+                            <button id="activandomodal" class="btn btn-success neumorphic-btn">
+                                <i class="material-icons">add</i> Nuevo canal
+                            </button>
                         </td>
                     </tr>`;
-            });
+            }
+
             $("#RBuscador").html(rows);
-            
-            $("#RBuscador").on("click", ".rep-btn", function() { btnRepEvent(this); });
+
+            // Eventos
+            $("#RBuscador").on("click", ".rep-btn", function() {
+                btnRepEvent(this);
+            });
             $("#RBuscador").on("click", ".edit-btn", function() {
-                let id = $(this).attr("id").split("channel-")[1];
+                const id = $(this).attr("id").split("channel-")[1];
                 if (!id) return;
                 paintModal("edit_channel", id);
             });
             $("#RBuscador").on("click", ".delete-btn", function() {
-                let id = $(this).attr("id").split("channel-")[1];
+                const id = $(this).attr("id").split("channel-")[1];
                 if (!id) return;
                 btnDeleteEvent(id);
             });
+
+            if (allowAddChannel) {
+                $("#activandomodal").on("click", function() {
+                    activandomodalEvent();
+                });
+            }
         }
       })
-      .catch((error) => {});
+      .catch((error) => {
+          console.error("Error fetching canales:", error);
+      });
 };
 
 
@@ -67,14 +94,11 @@ function btnRepEvent(input) {
     if (!id) return;
     paintModal("show_rep", id);
 }
-
-
 function paintModal(version = '', id) {
     if (instance_of_modal && instance_of_modal.isOpen) {
         instance_of_modal.close();
         instance_of_modal = null;
     }
-
     let modal = {
         useBootstrap: false,
         buttons: {
@@ -100,7 +124,6 @@ function paintModal(version = '', id) {
             },
         },
     };
-
     switch (version) {
         case "show_rep":
             modal.title = "Representantes";
@@ -119,12 +142,9 @@ function paintModal(version = '', id) {
             modal.content = '';
             break;
     }
-
     instance_of_modal = $.confirm(modal);
     return instance_of_modal;
 }
-
-
 function activandomodalEvent() {
     if (instance_of_modal && instance_of_modal.isOpen) {
         instance_of_modal.close();
@@ -160,9 +180,20 @@ function activandomodalEvent() {
         }
     });
 }
-
-
-function btnDeleteEvent(id) {
+function buildQueryParams(params) {
+    const query = [];
+    for (const key in params) {
+        if (Array.isArray(params[key])) {
+            params[key].forEach(val => {
+                query.push(`${encodeURIComponent(key)}[]=${encodeURIComponent(val)}`);
+            });
+        } else {
+            query.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
+        }
+    }
+    return query.join('&');
+}
+async function btnDeleteEvent(id) {
     if (instance_of_modal && instance_of_modal.isOpen) {
         instance_of_modal.close();
         instance_of_modal = null;
@@ -177,16 +208,28 @@ function btnDeleteEvent(id) {
             ok: {
                 text: "Aceptar",
                 btnClass: "btn-green",
-                action: function () {
-                    fetchAPI(`canales?id=${id}`, "DELETE")
-                      .then(async (response) => {
-                        const status = response.status;
+                action: async function () {
+                    try {
+                        // Obtener reps asociados al canal
+                        const responseReps = await fetchAPI(`rep?channelid=${id}`, "GET");
+                        const repsJson = await responseReps.json();
+                        const rep_ids = repsJson.data.map(rep => rep.id);
 
-                        if (status == 204) {
+                        // Construir query con reps[] y id
+                        const queryParams = buildQueryParams({ id: id, reps: rep_ids });
+
+                        // Llamar al endpoint con DELETE y query string correcta
+                        const deleteResponse = await fetchAPI(`canales?${queryParams}`, "DELETE");
+
+                        if (deleteResponse.status === 204) {
                             location.reload();
+                        } else {
+                            const error = await deleteResponse.json();
+                            console.error("Error al eliminar canal:", error.message);
                         }
-                      })
-                      .catch((error) => {});
+                    } catch (error) {
+                        console.error("Error al procesar la eliminación del canal:", error);
+                    }
                     return false;
                 }
             },

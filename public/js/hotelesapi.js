@@ -15,13 +15,110 @@ async function fetch_hoteles() {
         return null;
     }
 }
-// 🔹 Pinta los servicios en el select
 function render_hotels(hotels) {
-    const $hotelsSelect = $("#hoteltype").empty().append('<option value="">Selecciona un hotel</option>');
-
-    if (Array.isArray(hotels) && hotels.length) {
-        hotels.forEach(hotel => {
-            $hotelsSelect.append(`<option value="${hotel.nombre}">${hotel.nombre}</option>`);
-        });
+    const $input = $("#hotelInput");
+    const $dropdown = $("#hotelDropdown");
+    let currentIndex = -1;
+    function showDropdown(matches) {
+        $dropdown.empty();
+        currentIndex = -1; // reset highlight
+        if (matches.length > 0) {
+            matches.forEach(h => {
+                $dropdown.append(`<li style="padding:5px; cursor:pointer;">${h.nombre}</li>`);
+            });
+            $dropdown.show();
+        } else {
+            $dropdown.hide();
+        }
     }
+    $input.on("input", function () {
+        const query = $(this).val().toLowerCase();
+        const matches = hotels.filter(h => h.nombre.toLowerCase().includes(query));
+        showDropdown(matches);
+    });
+    $input.on("focus", function () {
+        if ($(this).val() === "") {
+            showDropdown(hotels); // ✅ pasamos el array completo
+        }
+    });
+    // Resaltar al pasar el mouse
+    $dropdown.on("mouseenter", "li", function () {
+        $dropdown.find("li").removeClass("active");
+        $(this).addClass("active");
+        currentIndex = $(this).index();
+    });
+    $dropdown.on("click", "li", function () {
+        $input.val($(this).text());
+        $dropdown.hide();
+    });
+    // Navegación con teclado
+    $input.on("keydown", function(e) {
+        const $items = $dropdown.find("li");
+        if ($items.length === 0) return;
+
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            currentIndex = (currentIndex + 1) % $items.length;
+            $items.removeClass("active");
+            $items.eq(currentIndex).addClass("active");
+            scrollToView($items.eq(currentIndex));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            currentIndex = (currentIndex - 1 + $items.length) % $items.length;
+            $items.removeClass("active");
+            $items.eq(currentIndex).addClass("active");
+            scrollToView($items.eq(currentIndex));
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (currentIndex >= 0) {
+                $input.val($items.eq(currentIndex).text());
+                $dropdown.hide();
+            }
+        }
+    });
+    function scrollToView($item) {
+        const container = $dropdown[0];
+        const item = $item[0];
+        if (item.offsetTop < container.scrollTop) {
+            container.scrollTop = item.offsetTop;
+        } else if (item.offsetTop + item.offsetHeight > container.scrollTop + container.offsetHeight) {
+            container.scrollTop = item.offsetTop + item.offsetHeight - container.offsetHeight;
+        }
+    }
+
+    $(document).click(function(e){
+        if (!$(e.target).closest('#hotelInput, #hotelDropdown').length) {
+            $dropdown.hide();
+        }
+    });
 }
+
+
+
+function setupHotelSearch(hotels) {
+    const $input = $("#hotelSearchInput");
+    const $select = $("#hotelSelect");
+
+    $input.off("input").on("input", function () {
+        const query = $(this).val().toLowerCase();
+
+        // Encontrar primer match
+        const match = hotels.find(h => h.nombre.toLowerCase().includes(query));
+        if (match) {
+            $select.val(match.nombre);
+        } else {
+            $select.val("");
+        }
+    });
+
+    // // Enfocar input oculto al enfocar el select
+    // $select.off("focus").on("focus", function () {
+    //     $input.val("").focus();
+    // });
+
+    // // También enfocar al hacer click
+    // $select.off("click").on("click", function () {
+    //     $input.val("").focus();
+    // });
+}
+

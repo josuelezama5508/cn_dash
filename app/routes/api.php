@@ -2,6 +2,8 @@
 return [
     // Version de produccion
     "production" => [
+        "slug" => ["controller" => "RoutesController", "methods" => array("POST", "GET", "PUT")],
+
         "user/login" => ["controller" => "UserController", "methods" => array("POST")],
         "bookings" => ["controller" => "BookingController", "methods" => array("GET")],
         "typeservice" => ["controller" => "TypeServiceController", "methods" => array("GET")],
@@ -15,6 +17,8 @@ return [
         "promocode" => ["controller" => "PromocodeController", "methods" => array("GET", "POST", "PUT")],
         //"channel" => ["controller" => "ChannelController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         "hotel" => ["controller" => "HotelController", "methods" => array("GET", "POST", "PUT", "DELETE")],
+        "transportation" => ["controller" => "TransportationController", "methods" => array("GET", "POST", "PUT", "DELETE")],
+        "camioneta" => ["controller" => "CamionetaController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         // "rep" => ["controller" => "RepController", "methods" => array("GET", "POST", "PUT", "DELETE")],
 
         // "empresas" => ["controller" => "EmpresaController", "methods" => array("GET", "POST", "PUT", "PATCH")],

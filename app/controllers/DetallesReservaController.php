@@ -23,7 +23,13 @@ class DetallesReservaController extends Controller
         Auth::requireLogin();
         $this->form('form_update_cancelar'); // ✅ usa el método correcto
     }
-
+    public function viewdetails($nog = null)
+    {
+        Auth::requireLogin();
+    
+        return $this->view("dashboard/view_details", ['nog' => $nog]);
+    }
+    
 
 }
 

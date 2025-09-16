@@ -1,5 +1,12 @@
 $(document).ready(function() {
     $("#sendButton").on("click", function() { sendEvent(); });
+     // Presionar Enter en cualquier campo del formulario
+     $("#form-login").on("keydown", function (e) {
+        if (e.keyCode === 13) { // Enter
+            e.preventDefault(); // Previene que el form haga submit por defecto
+            sendEvent();
+        }
+    });
 });
 
 
