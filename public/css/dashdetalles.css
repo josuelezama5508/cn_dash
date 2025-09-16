@@ -13,3 +13,74 @@
     max-height: 70vh; /* Máximo 70% de la altura de la ventana */
     overflow-y: auto; /* Scroll si el contenido supera la altura */
 }
+/* Modal lateral derecho - estilo básico */
+.modal-right {
+    position: fixed;
+    top: 0;
+    right: -400px; /* Oculto fuera de pantalla */
+    width: 400px;
+    height: 100%;
+    background: white;
+    box-shadow: -2px 0 8px rgba(0,0,0,0.3);
+    transition: right 0.3s ease;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modal-right.show {
+    right: 0; /* Aparece visible */
+  }
+  
+  .modal-content-right {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .modal-header, .modal-footer {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .modal-body {
+    padding: 10px;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  
+  .modal-footer {
+    border-top: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  #mensajeEditTexto {
+    width: 100%;
+    resize: vertical;
+  }
+  
+  #btnGuardarMensaje {
+    align-self: flex-end;
+    padding: 6px 16px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  #btnGuardarMensaje:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+  }
+  

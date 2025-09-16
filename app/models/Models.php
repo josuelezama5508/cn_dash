@@ -38,9 +38,9 @@ class Control extends ModelTable
     public function getByDatePickup($startDate = null, $endDate = null)
     {
         if ($startDate === null) $startDate = date('Y-m-d');
-        if ($endDate === null) $endDate = $startDate;
-
-        // --- 1. Traer todas las reservas entre fechas ---
+        if ($endDate === null)   $endDate   = $startDate;
+    
+        // 1) Traer reservas raw
         $sql = "
             SELECT 
                 C.idpago, C.actividad, C.datepicker, C.horario, 
@@ -54,112 +54,122 @@ class Control extends ModelTable
             INNER JOIN companies CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
             INNER JOIN estatus S ON C.status = S.id_status
             INNER JOIN users U ON B.usuario = U.user_id
-            WHERE DATE(C.datepicker) BETWEEN :startDate AND :endDate AND C.status !=2 AND C.status !=0
+            WHERE DATE(C.datepicker) BETWEEN :startDate AND :endDate AND C.status != 2 AND C.status != 0
             ORDER BY C.datepicker, C.horario, C.actividad
         ";
-
+    
         $rows = $this->SqlQuery(
             ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
             $sql,
             ['startDate' => $startDate, 'endDate' => $endDate]
         );
-
-        // --- 2. Lookup de canales y reps ---
-        $canales = $this->SqlQuery(
-            ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
-            "SELECT id_channel, nombre FROM channel"
-        );
-        $reps = $this->SqlQuery(
-            ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
-            "SELECT idrep, nombre FROM rep"
-        );
-
+    
+        // 2) Lookup de canales y reps (traer todo una sola vez)
+        $canales = $this->SqlQuery(['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''], "SELECT id_channel, nombre FROM channel");
+        $reps    = $this->SqlQuery(['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''], "SELECT idrep, nombre FROM rep");
+    
         $canalesMap = [];
-        foreach ($canales as $c) $canalesMap[$c['id_channel']] = $c['nombre'];
+        foreach ($canales as $c) $canalesMap[(int)$c['id_channel']] = $c['nombre'];
+    
         $repsMap = [];
-        foreach ($reps as $r) $repsMap[$r['idrep']] = $r['nombre'];
-
-        // --- 3. Agrupar por fecha y horario ---
+        foreach ($reps as $r) $repsMap[(int)$r['idrep']] = $r['nombre'];
+    
+        // 3) Agrupar y contar
         $result = [];
+        $refToName = []; // cache global reference -> name para no repetir strings
+    
         foreach ($rows as $row) {
             $fecha = $row['datepicker'];
-            $horario = $row['horario'];
-
+            $actividad = $row['actividad'] ?? 'Sin actividad';
+            $horario = $row['horario'] ?? 'N/A';
+            $key = $actividad . '|' . $horario;
+    
             if (!isset($result[$fecha])) $result[$fecha] = [];
-            if (!isset($result[$fecha][$horario])) {
-                $result[$fecha][$horario] = [
+            if (!isset($result[$fecha][$key])) {
+                $result[$fecha][$key] = [
                     'horario' => $horario,
+                    'actividad' => $actividad,
                     'cantidad' => 0,
+                    'tickets' => 0,
                     'conteo_items' => [],
-                    'detalles_reservas' => [],
-                    'tickets'=>0
+                    'detalles_reservas' => []
                 ];
             }
-
-            $result[$fecha][$horario]['cantidad']++;
-
-            // --- Contar items tipo "tour" ---
+    
+            // 1 reserva más para esa combinación
+            $result[$fecha][$key]['cantidad']++;
+    
+            // Procesar items: solo tipo "tour", qty > 0 y price > 0
             $items = json_decode($row['items_details'], true) ?: [];
-
             foreach ($items as $item) {
                 $tipo = $item['tipo'] ?? '';
-                $price = $item['price'] ?? 0;
-                $qty   = intval($item['item'] ?? 0);
-            
-                // Validaciones extra
-                if ($tipo === 'tour' 
-                    && $qty > 0 
-                    && floatval($price) > 0.0
-                ) {
-                    // Entonces contamos
+                $qty  = intval($item['item'] ?? 0);
+                // price puede venir como string "75.00"
+                $price = isset($item['price']) ? floatval(str_replace(',', '.', $item['price'])) : 0.0;
+    
+                if ($tipo === 'tour' && $qty > 0 && $price > 0.0) {
                     $ref = $item['reference'] ?? null;
                     $name = $item['name'] ?? 'Unknown';
-            
-                    // Aquí tickets se refiere al número total de personas/items que pasan las condiciones
-                    $result[$fecha][$horario]['tickets'] += $qty;
-            
-                    // Contar por nombre
-                    if (!isset($nameByRef)) {
-                        $nameByRef = [];
-                    }
-                    if ($ref && !isset($nameByRef[$ref])) {
-                        $nameByRef[$ref] = $name;
-                    }
+    
+                    // mapea reference -> nombre (cache global)
                     if ($ref) {
-                        $finalName = $nameByRef[$ref];
-                        $result[$fecha][$horario]['conteo_items'][$finalName] = 
-                            ($result[$fecha][$horario]['conteo_items'][$finalName] ?? 0) + $qty;
+                        if (!isset($refToName[$ref])) $refToName[$ref] = $name;
+                        $finalName = $refToName[$ref];
+                    } else {
+                        $finalName = $name;
                     }
+    
+                    // tickets totales (personas/items) en esta combinación actividad|horario
+                    $result[$fecha][$key]['tickets'] += $qty;
+    
+                    // conteo por nombre legible
+                    $result[$fecha][$key]['conteo_items'][$finalName] =
+                        ($result[$fecha][$key]['conteo_items'][$finalName] ?? 0) + $qty;
                 }
             }
-            
-
-            // Convertir canal y rep a nombres
+    
+            // Resolver canal y rep -> nombres usando los mapas
             $canalData = json_decode($row['canal'], true) ?: [];
             $row['canal_nombre'] = [];
             $row['rep_nombre'] = [];
             foreach ($canalData as $c) {
-                $id_canal = $c['canal'] ?? null;
-                $id_rep   = $c['rep'] ?? null;
+                $id_canal = isset($c['canal']) ? (int)$c['canal'] : null;
+                $id_rep   = isset($c['rep']) ? (int)$c['rep'] : null;
                 $row['canal_nombre'][] = $canalesMap[$id_canal] ?? null;
-                $row['rep_nombre'][]   = $repsMap[$id_rep] ?? null;
-    }
-
-
-            $result[$fecha][$horario]['detalles_reservas'][] = $row;
+                $row['rep_nombre'][]   = $repsMap[$id_rep]   ?? null;
+            }
+    
+            // guardar la reserva completa (raw + nombres resueltos)
+            $result[$fecha][$key]['detalles_reservas'][] = $row;
         }
-
-        // --- 4. Reestructurar array final ---
+    
+        // 4) Reestructurar la respuesta final (lista por fecha con array de reservas)
         $final = [];
-        foreach ($result as $fecha => $horarios) {
+        foreach ($result as $fecha => $reservasMap) {
+            $reservasArray = array_values($reservasMap);
+
+            // Ordenar por horario (N/A al final, horas en orden normal)
+            usort($reservasArray, function($a, $b) {
+                // Manejar N/A (lo mandamos al final siempre)
+                if (strtoupper($a['horario']) === 'N/A') return 1;
+                if (strtoupper($b['horario']) === 'N/A') return -1;
+        
+                // Convertir horas a timestamp para comparar
+                $horaA = strtotime($a['horario']);
+                $horaB = strtotime($b['horario']);
+        
+                return $horaA <=> $horaB;
+            });
+        
             $final[] = [
                 'fecha' => $fecha,
-                'horarios' => array_values($horarios)
+                'reservas' => $reservasArray
             ];
         }
-
+    
         return $final;
     }
+    
     public function getByNog($nog)
     {
         if ($nog === null) {

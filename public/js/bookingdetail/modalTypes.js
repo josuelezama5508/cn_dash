@@ -258,18 +258,59 @@ window.openReagendarModal = async function(modalData) {
     const html = `
     <form id="form_update_reagendar">
         <input type="hidden" id="reserva_id" value="${modalData.id}">
-        <div class="mb-3">
-            <label class="form-label fw-bold">Nueva Fecha</label>
-            <input type="text" id="datepicker" class="form-control" required value="${modalData.datepicker}">
+
+        <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+             <div class="mb-3">
+                <label class="form-label fw-bold">Cliente</label>
+                <input type="text" id="cliente_name" class="form-control" value="${modalData.cliente_name || ''} ${modalData.cliente_lastname || ''}" placeholder="Nombre del cliente" required>
+            </div>
+
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Correo</label>
+                <input type="email" id="cliente_email" class="form-control" value="${modalData.email || ''}">
+            </div>
         </div>
+        <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+            <div class="mb-3" style="flex: 2;">
+                <label class="form-label fw-bold">Enviar notificación</label>
+                <select id="enviar_notificacion" class="form-select">
+                    <option value="1" selected>Sí, enviar notificación</option>
+                    <option value="0">No enviar notificación</option>
+                </select>
+            </div>
+
+            <div class="mb-3" style="flex: 1;">
+                <label class="form-label fw-bold">Idioma</label>
+                <select id="idioma" class="form-select">
+                    <option value="es" selected>Español</option>
+                    <option value="en">Inglés</option>
+                    <option value="fr">Francés</option>
+                    <option value="pt">Portugués</option>
+                </select>
+            </div>
+        </div>
+        <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+            <div class="mb-3" style="flex: 2;">
+                <label class="form-label fw-bold">Nueva Fecha</label>
+                <input type="text" id="datepicker" class="form-control" required value="${modalData.datepicker}">
+            </div>
+
+            <div class="mb-3" style="flex: 1;">
+                <label class="form-label fw-bold">Nuevo Horario</label>
+                <select id="nuevo_horario" class="form-select" required>
+                    <option value="${modalData.horario}" selected>${modalData.horario}</option>
+                </select>
+            </div>
+        </div>
+        
         <div class="mb-3">
-            <label class="form-label fw-bold">Nuevo Horario</label>
-            <select id="nuevo_horario" class="form-select" required>
-                <option value="${modalData.horario}" selected>${modalData.horario}</option>
-            </select>
+            <label class="form-label fw-bold">Descripción / Nota</label>
+            <textarea id="descripcion" class="form-control" rows="3">${modalData.nota || ''}</textarea>
         </div>
     </form>
     `;
+
     document.getElementById("modalGenericContent").innerHTML = html;
     document.getElementById("modalGenericTitle").innerText = "Reagendar Reserva";
 
@@ -308,7 +349,6 @@ window.setupCalendario = function (companycode) {
         }
     });
 }
-
 window.confirmReagendar = async function() {
     const form = document.getElementById('form_update_reagendar');
     if (!form.checkValidity()) return form.reportValidity();
@@ -318,6 +358,11 @@ window.confirmReagendar = async function() {
             idpago: parseInt(document.getElementById('reserva_id').value),
             datepicker: document.getElementById('datepicker').value,
             horario: document.getElementById('nuevo_horario').value,
+            cliente_name: document.getElementById('cliente_name').value,
+            cliente_email: document.getElementById('cliente_email').value,
+            enviar_notificacion: parseInt(document.getElementById('enviar_notificacion').value),
+            idioma: document.getElementById('idioma').value,
+            descripcion: document.getElementById('descripcion').value,
             tipo: 'reagendacion',
             module: 'DetalleReservas'
         }
@@ -325,12 +370,19 @@ window.confirmReagendar = async function() {
 
     try {
         const response = await fetchAPI('control', 'PUT', data);
-        if (response.ok) { closeModal(); location.reload(); }
-        else { const result = await response.json(); alert("Error: " + result.message); }
+        if (response.ok) {
+            closeModal();
+            location.reload();
+        } else {
+            const result = await response.json();
+            alert("Error: " + result.message);
+        }
     } catch (error) {
-        console.error(error); alert("Error al reagendar la reserva");
+        console.error(error);
+        alert("Error al reagendar la reserva");
     }
-}
+};
+
 // modalSapa.js
 window.confirmSapa = async function () {
     const data = {

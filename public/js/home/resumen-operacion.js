@@ -10,31 +10,31 @@ function renderResumenOperacion(data) {
     data.forEach(dia => {
         const card = document.createElement('div');
         card.className = 'card mb-3 shadow-sm';
-        let hoy = new Date();
-        let fechaFormateada = hoy.toISOString().split("T")[0];
-        const [year, month, day] = fechaFormateada.split('-');
 
-        const fecha = new Date(year, month - 1, day);
+        const fecha = new Date(dia.fecha);
         const fechaLegible = fecha.toLocaleDateString('es-MX', {
             weekday: 'long',
             year: 'numeric',
             month: 'short',
             day: 'numeric'
-          });
-        const horariosHTML = dia.horarios.map(h => {
-            const itemsStr = Object.entries(h.conteo_items)
+        });
+
+        const reservasHTML = dia.reservas.map(r => {
+            const itemsStr = Object.entries(r.conteo_items || {})
                 .map(([tipo, cant]) => `<span class="badge bg-secondary me-1">${tipo}: ${cant}</span>`)
                 .join(' ');
 
             return `
                 <tr>
-                    <td style="width: 120px;">${h.horario}</td>
-                    <td style="width: 60px;"><strong>${h.tickets}</strong></td>
+                    <td style="width: 120px;">${r.horario}</td>
+                    <td>${r.actividad}</td>
+                    <td style="width: 60px;"><strong>${r.tickets}</strong></td>
                     <td>${itemsStr}</td>
                     <td style="width: 90px;">
                         <button class="btn btn-outline-primary btn-sm abrir-detalle" 
-                                data-horario="${h.horario}" 
-                                data-detalles='${JSON.stringify(h.detalles_reservas).replace(/'/g, "&apos;")}'>
+                                data-horario="${r.horario}" 
+                                data-actividad="${r.actividad}"
+                                data-detalles='${JSON.stringify(r.detalles_reservas).replace(/'/g, "&apos;")}' >
                             <i class="bi bi-eye"></i>
                         </button>
                     </td>
@@ -45,20 +45,21 @@ function renderResumenOperacion(data) {
         card.innerHTML = `
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-calendar-event me-2"></i>${fechaLegible}</strong>
-                <span class="badge bg-light text-dark">${dia.horarios.length} horarios</span>
+                <span class="badge bg-light text-dark">${dia.reservas.length} reservas</span>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm table-bordered mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Horario</th>
+                            <th>Actividad</th>
                             <th>Tickets</th>
                             <th>Conteo</th>
                             <th>Detalles</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${horariosHTML}
+                        ${reservasHTML}
                     </tbody>
                 </table>
             </div>
@@ -67,15 +68,17 @@ function renderResumenOperacion(data) {
         container.appendChild(card);
     });
 
-    // Delegar evento para abrir el modal de detalles
+    // Delegar evento
     container.querySelectorAll('.abrir-detalle').forEach(button => {
         button.addEventListener('click', function () {
             const detalles = JSON.parse(this.getAttribute('data-detalles').replace(/&apos;/g, "'"));
             const horario = this.getAttribute('data-horario');
-            abrirModalDetalle(detalles, horario);
+            const actividad = this.getAttribute('data-actividad');
+            abrirModalDetalle(detalles, horario, actividad);
         });
     });
 }
+
 function abrirModalDetalle(detalles, horario) {
     const modal = document.getElementById('modalDetallesReserva');
     document.getElementById('modalHorario').innerText = horario;

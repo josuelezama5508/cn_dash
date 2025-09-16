@@ -21,6 +21,7 @@
                 <button class="btn btn-dark" id="btnAbrirReservaVinculada"><i class="fas fa-link"></i> Reservas vinculadas</button>
                 <!-- <button class="btn btn-warning text-white"><i class="fas fa-bell"></i> Enviar Notificación</button> -->
                 <button class="btn btn-danger" id="btnCancelarReserva"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
+                <button class="btn btn-secondary" id="btnAbrirMensajes"><i class="fas fa-comments"></i> Ver Mensajes</button>
             </div>
             <!-- INFORMACIÓN USUARIO + RESERVA -->
             <div class="row mb-4">
@@ -128,6 +129,22 @@
                         </div>
                     </div>
                 </div>
+                <!-- Sección de Notas -->
+                <div class="card sombra-custom mt-4">
+                    <div class="card-header bg-light"><strong>Notas</strong></div>
+                    <div class="card-body">
+                        <div id="notasList" class="list-group"></div>
+
+                        <!-- Input para agregar nueva nota -->
+                        <div class="input-group mt-3">
+                            <textarea id="nuevaNota" class="form-control" placeholder="Agregar comentario..." rows="2"></textarea>
+                            <button class="btn btn-primary" id="btnAgregarNota" type="button">
+                                Enviar <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Modal independiente para Reservas Vinculadas -->
                 <div class="modal fade" id="modalReservasVinculadas" tabindex="-1">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -163,6 +180,22 @@
                     </div>
                 </div>
             </div>
+            <!-- Modal lateral derecho para mensajes -->
+            <div id="modalMensajes" class="modal-right">
+                <div class="modal-content-right">
+                    <div class="modal-header">
+                    <h5>Mensajes de la Reserva</h5>
+                    <button id="btnCerrarModalMensajes" class="btn-close">&times;</button>
+                    </div>
+                    <div class="modal-body" id="mensajesContainer">
+                    <!-- Lista de mensajes cargados aquí -->
+                    </div>
+                    <div class="modal-footer">
+                    <textarea id="mensajeEditTexto" rows="3" placeholder="Editar mensaje..."></textarea>
+                    <button id="btnGuardarMensaje" disabled>Guardar</button>
+                    </div>
+                </div>
+            </div>
 
 
 
@@ -175,6 +208,7 @@
         <script src="<?= asset('/js/itemsapi.js') ?>?v=1"></script>
         <script src="<?= asset('/js/tiposerviciosapi.js') ?>?v=1"></script>
         <script src="<?= asset('/js/canalesapi.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/bookingmessageapi.js') ?>?v=1"></script>
 
         <!-- 2️⃣ Render de items y booking detail -->
         <script src="<?= asset('/js/bookingdetail/renderReservaItems.js') ?>?v=1"></script>
@@ -189,15 +223,16 @@
         <script src="<?= asset('/js/bookingdetail/notifications.js') ?>?v=1"></script>
 
         <!-- 6️⃣ Modales específicos -->
-        <!-- <script src="<?= asset('/js/bookingdetail/modalSapa.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/bookingdetail/notesTimeLine.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/bookingdetail/modalSapa.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalMail.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalReagendar.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalCancel.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalChannel.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalType.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalVinculados.js') ?>?v=1"></script> -->
+        <script src="<?= asset('/js/bookingdetail/modalVinculados.js') ?>?v=1"></script>
         
-        <script src="<?= asset('/js/bookingdetail/modalTypes.js') ?>?v=1"></script>
+        <!-- <script src="<?= asset('/js/bookingdetail/modalTypes.js') ?>?v=1"></script> -->
         <!-- 7️⃣ Main modal y botones -->
         <script src="<?= asset('/js/bookingdetail/mainModal.js') ?>?v=1"></script>
 

@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const reserva = json.data[0];
     modalData = reserva;
     console.log("Reserva completa:", reserva);
+    // Botón cerrar modal
+    $('#btnCerrarModalMensajes').on('click', cerrarModalMensajes);
+
+    // Ejemplo: abrir modal cuando se presione un botón específico
+    $('#btnAbrirMensajes').on('click', abrirModalMensajes);
 
     const items = JSON.parse(reserva.items_details || "[]");
 

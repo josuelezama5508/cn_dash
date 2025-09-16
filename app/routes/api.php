@@ -19,6 +19,7 @@ return [
         "hotel" => ["controller" => "HotelController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         "transportation" => ["controller" => "TransportationController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         "camioneta" => ["controller" => "CamionetaController", "methods" => array("GET", "POST", "PUT", "DELETE")],
+        "message" => ["controller" => "BookingMessageController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         // "rep" => ["controller" => "RepController", "methods" => array("GET", "POST", "PUT", "DELETE")],
 
         // "empresas" => ["controller" => "EmpresaController", "methods" => array("GET", "POST", "PUT", "PATCH")],

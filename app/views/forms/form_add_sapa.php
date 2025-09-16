@@ -34,11 +34,6 @@
       </div>
 
       <div class="col-md-6">
-        <label for="personas" class="form-label">Número de personas:</label>
-        <input type="number" class="form-control form-control-sm" id="personas" name="personas" min="1" value="1">
-      </div>
-
-      <div class="col-md-6">
         <label for="origen" class="form-label">Punto de partida:</label>
         <input type="text" class="form-control form-control-sm" id="origen" name="origen">
       </div>
@@ -51,27 +46,6 @@
       <div class="col-md-6">
         <label for="hora" class="form-label">Horario:</label>
         <input type="time" class="form-control form-control-sm" id="hora" name="hora">
-      </div>
-
-      <div class="col-md-6">
-        <label for="usuario" class="form-label">Usuario que registra:</label>
-        <input type="text" class="form-control form-control-sm" id="usuario" name="usuario">
-      </div>
-
-      <div class="col-md-6">
-        <label for="matricula" class="form-label">Camioneta:</label>
-        <select class="form-select form-select-sm" id="matricula" name="matricula">
-          <option value="">Selecciona una camioneta</option>
-          <!-- Opciones -->
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label for="chofer_id" class="form-label">Chofer asignado:</label>
-        <select class="form-select form-select-sm" id="chofer_id" name="chofer_id">
-          <option value="">Selecciona un chofer</option>
-          <!-- Opciones -->
-        </select>
       </div>
 
       <div class="col-12">

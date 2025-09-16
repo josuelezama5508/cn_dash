@@ -155,7 +155,7 @@ function calcularTotal() {
     total = descuentoAplicado ? subtotal * descuentoAplicado : subtotal;
 
     // Mostrar el total en el input editable de balance
-    $('#RBalanced').val(total.toFixed(2));
+    // $('#RBalanced').val(total.toFixed(2));
 
     // Mostrar en resumen
     $('#PrintTotal').text(total.toFixed(2));

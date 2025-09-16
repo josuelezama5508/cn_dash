@@ -117,10 +117,10 @@ function render_reservationResponse(buttonId, responseObj) {
         console.log("✅ Reserva exitosa:", result);
 
         // Esperar 2 segundos antes de redirigir
-        // setTimeout(() => {
-        //     hideLoadingModal(); // ⬅️ Ocultar modal justo antes de redirigir
-        //     window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
-        // }, 2000);
+        setTimeout(() => {
+            hideLoadingModal(); // ⬅️ Ocultar modal justo antes de redirigir
+            window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
+        }, 1000);
 
     } else {
         console.error("❌ Error al procesar reserva:", result);
