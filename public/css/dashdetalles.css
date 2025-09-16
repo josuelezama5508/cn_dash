@@ -13,6 +13,7 @@
     max-height: 70vh; /* Máximo 70% de la altura de la ventana */
     overflow-y: auto; /* Scroll si el contenido supera la altura */
 }
+/*MODIFCAR PARA ABAJO YA QUE LOS CSS SE COMPARTEN, HACERLO ESPECÍFICOS*/
 /* Modal lateral derecho - estilo básico */
 .modal-right {
     position: fixed;
@@ -54,7 +55,7 @@
   .modal-body {
     padding: 10px;
     flex-grow: 1;
-    overflow-y: auto;
+    /* overflow-y: auto; */
   }
   
   .modal-footer {

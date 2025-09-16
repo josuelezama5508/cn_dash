@@ -163,17 +163,17 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="modalGeneric" tabindex="-1" style="background: transparent;width: 30%;">
+            <div class="modal fade" id="modalGeneric" tabindex="-1" style="background: transparent;width: 40%;">
                 <div class="modal-dialog">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalGenericTitle"></h5>
+                        <div class="modal-header" style="background: transparent;">
+                            <h5 class="modal-title" id="modalGenericTitle" style = "color: black;"></h5>
                             <button type="button" class="btn-close" onclick="closeModal()"></button>
                         </div>
                         <div class="modal-body" id="modalGenericContent">
                             <!-- Contenido grande aquí -->
                         </div>
-                        <div class="modal-footer">
+                        <div class="modal-footer" style= "flex-direction: row;">
                             <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
                             <button type="button" class="btn btn-primary">Guardar</button>
                         </div>
