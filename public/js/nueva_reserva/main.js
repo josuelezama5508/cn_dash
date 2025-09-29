@@ -5,6 +5,7 @@ let instance_of_modal = null;
 let itemProductCount = 0;
 let companycode = "";
 let productcode = "";
+let productid = 0;
 let currentLangId = 1;
 let isProductPreloaded = false;
 let voucherSource = "";
@@ -19,9 +20,9 @@ $(document).ready(async function () {
         loadCommonData(),
         initBookingForm(companycode, productcode)
     ]);
-    if (companycode && productcode) {
-        await conditionalData(companycode, productcode, currentLangId);
-    }
+   
+    await conditionalData(companycode, productcode, currentLangId);
+    
     bindReservationButtons();
     bindRepresentativeEvents();
     bindPromoCodeHandler();
@@ -40,11 +41,50 @@ $(document).ready(async function () {
         const selectedCompany = companies.find(c => c.companycode == companycode) || null;
         render_company(selectedCompany);
         descuentoAplicado = 0;
-        renderItems([], getSelectedLanguage());
+        await renderItems([], getSelectedLanguage());
         calcularTotal();
     });
     // bindCompanyProductLanguageEvents();
 });
+async function productSelection(productCode) {
+    // Si no hay producto, limpia todo
+    if (!productCode) {
+        $("#productSelect").val("").trigger("change.select2");
+        $("#horariosDisponibles").empty();
+        return;
+    }
+
+    // Selecciona el producto en el select (Select2 seguro)
+    if ($("#productSelect").hasClass("select2-hidden-accessible")) {
+        $("#productSelect").val(productCode).trigger("change.select2");
+    } else {
+        $("#productSelect").val(productCode).trigger("change");
+    }
+
+    // Actualiza variables globales
+    productcode = productCode;
+    const selectedOption = $("#productSelect option:selected");
+    productid = selectedOption.data('product-id');
+
+    try {
+        // Cargar producto y renderizar
+        const productData = await fetch_product(productCode, languagecode);
+        render_product(productData);
+
+        // Cargar items
+        const items = await fetch_items(productCode);
+        await renderItems(items, languagecode);
+
+        // Configurar calendario si ya hay companycode
+        if (companycode && productid) {
+            setupCalendario(companycode, productid);
+        }
+    } catch (error) {
+        console.error("Error en productSelection:", error);
+        $("#horariosDisponibles").empty();
+    }
+}
+
 function wasPageReloaded() {
     const entries = performance.getEntriesByType("navigation");
     return entries.length > 0 && entries[0].type === "reload";
@@ -94,16 +134,11 @@ async function loadCompanyData(company, product) {
 
     const products = await fetch_products_languague(company, languagecode);
     render_products(products, "#productSelect");
+   
 
     if (product) {
-        $("#productSelect").val(product);
-        const productData = await fetch_product(product, languagecode);
-        render_product(productData);
-        const items = await fetch_items(product);
-        renderItems(items, languagecode);
+        await productSelection(product);
     }
-
-    setupCalendario(company);
 }
 function bindClientPreviewEvents() {
     $(document).on("input", ".form-group input, .form-group textarea", function () {
@@ -127,21 +162,58 @@ function bindHorarioSelection() {
     });
 }
 function bindReservationButtons() {
-    $("#btnEfectivo").click(() => enviarReservaConEstatus("btnEfectivo", 1, "dash"));
-    $("#btnBalance").click(() => enviarReservaConEstatus("btnBalance", 3, "dash"));
+    const toggleSections = (hideSelector, showSelector) => {
+        $(hideSelector).hide();
+        $(showSelector).show();
+    };
+
+    $("#btnPagarAhora").click(() => toggleSections("#mainButtons", "#pagarAhoraOpciones"));
+    $("#btnPaymentRequest").click(() => toggleSections("#mainButtons", "#paymentRadios"));
+    $("#btnBalance").click(() => {
+        console.log("🧪 [btnBalance] Valor actual de soloAddons:", window.soloAddons);
+        enviarReservaConEstatus("btnBalance", 3, "", "dash", window.soloAddons);
+
+    });
+
+    
 
     $("#btnConfirmVoucher").click(() => {
-        const voucherCode = $("#voucherCode").val().trim();
-        if (!voucherCode) return alert("Por favor, ingresa un código válido.");
-        const status = voucherSource === "voucher" ? 1 : 0;
+        const $voucher = $("#voucherCode");
+        const voucherCode = $voucher.val().trim();
+
+        // validar solo si está visible
+        // if ($voucher.is(":visible") && !ReservationValidator.validateCommentsVoucher($voucher)) {
+        //     ReservationValidator.focusFirst($voucher);
+        //     return;
+        // }
+
+        // 🔹 status 1 = voucher, 0 = otro
+        const status = 1;
         const buttonId = voucherSource === "voucher" ? "btnConfirmVoucher" : "btnOtro";
-        enviarReservaConEstatus(buttonId, status, voucherCode, "dash");
+        console.log("🧪 [btnBalance] Valor actual de soloAddons:", window.soloAddons);
+        enviarReservaConEstatus(buttonId, status, voucherCode, "dash", window.soloAddons);
     });
 
     $("#btnVoucher").click(() => showVoucherInput("voucher"));
     $("#btnOtro").click(() => showVoucherInput("otro"));
-    $("#btnVolverVoucher").click(() => $("#voucherInputGroup").hide() && $("#pagarAhoraOpciones > button").show());
+    $("#btnVolverVoucher").click(() => {
+        $("#voucherInputGroup").hide();
+        $("#pagarAhoraOpciones > button").show();
+    });
+
+    $("#btnVolverPagarAhora").click(() => toggleSections("#pagarAhoraOpciones", "#mainButtons"));
+    $("#btnVolverPayment").click(() => toggleSections("#paymentRadios", "#mainButtons"));
 }
+
+function showVoucherInput(source) {
+    voucherSource = source; // "voucher" o "otro"
+    $("#pagarAhoraOpciones > button").hide();
+    $("#btnVolverPagarAhora").hide();
+    $("#voucherCode").val("");
+    $("#voucherInputGroup").slideDown();
+}
+
+
 function bindRepresentativeEvents() {
     $(document).on("change", "#repSelect", handleRepSelectChange);
     $(document).on("click", "#btnSaveRepInline", handleSaveRep);
@@ -151,7 +223,8 @@ function bindRepresentativeEvents() {
     });
 }
 
-function handleRepSelectChange() {
+async function handleRepSelectChange() {
+    // await conditionalData(companycode, productcode, currentLangId);
     const val = $(this).val();
     if (val === "add") {
         $(this).val("");
@@ -246,7 +319,7 @@ function bindPromoCodeHandler() {
     });
 }
 
-function handleLanguageChange() {
+async function handleLanguageChange() {
     languagecode = getSelectedLanguage();
 
     const selectedCompany = $("#companySelect").val();
@@ -258,19 +331,16 @@ function handleLanguageChange() {
 
             // Si ya había un producto seleccionado, lo volvemos a aplicar
             if (selectedProduct) {
-                $("#productSelect").val(selectedProduct);
-                fetch_product(selectedProduct, languagecode).then(render_product);
-                fetch_items(selectedProduct).then(items => {
-                    renderItems(items, languagecode);
-                });
+                productSelection(selectedProduct);
             }
+            
         });
     }
 }
-async function loadHorarios(companycode, dateStr) {
+async function loadHorarios(companycode, productid,dateStr) {
     try {
         const response = await fetchAPI(
-            `control?getByDispo[empresa]=${companycode}&getByDispo[fecha]=${dateStr}`,
+            `control?getByDispo2[empresa]=${companycode}&getByDispo2[producto]=${productid}&getByDispo2[fecha]=${dateStr}`,
             "GET"
         );
         const result = await response.json();
@@ -287,34 +357,41 @@ async function loadHorarios(companycode, dateStr) {
     }
 }
 
-function setupCalendario(companycode) {
-    // 🔹 Obtenemos la fecha de hoy
+function setupCalendario(companycode, productid) {
+    // 🔹 Obtenemos la fecha de hoy en formato YYYY-MM-DD
     const today = new Date().toISOString().split("T")[0];
+
     flatpickr("#datepicker", {
         inline: true,
         dateFormat: "Y-m-d",
-        minDate: "today",
-        defaultDate: today, // 🔹 Preselecciona hoy
+        minDate: today,            // 🔥 no deja seleccionar antes de hoy
+        defaultDate: today,        // 🔹 Preselecciona hoy
         onChange: (selectedDates, dateStr) => {
+            // Solo aceptar fechas >= hoy
+            if (dateStr < today) return;
+
             $("#PrintDate").text(dateStr);
-            loadHorarios(companycode, dateStr);
+            loadHorarios(companycode, productid, dateStr);
         }
-        
     });
+
     // 🔹 Inicializar con hoy
     $("#PrintDate").text(today);
 
-    // Si quieres, puedes disparar la carga de horarios automáticamente
-    // simulando el onChange:
+    // Cargar horarios de hoy
     (async () => {
         try {
             const response = await fetchAPI(
-                `control?getByDispo[empresa]=${companycode}&getByDispo[fecha]=${today}`,
+                `control?getByDispo2[empresa]=${companycode}&getByDispo2[producto]=${productid}&getByDispo2[fecha]=${today}`,
                 "GET"
             );
             const result = await response.json();
+
             if (response.ok && Array.isArray(result?.data)) {
-                const horarios = result.data.filter(h => h.disponibilidad > 0);
+                // 🔥 Filtro extra: evitar mostrar horarios de días pasados (seguro nunca, pero por si acaso)
+                const horarios = result.data
+                    .filter(h => h.disponibilidad > 0 && h.fecha >= today);
+
                 renderHorarios(horarios);
             } else {
                 renderHorarios([]);
@@ -326,11 +403,12 @@ function setupCalendario(companycode) {
     })();
 
     $("#horariosDisponibles").html('<div class="text-muted">Selecciona una fecha para ver horarios</div>');
-    
 }
+
 async function handleCompanyChange() {
     const company = $(this).val();
     companycode = company;
+
     if (!company) {
         $("#productSelect").empty();
         $("#horariosDisponibles").empty();
@@ -342,54 +420,49 @@ async function handleCompanyChange() {
     const products = await fetch_products_languague(company, languagecode);
     render_products(products, "#productSelect");
 
-    // Selecciona primer producto o ninguno
+    // Selecciona primer producto si existe
     const firstProduct = products.length ? products[0].code : "";
-    $("#productSelect").val(firstProduct);
-
     if (firstProduct) {
-        const productData = await fetch_product(firstProduct, languagecode);
-        render_product(productData);
-        const items = await fetch_items(firstProduct);
-        renderItems(items, languagecode);
+        await productSelection(firstProduct);
     }
-
-    // Configura el calendario con la nueva compañía
-    setupCalendario(company);
 }
+
 async function handleProductChange() {
     const product = $(this).val();
+
+    // ✅ Obtener <option> seleccionado y extraer el product-id
+    const selectedOption = $("#productSelect option:selected");
+    const idp = selectedOption.data('product-id');
+
     productcode = product;
+    productid = idp;
 
     if (!product) {
-        // Si no hay producto seleccionado, limpia datos relevantes
         $("#horariosDisponibles").empty();
-        // También podrías limpiar otras secciones si hace falta
         return;
     }
 
     try {
-        // Obtén datos del producto según el idioma actual
-        const productData = await fetch_product(product, languagecode);
-        render_product(productData);
+        await productSelection(product);
 
-        // Obtén items asociados al producto y renderízalos
-        const items = await fetch_items(product);
-        renderItems(items, languagecode);
-
-        // Opcional: Actualiza el calendario con el código de la empresa actual
-        if (companycode) {
-            setupCalendario(companycode);
-        }
     } catch (error) {
         console.error("Error al cargar datos del producto:", error);
-        // Manejo de error visual, por ejemplo limpiar horarios
         $("#horariosDisponibles").empty();
     }
 }
 
+
 function renderHorarios(horarios) {
     if (Array.isArray(horarios) && horarios.length) {
-        // Renderizar tarjetas en grid
+
+        // 🔹 Ordenar por hora real
+        horarios.sort((a, b) => {
+            const fechaA = new Date(`2000-01-01 ${a.hora}`);
+            const fechaB = new Date(`2000-01-01 ${b.hora}`);
+            return fechaA - fechaB;
+        });
+
+        // 🔹 Renderizar tarjetas en grid
         const html = horarios.map(h => `
             <div class="horario-card" data-hora="${h.hora}">
                 <div style="font-weight:bold; font-size:14px; min-width:80px;">
@@ -404,93 +477,118 @@ function renderHorarios(horarios) {
             </div>
         `).join("");
         $("#horariosDisponibles").html(html);
-        // Rellenar <select>
+
+        // 🔹 Rellenar <select>
         const options = horarios.map(h => 
             `<option value="${h.hora}">${h.hora}</option>`
         ).join("");
         $("#selectHorario").html(options);
         $("#PrintTime").text($("#selectHorario").val());
-        // Eventos: click en card
+
+        // 🔹 Eventos: click en card
         $(".horario-card").on("click", function() {
             const hora = $(this).data("hora");
             $(".horario-card").removeClass("seleccionado");
             $(this).addClass("seleccionado");
             $("#selectHorario").val(hora).trigger("change");
         });
-        // Sincronizar select -> card
+
+        // 🔹 Sincronizar select -> card
         $("#selectHorario").on("change", function() {
             const hora = $(this).val();
             $("#PrintTime").text(hora);
             $(".horario-card").removeClass("seleccionado");
             $(`.horario-card[data-hora="${hora}"]`).addClass("seleccionado");
         });
-        // Preseleccionar el primero
+
+        // 🔹 Preseleccionar el primero
         $(".horario-card").first().addClass("seleccionado");
         $("#selectHorario").val(horarios[0].hora);
-
+        ReservationValidator.validateHorario($("#selectHorario"));
     } else {
         $("#horariosDisponibles").html('<div class="text-muted">Sin horarios disponibles</div>');
         $("#selectHorario").html('<option value="">Sin horarios</option>');
     }
 }
-async function conditionalData(companycode, productcode,languagecode){
+
+async function conditionalData(companycode, productcode, languagecode) {
     $('#addonsBlock').addClass('hidden');
-    // Validar al cambiar inputs de texto
-// 🔹 Inputs de texto y opcionales
-    $(document).on('input change', 'input[placeholder="Nombre"]', function() {
-        ReservationValidator.validateNombre(this);
+
+    // 🔹 Validación de campos de texto (Nombre, Apellidos, Correo, Teléfono, Comentarios)
+    $(document).on('input change', 'input[placeholder="Nombre"]', function () {
+        ReservationValidator.validateNombre($(this));
+
     });
-    $('#tourtype').on('change', function() {
+    $(document).on('input change', 'input[placeholder="Apellidos"]', function () {
+        ReservationValidator.validateLastName($(this));
+
+    });
+    $('#tourtype').on('change', function () {
         ReservationValidator.validateTourTypeSelect($(this));
     });
-    // 🔹 Selects principales
-    $('#companySelect').on('change', function() {
+
+    $('#companySelect').on('change', function () {
         ReservationValidator.validateCompany($(this));
     });
 
-    $('#productSelect').on('change', function() {
+    $('#productSelect').on('change', function () {
         ReservationValidator.validateProduct($(this));
     });
 
-    $('#language').on('change', function() {
+    $('#language').on('change', function () {
         ReservationValidator.validateLanguage($(this));
     });
 
-    $('#channelSelect').on('change', function() {
+    $('#channelSelect').on('change', function () {
         ReservationValidator.validateChannel($(this));
     });
-    // 🔹 Horario
-    $(document).on('click', '.horario-card', function() {
+
+    $(document).on('click', '.horario-card', function () {
         ReservationValidator.validateHorario();
     });
 
-    // 🔹 Calendario
-    $("#datepicker").on('change', function() {
+    $("#datepicker").on('change', function () {
         ReservationValidator.validateDate($(this));
     });
 
-    // 🔹 Total
-    $('#totalPaxPrice').on('input change', function() {
+    $('#totalPaxPrice').on('input change', function () {
         ReservationValidator.validateTotal($(this));
     });
 
-    // 🔹 Delegación de eventos para botones generados dinámicamente
-    $(document).on("click", ".btn-add-channel", function() {
+    $(document).on("click", ".btn-add-channel", function () {
         activandomodalEvent();
     });
-    // Empresa
-    const company = await fetch_company(companycode);
-    console.log("COMPANYYYY");
-    console.log(company);
-    console.log("COMPANYYYY");
-    render_company(company);
-    const items = await fetch_items(productcode);
-    renderItems(items, getSelectedLanguage());
 
-    // Promo
-    const promo = await fetch_promocode(companycode, promoCode);
+    // 📧 Correo (opcional pero válido si tiene valor)
+    $(document).on("input change", "input[placeholder='Correo Cliente']", function () {
+        ReservationValidator.validateEmail($(this));
+    });
 
+    // 📱 Teléfono (opcional pero válido si tiene valor)
+    $(document).on("input change", "input[placeholder='Telefono Cliente']", function () {
+        ReservationValidator.validatePhone($(this));
+    });
+
+    // 💬 Comentario (opcional, pero limpiar si tiene contenido)
+    $(document).on("blur", "textarea[placeholder*='comentario']", function () { 
+        ReservationValidator.validateComments($(this)); 
+    });
+    // validación en tiempo real, solo si está visible
+    $("#voucherCode").on("change keyup", function () {
+        if ($(this).is(":visible")) {
+            ReservationValidator.validateCommentsVoucher($(this));
+        }
+    });
+    $('#selectHorario').on('change', function () {
+        ReservationValidator.validateHorario($(this));
+    });
+    if (companycode && productcode) {
+        await productSelection(productcode);
+    }
+    // 🔹 Cargar empresa, productos e items
+    
 }
+
 async function loadCommonData() {
     try {
         const hotels = await fetch_hoteles();

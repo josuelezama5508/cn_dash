@@ -31,7 +31,7 @@ const registered_channel = async (condition) => {
                                 <span class="rep-count">${element.totalreps}</span>
                             </button>
                         </td>
-                        <td class="channel-phone">${element.phone || '-'}</td>
+                        <td class="channel-phone">${element.metodopago || '-'}</td>
                         <td class="channel-type">${element.type}</td>
                         <td>
                             <div class="channel-actions">

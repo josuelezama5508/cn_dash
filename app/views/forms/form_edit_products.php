@@ -64,7 +64,7 @@
                 <div class="form-group">
                     <label style="font-weight: 700;">Descripción:</label>
                     <div class="form-control ds-input">
-                        <input type="text" name="description" id="inputDescription" class="form-control" style="min-height: 60px;">
+                        <textarea type="text" name="description" id="txtareaDescription" class="form-control" style="min-height: 60px;"></textarea>
                     </div>
                 </div>
             </div>
@@ -88,6 +88,7 @@
 
     function registered_product() {
         function create_select(name, category, id, div) {
+            console.log(`${window.url_web}/widgets/`);
             $.ajax({
                 url: `${window.url_web}/widgets/`,
                 type: 'POST',
@@ -116,7 +117,7 @@
                     create_select('producttype', 'producttype', data.producttype, '#divProducttype');
                     $("#language").html(data.language);
                     create_select('showdash', 'show', data.showdash, "#divShowdash");
-                    create_select('showweb', 'show', data.showdash, "#divShowweb");
+                    create_select('showweb', 'show', data.showweb, "#divShowweb");
                     create_select('adultprice', 'prices', data.adultprice, "#divPriceadult");
                     create_select('childprice', 'prices', data.childprice, "#divPricechild");
                     create_select('riderprice', 'prices', data.riderprice, "#divPricerider");
@@ -124,13 +125,13 @@
                     create_select('wetsuitprice', 'prices', data.wetsuitprice, "#divPricewetsuit");
                     create_select('denomination', 'denomination', data.denomination, "#divDenomination");
                     const desc = data.description ?? "";
-                    $("#inputDescription").val(desc);
+                    $("#txtareaDescription").val(desc);
 
                     // Bloquear el campo si ya trae texto
                     if (desc.trim() !== "") {
-                        $("#inputDescription").prop("readonly", true);
+                        $("#txtareaDescription").prop("readonly", true);
                     } else {
-                        $("#inputDescription").prop("readonly", false);
+                        $("#txtareaDescription").prop("readonly", false);
                     }
                 } else {
                     $("form-edit-product").html('');
@@ -186,19 +187,19 @@
                     [ban, msg] = validate_data(texto, regexID);
                     break;
                 case 'adultprice':
-                    [ban, msg] = validate_data(texto, regexID);
+                    [ban, msg] = validate_data(texto, regexPrice);
                     break;
                 case 'childprice':
-                    [ban, msg] = validate_data(texto, regexID);
+                    [ban, msg] = validate_data(texto, regexPrice);
                     break;
                 case 'riderprice':
-                    [ban, msg] = validate_data(texto, regexID);
+                    [ban, msg] = validate_data(texto, regexPrice);
                     break;
                 case 'photoprice':
-                    [ban, msg] = validate_data(texto, regexID);
+                    [ban, msg] = validate_data(texto, regexPrice);
                     break;
                 case 'wetsuitprice':
-                    [ban, msg] = validate_data(texto, regexID);
+                    [ban, msg] = validate_data(texto, regexPrice);
                     break;
                 case 'denomination':
                     [ban, msg] = validate_data(texto, regexID);

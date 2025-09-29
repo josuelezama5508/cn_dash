@@ -271,7 +271,7 @@ function initSchedulesForm(input) {
     selected_input_schedule();
 
     setTimeout(() => {
-        $("#overlay2").css({ opacity: "1", visibility: "visible", "z-index": 999999, opacity: .5});
+        $("#overlay2").css({ opacity: "1", visibility: "visible", "z-index": 1050, opacity: .5});
         $("#modalSchedules").fadeIn();
     }, 200);
 

@@ -73,10 +73,10 @@ td {
   }
 
   /* Asegura que la celda que contiene el control tenga un ancho fijo */
-  td:nth-child(2) {
-    width: 220px; /* ajusta según tu layout */
+  /* td:nth-child(2) {
+    width: 220px;
     text-align: center;
-  }
+  } */
 .td-price {
     width: 150px; /* ajusta según tu layout */
     text-align: center;
@@ -89,7 +89,7 @@ td {
     width: auto;          /* Se ajusta al contenido o al contenedor */
     min-width: 140px;     /* ancho mínimo para no colapsar */
     max-width: 100%;      /* no sobrepasa el contenedor */
-    text-align: end;
+    text-align: justify;
     vertical-align: middle;
     padding: 8px 12px;
     word-break: break-word;

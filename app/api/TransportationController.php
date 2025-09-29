@@ -26,6 +26,9 @@ class TransportationController extends API
         } else if (isset($params['search'])) {
             $action = 'search';
             $search = $params['search'];
+        }else if (isset($params['searchHome'])) {
+            $action = 'searchHome';
+            $search = $params['searchHome'];
         }
 
 
@@ -50,6 +53,14 @@ class TransportationController extends API
                     // $response = $this->model_transportation->searchTransportation($search);
                     //BUSCAR ACTIVOS
                     $response = $this->model_transportation->searchTransportationEnable($search);
+                    //BUSCAR INACTIVOS
+                    // $response = $this->model_transportation->searchTransportationDisable($search);
+                    break;
+                case 'searchHome':
+                    //BUSCAR TODOS
+                    // $response = $this->model_transportation->searchTransportation($search);
+                    //BUSCAR ACTIVOS
+                    $response = $this->model_transportation->searchTransportationEnableHome($search);
                     //BUSCAR INACTIVOS
                     // $response = $this->model_transportation->searchTransportationDisable($search);
                     break;

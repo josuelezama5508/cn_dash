@@ -1,7 +1,7 @@
 // 🔹 Solo hace la consulta y devuelve la respuesta JSON
 async function fetch_company(companycode) {
     try {
-        const response = await fetchAPI("company", "POST", { companycode });
+        const response = await fetchAPI(`company?companycode=${companycode}`, "GET");
         const data = await response.json();
 
         if (response.status === 200 && data.data?.length) {

@@ -32,7 +32,7 @@
             <!--  -->
         </div>
 
-        <div id="modalProducts" class="modal" style="width: 900px;">
+        <div id="modalProducts" class="modal">
             <div class="modal-header">
                 <h4>Crear producto</h4>
                 <button class="btn-close"></button>
@@ -48,7 +48,7 @@
     </main>
 
 
-    <script src="<?= asset('/js/products.js') ?>?v=1"></script>
+    <script src="<?= asset('/js/products.js') ?>?123456789"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>
 </body>
 

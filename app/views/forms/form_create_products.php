@@ -2,7 +2,7 @@
     <form id="form-add-products" style="display: flex; flex-direction: column; gap: 10px;">
         <div id="form-1" style="display: flex; flex-direction: column; gap: 10px;">
             <div class="form-group">
-                <label for="select-company" style="font-weight: 700;">Empresa:</label> <span style="color: red;">*</span>
+                <label for="select-company" id="select-company" style="font-weight: 700;">Empresa:</label> <span style="color: red;">*</span>
                 <div style="display: flex; flex-direction: row; gap: 8px;">
                     <div style="width: 50px; height: 40px;">
                         <img id="logocompany" style="width: 100%; height: 100%; object-fit: contain; border: none;">

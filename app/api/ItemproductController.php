@@ -190,7 +190,7 @@ class ItemproductController extends API
             if (isset($params['action'])) {
                 $action = strtolower($params['action']);
                 switch ($action) {
-                    case 'position':
+                    case 'position2':
                         $ids = array();
 
                         $tagitem = isset($data['tagitem']) ? (array) $data['tagitem'] : [];
@@ -220,6 +220,49 @@ class ItemproductController extends API
                         $httpCode = 204;
                         $response = array("data" => $ids);
                         break;
+                        case 'position':
+                            // Obtener el objeto tagitem directamente
+                            $tagitem = isset($data['tagitem']) ? $data['tagitem'] : null;
+                            if (!$tagitem) {
+                                return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
+                            }
+                        
+                            // Si viene como string JSON, decodificarlo
+                            if (is_string($tagitem)) {
+                                $tagitem = json_decode($tagitem);
+                            }
+                        
+                            // Validar que sea objeto con propiedades necesarias
+                            if (!is_object($tagitem) || !isset($tagitem->tagitem) || !isset($tagitem->position)) {
+                                return $this->jsonResponse(["message" => "Datos inválidos."], 400);
+                            }
+                        
+                            // Buscar el tag en base al id
+                            $tag = $this->model_itemproduct->find($tagitem->tagitem);
+                            if (!count((array) $tag)) {
+                                return $this->jsonResponse(["message" => "Tag no encontrado."], 404);
+                            }
+                        
+                            // Actualizar la posición
+                            $_tag = $this->model_itemproduct->update($tagitem->tagitem, ["position" => $tagitem->position]);
+                            if ($_tag) {
+                                $this->model_history->insert([
+                                    "module" => $this->model_itemproduct->getTableName(),
+                                    "row_id" => $tag->id,
+                                    "action" => "update",
+                                    "details" => "Posición del tag actualizado.",
+                                    "user_id" => $userData->id,
+                                    "old_data" => json_encode($tag),
+                                    "new_data" => json_encode($this->model_itemproduct->find($tag->id)),
+                                ]);
+                        
+                                $httpCode = 200;
+                                $response = ["data" => [$tag->id], "tagfind"=>$tag, "tagupdate"=>$tagitem, "update"=>$_tag];
+                            } else {
+                                return $this->jsonResponse(["message" => "No se pudo actualizar."], 500);
+                            }
+                            break;
+                        
                     case 'type':
                         $tag_id = isset($data['key']) ? validate_id($data['key']) : 0;
                         $type = isset($data['value']) ? validate_producttagtype($data['value']) : '';

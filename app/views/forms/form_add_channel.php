@@ -13,8 +13,8 @@
                     <div id="divType"></div>
                 </div>
                 <div class="form-group" style="flex: 1;">
-                    <label for="channel-name" style="font-weight: 700;">Teléfono:</label>
-                    <input type="text" name="channelphone" id="channel-phone" class="form-control ds-input">
+                    <label for="channel-name" style="font-weight: 700;">Metodo de pago:</label>
+                    <input type="text" name="channelmethodpay" id="channel-phone" class="form-control ds-input">
                 </div>
             </div>
         </div>
@@ -71,8 +71,8 @@
             <tr class="rep-item-${count}">
                 <td><div class="form-group" style="flex: 1;"><input type="text" name="repname[]" class="form-control ds-input" placeholder="Nombre"></div></td>
                 <td><div class="form-group" style="flex: 1;"><input type="text" name="repemail[]" class="form-control ds-input" placeholder="Email"></div></td>
-                <td><div class="form-group" style="flex: 1;"><input type="text" name="repphone[]" class="form-control ds-input" placeholder="Teléfono"></div></td>
-                <td><div class="form-group" style="flex: 1;"><input type="text" name="repcommission[]" class="form-control ds-input" placeholder="Comisión"></div></td>
+                <td><div class="form-group" style="flex: 1;"><input type="number" name="repphone[]" class="form-control ds-input" placeholder="Metodo de pago"></div></td>
+                <td><div class="form-group" style="flex: 1;"><input type="number" name="repcommission[]" class="form-control ds-input" placeholder="Comisión"></div></td>
                 <td>
                     <div class="form-group delete-btn delete-rep" style="width: 32px; height: 32px;"><i class="material-icons">cancel</i></div>
                 </td>
@@ -95,8 +95,8 @@
                 case 'channeltype':
                     [ban, msg] = validate_data(texto, regexChannelType);
                     break;
-                case 'channelphone':
-                    [ban, msg] = validate_data(texto, /[a-zA-Z0-9.-]+/);
+                case 'channelmethodpay':
+                    [ban, msg] = validate_data(texto, regexTextArea);
                     if (texto.length == 0)
                         ban = "correcto";
                     break;
@@ -126,12 +126,19 @@
                     [ban, msg] = validate_data(texto, regexName);
                     break;
                 case 'repemail[]':
-                    [ban, msg] = validate_data(texto, regexEmail);
+                    if (texto === "") {
+                        ban = "correcto"; // permite vacío
+                        msg = "";
+                    } else {
+                        [ban, msg] = validate_data(texto, regexEmail);
+                    }
                     break;
                 case 'repphone[]':
-                    [ban, msg] = validate_data(texto, /[a-zA-Z0-9.-]+/);
-                    if (texto.length == 0)
-                        ban = "correcto";
+                    if (texto === "") {
+                        ban = "correcto"; // permite vacío
+                    } else {
+                        [ban, msg] = validate_data(texto, regexTextArea);
+                    }
                     break;
                 case 'repcommission[]':
                     [ban, msg] = validate_data(texto, regexCommission);

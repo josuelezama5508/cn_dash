@@ -1,6 +1,14 @@
 // modalReagendar.js
 window.openReagendarModal = async function(modalData) {
+    const idiomaSeleccionado = modalData?.lang === 1 ? 'en' : 'es';
     const html = `
+    <!-- <label class="form-check-label" for="empresaname">EMPRESA:</label> -->
+    <div class="d-flex align-items-center gap-2 mt-2">  
+        <img id="logocompany" 
+            style="width:80px; height:50px; object-fit:contain;" 
+            alt="Logo empresa">
+        <input class="form-control" id="empresaname" disabled>
+    </div>
     <form id="form_update_reagendar">
         <input type="hidden" id="reserva_id" value="${modalData.id}">
 
@@ -28,10 +36,8 @@ window.openReagendarModal = async function(modalData) {
             <div class="mb-3" style="flex: 1;">
                 <label class="form-label fw-bold">Idioma</label>
                 <select id="idioma" class="form-select">
-                    <option value="es" selected>Español</option>
-                    <option value="en">Inglés</option>
-                    <option value="fr">Francés</option>
-                    <option value="pt">Portugués</option>
+                    <option value="es" ${idiomaSeleccionado === 'es' ? 'selected' : ''}>Español</option>
+                    <option value="en" ${idiomaSeleccionado === 'en' ? 'selected' : ''}>Inglés</option>
                 </select>
             </div>
         </div>
@@ -64,20 +70,75 @@ window.openReagendarModal = async function(modalData) {
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
     window.currentModal = modal;
-
-    setupCalendario(modalData.code_company);
+    // rellenar logo y nombre de empresa desde modalData
+    if (modalData?.company_logo) {
+        document.getElementById("logocompany").src = modalData.company_logo;
+    }
+    if (modalData?.company_name) {
+        const input = document.getElementById("empresaname");
+        input.value = modalData.company_name;
+        input.disabled = true; // solo display
+        if (modalData?.primary_color) {
+            input.style.color = modalData.primary_color;
+        }
+    }
+    await cargarHorarios(modalData.code_company, modalData.idproduct, modalData.datepicker);
+    setupCalendario(modalData);
     document.querySelector("#modalGeneric .btn-primary").onclick = confirmReagendar;
 }
+// Función que carga horarios y rellena el select
+async function cargarHorarios(companyCode, productId, fecha) {
+    try {
+        const response = await fetchAPI(`control?getByDispo2[empresa]=${companyCode}&getByDispo2[producto]=${productId}&getByDispo2[fecha]=${fecha}`, "GET");
+        const select = document.getElementById("nuevo_horario");
+        select.innerHTML = "";
+        if (response.ok) {
+            const result = await response.json();
+            if (Array.isArray(result?.data)) {
+                const horarios = result.data.filter(h => h.disponibilidad > 0);
+                if (horarios.length) {
+                    horarios.forEach(h => {
+                        const option = document.createElement("option");
+                        option.value = h.hora;
+                        option.textContent = `${h.hora} (${h.disponibilidad} disponibles)`;
+                        select.appendChild(option);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">Sin horarios disponibles</option>';
+                }
+            } else {
+                select.innerHTML = '<option value="">Sin horarios disponibles</option>';
+            }
+        } else {
+            select.innerHTML = '<option value="">Sin horarios disponibles</option>';
+        }
+    } catch (error) {
+        console.error(error);
+        document.getElementById("nuevo_horario").innerHTML = '<option value="">Error al cargar horarios</option>';
+    }
+}
 
-window.setupCalendario = function (companycode) {
+window.setupCalendario = function (modalData) {
+    // Inyectar CSS para el z-index del calendario flatpickr
+    if (!document.getElementById('flatpickr-zindex-style')) {
+        document.head.insertAdjacentHTML('beforeend', `
+            <style id="flatpickr-zindex-style">
+                .flatpickr-calendar {
+                    z-index: 1100 !important;
+                }
+            </style>
+        `);
+    }
+
     flatpickr("#datepicker", {
-        inline: true,
         dateFormat: "Y-m-d",
         minDate: "today",
+        appendTo: document.body,
+        clickOpens: false,
         defaultDate: document.getElementById("datepicker").value,
         onChange: async function(_, dateStr) {
             try {
-                const response = await fetch(`${window.url_web}/api/control?getByDispo[empresa]=${companycode}&getByDispo[fecha]=${dateStr}`);
+                const response = await fetchAPI(`control?getByDispo2[empresa]=${modalData.code_company}&getByDispo2[producto]=${modalData.idproduct}&getByDispo2[fecha]=${dateStr}`, "GET");
                 const result = await response.json();
                 const select = document.getElementById("nuevo_horario");
                 select.innerHTML = "";
@@ -93,6 +154,9 @@ window.setupCalendario = function (companycode) {
             } catch (error) { console.error(error); }
         }
     });
+    document.getElementById("datepicker").addEventListener("focus", function(){
+        this._flatpickr.open();
+      });
 }
 window.confirmReagendar = async function() {
     const form = document.getElementById('form_update_reagendar');

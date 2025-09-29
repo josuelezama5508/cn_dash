@@ -38,6 +38,7 @@ return [
         "detalles-reserva/form_sapa" => ["controller" => "DetallesReservaController","method" => "formSapa"],
         "detalles-reserva/form_mail" => ["controller" => "DetallesReservaController","method" => "formMails"],
         "detalles-reserva/form_cancelar" => ["controller" => "DetallesReservaController","method" => "formCancel"],
+        "detalles-reserva/form_payment" => ["controller" => "DetallesReservaController","method" => "formPayment"],
 
     ],
     // Version de desarrollo

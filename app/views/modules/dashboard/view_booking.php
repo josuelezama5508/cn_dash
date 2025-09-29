@@ -25,13 +25,13 @@
                     <section class="header-reserva" style="display:flex; gap:10px; align-items:center; width:80%;">
                         <img id="logocompany" style="width:80px; height:50px; object-fit:contain;" alt="Logo empresa">
                         <!-- <input type="hidden" id="slug" name="slug" value="<?= $data['slug'] ?>"> -->
-                        <div style="flex:1;">
+                        <div style="flex:2;">
                             <label for="companySelect" style="font-weight:bold;">Empresa:</label>
                             <select id="companySelect" class="form-control ds-input" style="width:100%;"></select>
                             <input type="hidden" id="companycode" name="companycode" value="<?= $data['company'] ?>">
                         </div>
 
-                        <div style="flex:1;">
+                        <div style="flex:3;">
                             <label for="productSelect" style="font-weight:bold;">Producto:</label>
                             <select id="productSelect" class="form-control ds-input" style="width:100%;"></select>
                             <input type="hidden" id="productcode" name="productcode" value="<?= $data['product'] ?>">
@@ -103,7 +103,7 @@
                         </div>
                         <div class="container" style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; flex-direction: row; gap: 10px;"> 
-                                <div class="container" style="display: flex; flex-direction: column; gap: 10px; border-color: transparent; padding: 0px;">
+                                <div id="toursBlock" class="container" style="display: flex; flex-direction: column; gap: 10px; border-color: transparent; padding: 0px;">
                                     <div style="padding: 5px; border-bottom: 2px solid #D70000;">
                                         <span class="row-content-left" style="height: 22px; margin-left: 10px;">
                                             <i class="bi bi-ticket-detailed row-content-left"></i> Tickets
@@ -175,7 +175,7 @@
                                     <input type="text" name="" class="form-control ds-input" placeholder="Correo Cliente">
                                 </div>
                                 <div class="form-group">
-                                    <input type="text" name="" class="form-control ds-input" placeholder="Telefono Cliente">
+                                    <input type="number" name="" class="form-control ds-input" placeholder="Telefono Cliente">
                                 </div>
                                 <div class="form-group" style="position: relative;">
                                 <input id="hotelInput" placeholder="Seleccione un hotel" autocomplete="off" style="width: 100%;height: -webkit-fill-available;border: 1px solid #dee2e6;border-radius: 5px;padding: .375rem .75rem;font-size: 1rem;color: #212529;"/>
@@ -187,7 +187,8 @@
                                     <input type="text" name="" class="form-control ds-input" placeholder="Numero Hotel">
                                 </div>
                                 <div class="form-group" style="grid-column: span 2">
-                                    <textarea name="" class="form-control ds-input" placeholder="Escribe aquí tu comentario, evita usar caracteres especiales <>()'*/\"></textarea>
+                                    <textarea name="" class="form-control ds-input comentario-opcional" placeholder="Escribe aquí tu comentario, evita usar caracteres especiales."></textarea>
+
                                 </div>
                             </div>
                         </div>
@@ -203,7 +204,7 @@
                             </div>
                             <!-- Opciones de Pagar Ahora -->
                             <div id="pagarAhoraOpciones" style="display: none;">
-                                <button class="btn-primary" id="btnEfectivo">Efectivo</button>
+                                <!-- <button class="btn-primary" id="btnEfectivo">Efectivo</button> -->
                                 <button class="btn-primary" id="btnVoucher">Voucher</button>
                                 <button class="btn-primary" id="btnOtro">Otro</button>
                                 <button class="btn-back corner-button" id="btnVolverPagarAhora"  style ="position: absolute; right: 0;bottom: 0;">

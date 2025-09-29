@@ -1,5 +1,5 @@
-<section class="d-flex justify-content-center align-items-center" style="height:auto;">
-  <div class="card shadow-sm" style="width: 500px; border-radius: 8px; position: relative;">
+<section class="d-flex justify-content-center align-items-center" style="height:auto; width: -webkit-fill-available">
+  <div class="card shadow-sm" style="width: 600px; border-radius: 8px; position: relative;">
 
     <!-- Icono superior -->
     <div style="position: absolute; top: -24px; left: 24px;">
@@ -21,15 +21,15 @@
       </div>
 
       <!-- Motivo + porcentaje de reembolso en línea -->
-      <div class="d-flex gap-3 mb-3">
-        <div style="flex: 1;">
+      <div class="d-flex gap-3 mb-3" style="gap: 0.4rem !important;">
+        <div style="flex: 3;">
           <label for="motivo_cancelacion" class="form-label fw-bold">Motivo de Cancelación</label>
           <select class="form-select" id="motivo_cancelacion">
             <!-- Opciones se llenarán dinámicamente -->
           </select>
         </div>
 
-        <div style="max-width: 120px;">
+        <div style="flex: 2;">
           <label class="form-label fw-bold">Porcentaje de reembolso</label>
           <div class="d-flex align-items-center gap-2">
             <input type="number" id="porcentaje_reembolso" class="form-control" value="0" min="0" max="100" style="max-width: 60px;">

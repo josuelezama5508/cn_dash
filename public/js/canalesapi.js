@@ -36,6 +36,10 @@ function render_channels(channels, highlightId = null) {
     }
 
     $channelSelect.append('<option value="add">➕ Agregar</option>');
+    if (highlightId) {
+        $channelSelect.val(highlightId).trigger("change");
+    }
+    
 }
 
 
@@ -45,6 +49,7 @@ $(document).on("change", "#channelSelect", async function () {
     if (val === "add") {
         $(this).val(""); // reset selection
         render_add_channel_form(); // 👈 Aquí renderizas el formulario directamente
+        
     } else {
         $("#channelFormContainer").empty(); // limpia el formulario si se cambia a otra opción
         if (val) {
@@ -65,12 +70,12 @@ function render_add_channel_form() {
                 </div>
 
                 <div class="form-group">
-                    <button id="addRepItem" class="btn-icon">
+                    <button id="addRepItem" class="btn-icon" type="button">
                         <i class="material-icons left">add</i> ADD REP
                     </button>
                 </div>
 
-                <form id="form-add-rep">
+                <form id="form-add-rep" style="display:none;">
                     <table class="table table-scrollbar" style="margin: 0;">
                         <thead>
                             <tr>
@@ -92,6 +97,7 @@ function render_add_channel_form() {
     $("#channelFormContainer").html(html);
     $("#divType").html(create_channel_type());
 }
+
 $(document).on("click", "#btnSaveChannel", function (e) {
     e.preventDefault();
     sendEvent(); // ya existente
@@ -258,18 +264,20 @@ $('#repSelect').on('select2:select', function (e) {
     //     render_add_rep_form(channelId);
     // }
 });
-$(document).on("click", "#addRepItem", function() {
-    create_rep_item();
+$(document).on("click", "#addRepItem", function(e) {
+    create_rep_item(e);
+    
 });
-function create_rep_item() {
+function create_rep_item(e) {
     const companycode = $("#companySelect").val();
     if (!companycode || companycode === "0") {
         alert("Por favor selecciona una empresa antes de agregar reps.");
         return;
     }
-
-    let isValid = rep_items_are_valid();
-    if (!isValid) return;
+    e.preventDefault(); // evita que el botón recargue la página si está dentro de un form
+    $("#form-add-rep").slideDown(); // animación para mostrar el formulario
+    // let isValid = rep_items_are_valid();
+    // if (!isValid) return;
 
     let count = itemProductCount;
     let item = `

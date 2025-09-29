@@ -10,7 +10,7 @@ return [
         "control" => ["controller" => "ControlController", "methods" => array("POST", "GET", "PUT")],
         "combo" => ["controller" => "ComboController", "methods" => array("POST", "GET", "PUT")],
         "cancellation" => ["controller" => "CancellationTypesController", "methods" => array("POST", "GET", "PUT")],
-        "company" => ["controller" => "CompanyController", "methods" => array("GET", "POST", "PUT")],
+        "company" => ["controller" => "CompanyController", "methods" => array("GET", "POST", "PUT", "PATCH")],
         "products" => ["controller" => "ProductController", "methods" => array("GET", "POST", "PUT")],
         "tags" => ["controller" => "TagController", "methods" => array("GET", "POST", "PUT")],
         "itemproduct" => ["controller" => "ItemproductController", "methods" => array("GET", "POST", "PUT", "DELETE")],
@@ -20,6 +20,8 @@ return [
         "transportation" => ["controller" => "TransportationController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         "camioneta" => ["controller" => "CamionetaController", "methods" => array("GET", "POST", "PUT", "DELETE")],
         "message" => ["controller" => "BookingMessageController", "methods" => array("GET", "POST", "PUT", "DELETE")],
+        "showsapa" => ["controller" => "ShowSapaController", "methods" => array("GET", "POST", "PUT", "DELETE")],
+        "notificationservice" => ["controller" => "NotificationServiceController", "methods" => array("POST")],
         // "rep" => ["controller" => "RepController", "methods" => array("GET", "POST", "PUT", "DELETE")],
 
         // "empresas" => ["controller" => "EmpresaController", "methods" => array("GET", "POST", "PUT", "PATCH")],

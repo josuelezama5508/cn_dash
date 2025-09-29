@@ -130,15 +130,22 @@ function render_reservationResponse(buttonId, responseObj) {
 }
 
 // 🔹 Función usada por los botones
-async function enviarReservaConEstatus(buttonId, estatus, voucherCode, platform = "dash") {
+async function enviarReservaConEstatus(buttonId, estatus, voucherCode, platform = "dash", soloAddons = false) {
     const $btn = $('#' + buttonId);
     $btn.prop('disabled', true);
-
-    // 🔹 Validación
-    if (!ReservationValidator.validateAll()) {
-        $btn.prop('disabled', false);
-        return;
+    if(estatus === 1){
+        if (!ReservationValidator.validateAllVoucher(soloAddons)) {
+            $btn.prop('disabled', false);
+            return;
+        }
+    }else{
+        if (!ReservationValidator.validateAll(soloAddons)) {
+            $btn.prop('disabled', false);
+            return;
+        }
     }
+    // 🔹 Validación
+    
 
     try {
         // 🔹 Mostrar modal de carga

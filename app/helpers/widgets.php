@@ -76,12 +76,17 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$items, fn($item) => $item->name];
 
             case 'prices':
-                $result = $model_price->where("active = '1'");
+                $result = $model_price->where("active = '1' ORDER BY price ASC");
+                $items = array_map(function ($r) {
+                    return ["id" => convert_to_price($r->price), "name" => convert_to_price($r->price)];
+                }, $result);
+                return [$items, fn($item) => $item->name];
+            case 'pricesNormal':
+                $result = $model_price->where("active = '1' ORDER BY price ASC");
                 $items = array_map(function ($r) {
                     return ["id" => $r->id, "name" => convert_to_price($r->price)];
                 }, $result);
                 return [$items, fn($item) => $item->name];
-
             case 'denomination':
                 $result = $model_currency->where("active = '1'");
                 $items = array_map(function ($r) {

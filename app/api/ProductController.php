@@ -51,7 +51,7 @@ class ProductController extends API
             [$action, $search] = $this->get_params($params);
             $response = null;
             $httpCode = 200;
-
+            $decoded= null;
             // Obtener datos
             switch ($action) {
                 case 'getDataDash':
@@ -76,7 +76,7 @@ class ProductController extends API
                     
                     break;
                 case 'companycode':
-                    $company = $this->model_company->where("company_code = '$search' AND disponibilidad_api = '1' AND active = '1'");
+                    $company = $this->model_company->where("company_code = '$search' AND statusD = '1' AND active = '1'");
                     if (!count($company)) return $this->jsonResponse(["message" => "Empresa no valida."], 400);
                     $company = $company[0];
     
@@ -102,15 +102,19 @@ class ProductController extends API
                     }
                     
                     // Reindexar el arreglo para evitar saltos en los índices
-                    $productos = array_values($productos);
+                    usort($productos, function ($a, $b) {
+                        $nameA = strtolower(trim($a->productname));
+                        $nameB = strtolower(trim($b->productname));
+                        return strcmp($nameA, $nameB);
+                    });
                     
-    
+                
                     return $this->jsonResponse(["data" => $productos], 200);
                     break;
                 case 'productcode':  // Obtener todos los productos
                     $products = $this->model_product->consult(
-                        ["PROD.product_code AS productcode", "PROD.company_id AS company", "PROD.product_name AS productname", "UPPER(LANG.code) AS language", "PRI.price AS productprice", "UPPER(CURR.denomination) AS denomination", "PROD.show_dash AS productstatus", "PROD.show_web AS web", "PROD.location_description", "PROD.location_url", "PROD.location_image", "PROD.is_combo"],
-                        "PROD INNER JOIN language_codes LANG ON PROD.lang_id = LANG.lang_id INNER JOIN currency_codes CURR ON PROD.currency_id = CURR.currency_id INNER JOIN prices PRI ON PROD.price_adult = PRI.price_id",
+                        ["PROD.product_code AS productcode", "PROD.company_id AS company", "PROD.product_name AS productname", "UPPER(LANG.code) AS language", "price_adult AS productprice", "UPPER(CURR.denomination) AS denomination", "PROD.show_dash AS productstatus", "PROD.show_web AS web", "PROD.ubicacion", "PROD.link_book", "PROD.location_image"],
+                        "PROD INNER JOIN language_codes LANG ON PROD.lang_id = LANG.lang_id INNER JOIN currency_codes CURR ON PROD.currency_id = CURR.currency_id",
                         "PROD.product_code = '$search' "
                     );
                     $response = $products;
@@ -199,7 +203,7 @@ class ProductController extends API
     public function getCompanyProductsByPlatformAndLanguage($company_code, $language_id, $platform) {
         // 1. Validar empresa activa y con disponibilidad_api=1
         $companyData = $this->model_company->where(
-            "company_code = :company_code AND disponibilidad_api = '1' AND active = '1'",
+            "company_code = :company_code AND statusD = '1' AND active = '1'",
             ['company_code' => $company_code]
         );
     
@@ -242,10 +246,13 @@ class ProductController extends API
                 // No hay producto con ese idioma, saltar
                 continue;
             }
-    
+            // Ordenar productos alfabéticamente por nombre
+            
             $productosFiltrados[] = $productoIdioma[0];
         }
-    
+        usort($productosFiltrados, function ($a, $b) {
+            return strcmp($a->productname, $b->productname);
+        });
         return $productosFiltrados;
     }
     
@@ -324,17 +331,22 @@ class ProductController extends API
 
             $company = $this->model_company->find($company_id);
             if (!count((array) $company)) return $this->jsonResponse(["message" => "Empresa a la que se hacer referencia no existe."], 409);
-
+            
             // Registrar los productos
             if (intval(count($productnameArray)) == 0) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
 
             $ids = array();
+            $companyProducts = [];
             for ($i = 0; $i < intval(count($productnameArray)); $i++) {
+                 // Aplicamos trim a todos los campos de texto/textarea
+                $prodname        = isset($productnameArray[$i]) ? trim(validate_productname($productnameArray[$i])) : '';
+                $proddescription = isset($descriptionArray[$i]) ? trim(validate_textarea($descriptionArray[$i])) : '';
+                
                 $prodlang_id = isset($productlangArray[$i]) ? validate_id($productlangArray[$i]) : 1;
-                $prodname = isset($productnameArray[$i]) ? validate_productname($productnameArray[$i]) : '';
+                // $prodname = isset($productnameArray[$i]) ? validate_productname($productnameArray[$i]) : '';
                 $prodprice_id = isset($productpriceArray[$i]) ? validate_id($productpriceArray[$i]) : 1;
                 $prodcurrency_id = isset($denominationArray[$i]) ? validate_id($denominationArray[$i]) : 1;
-                $proddescription = isset($descriptionArray[$i]) ? validate_textarea($descriptionArray[$i]) : '';
+                // $proddescription = isset($descriptionArray[$i]) ? validate_textarea($descriptionArray[$i]) : '';
                 $prodshowdash = isset($showpanelArray[$i]) ? ((in_array(intval($showpanelArray[$i]), [0, 1])) ? intval($showpanelArray[$i]) : 0) : 0;
                 $prodshowweb = isset($showwebArray[$i]) ? ((in_array(intval($showwebArray[$i]), [0, 1])) ? intval($showwebArray[$i]) : 0) : 0;
 
@@ -356,6 +368,12 @@ class ProductController extends API
                     "company_id" => $company_id
                 ));
                 if ((array) $product) {
+                    $companyProducts[] = [
+                        "codigoproducto" => $productcode,
+                        "bd" => "products"
+                    ];
+                }
+                if ((array) $product) {
                     // Capturar evento en el historial
                     $this->model_history->insert(array(
                         "module" => $this->model_product->getTableName(),
@@ -366,9 +384,33 @@ class ProductController extends API
                         "old_data" => json_encode([]),
                         "new_data" => json_encode($this->model_product->find($product->id)),
                     ));
-                    $ids[] = array($product->id);
+                    $ids[] =$product->id;
                 }
             }
+            if (!empty($companyProducts)) {
+                // Obtener y mezclar productos anteriores
+                $oldProductsCompany = json_decode($company->productos, true) ?? [];
+                $newCompanyProducts = $oldProductsCompany;
+            
+                foreach ($companyProducts as $newProduct) {
+                    $exists = false;
+                    foreach ($newCompanyProducts as $existing) {
+                        if (
+                            $existing['codigoproducto'] === $newProduct['codigoproducto'] &&
+                            $existing['bd'] === $newProduct['bd']
+                        ) {
+                            $exists = true;
+                            break;
+                        }
+                    }
+                    if (!$exists) {
+                        $newCompanyProducts[] = $newProduct;
+                    }
+                }
+                $newCompanyProducts= json_encode($newCompanyProducts);
+                $this->model_company->update($company->id, array("productos" => $newCompanyProducts));
+            }
+            
             $httpCode = 201;
             $response = array("data" => $ids);
 
@@ -399,11 +441,11 @@ class ProductController extends API
             $data = json_decode(file_get_contents("php://input"), true);
             if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
 
-            $adultprice_id = isset($data['adultprice']) ? validate_id($data['adultprice']) : 1;
-            $childprice_id = isset($data['childprice']) ? validate_id($data['childprice']) : 1;
-            $photoprice_id = isset($data['photoprice']) ? validate_id($data['photoprice']) : 1;
-            $riderprice_id = isset($data['riderprice']) ? validate_id($data['riderprice']) : 1;
-            $wetsuitprice_id = isset($data['wetsuitprice']) ? validate_id($data['wetsuitprice']) : 1;
+            $adultprice_id = isset($data['adultprice']) ? validate_price($data['adultprice']) : 1;
+            $childprice_id = isset($data['childprice']) ? validate_price($data['childprice']) : 1;
+            $photoprice_id = isset($data['photoprice']) ? validate_price($data['photoprice']) : 1;
+            $riderprice_id = isset($data['riderprice']) ? validate_price($data['riderprice']) : 1;
+            $wetsuitprice_id = isset($data['wetsuitprice']) ? validate_price($data['wetsuitprice']) : 1;
             $denomination_id = isset($data['denomination']) ? validate_id($data['denomination']) : 1;
             $producttype = isset($data['producttype']) ? validate_producttype($data['producttype']) : 'tour';
             $showdash = isset($data['showdash']) ? validate_status($data['showdash']) : 0;

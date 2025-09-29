@@ -550,23 +550,42 @@ function stattus_widget(status = 0) {
 
 function createSelectLang($item) {
     let options = '';
+    $item.html("<option>Conectando...</option>");
 
-    $item.html("<option>Connecting...</option>");
+    // Obtener los idiomas ya seleccionados
+    const idiomasUsados = new Set();
+    $("[name='productlang[]']").each(function () {
+        const val = $(this).val();
+        if (val) idiomasUsados.add(val);
+    });
 
     fetchAPI_AJAX("idiomas", "GET")
-      .done((response, textStatus, jqXHR) => {
-        const status = jqXHR.status;
-        if (status == 200) {
-            const result = response.data;
-            result.forEach((lang) => {
-                options += `<option value="${lang.id}">${lang.langcode}</option>`;
-            });
-            $item.html(options);
-        }
-      })
-      .fail((error) => {});
-    return options;
+        .done((response, textStatus, jqXHR) => {
+            const status = jqXHR.status;
+            if (status == 200) {
+                const result = response.data;
+                let hayOpciones = false;
+                options = '<option value="">Seleccione idioma</option>';
+
+                result.forEach((lang) => {
+                    if (!idiomasUsados.has(lang.id.toString())) {
+                        options += `<option value="${lang.id}">${lang.langcode}</option>`;
+                        hayOpciones = true;
+                    }
+                });
+
+                if (!hayOpciones) {
+                    options = '<option value="">Sin idiomas disponibles</option>';
+                }
+
+                $item.html(options);
+            }
+        })
+        .fail((error) => {
+            $item.html('<option>Error al cargar</option>');
+        });
 }
+
 
 function createSelectPrice($item) {
     let options = "";
@@ -579,7 +598,7 @@ function createSelectPrice($item) {
         if (status == 200) {
             const result = response.data;
             result.forEach((lang) => {
-                options += `<option value="${lang.id}">${lang.price}</option>`;
+                options += `<option value="${lang.price}">${lang.price}</option>`;
             });
             $item.html(options);
         }

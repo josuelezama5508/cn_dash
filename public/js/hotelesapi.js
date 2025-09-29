@@ -19,41 +19,60 @@ function render_hotels(hotels) {
     const $input = $("#hotelInput");
     const $dropdown = $("#hotelDropdown");
     let currentIndex = -1;
+
     function showDropdown(matches) {
         $dropdown.empty();
         currentIndex = -1; // reset highlight
+
         if (matches.length > 0) {
             matches.forEach(h => {
                 $dropdown.append(`<li style="padding:5px; cursor:pointer;">${h.nombre}</li>`);
             });
             $dropdown.show();
         } else {
-            $dropdown.hide();
+            // ✅ No hay hoteles
+            $dropdown.append('<li style="padding:5px; color:#999; cursor:default;">NO EXISTEN HOTELES</li>');
+            $dropdown.show();
+
+            // 🔹 Limpiar input
+            $input.val("");
+
+            // 🔹 Hint PENDIENTE (puede ser placeholder o un elemento extra)
+            $input.attr("placeholder", "PENDIENTE");
         }
     }
+
     $input.on("input", function () {
         const query = $(this).val().toLowerCase();
         const matches = hotels.filter(h => h.nombre.toLowerCase().includes(query));
         showDropdown(matches);
     });
+
     $input.on("focus", function () {
         if ($(this).val() === "") {
-            showDropdown(hotels); // ✅ pasamos el array completo
+            showDropdown(hotels);
         }
     });
+
     // Resaltar al pasar el mouse
     $dropdown.on("mouseenter", "li", function () {
         $dropdown.find("li").removeClass("active");
         $(this).addClass("active");
         currentIndex = $(this).index();
     });
+
     $dropdown.on("click", "li", function () {
-        $input.val($(this).text());
-        $dropdown.hide();
+        const text = $(this).text();
+        if (text !== "NO EXISTEN HOTELES") {
+            $input.val(text);
+            $dropdown.hide();
+            $input.attr("placeholder", ""); // limpiar hint
+        }
     });
+
     // Navegación con teclado
     $input.on("keydown", function(e) {
-        const $items = $dropdown.find("li");
+        const $items = $dropdown.find("li").not(':contains("NO EXISTEN HOTELES")');
         if ($items.length === 0) return;
 
         if (e.key === "ArrowDown") {
@@ -73,9 +92,11 @@ function render_hotels(hotels) {
             if (currentIndex >= 0) {
                 $input.val($items.eq(currentIndex).text());
                 $dropdown.hide();
+                $input.attr("placeholder", "");
             }
         }
     });
+
     function scrollToView($item) {
         const container = $dropdown[0];
         const item = $item[0];
@@ -92,6 +113,7 @@ function render_hotels(hotels) {
         }
     });
 }
+
 
 
 

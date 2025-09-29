@@ -19,35 +19,52 @@ $token = $_SESSION['user'];
     <main>
         <div class="content">
             <!--  -->
-            <div class="main-content" style="padding-top: 0;">
+            <div class="main-content" style="padding: 0px;">
                 <!--  -->
                 <div style="display: flex; flex-direction: column; justify-content: center; gap: 20px;">
                     <!--  -->
-                    <input type="search" name="search" class="form-control ds-input" placeholder="Search...">
+                    <!-- <input type="search" name="search" class="form-control ds-input" placeholder="Search..."> -->
                     <!--  -->
                     <div class="recent-bookings">
-                        <p style="font-size: 17px; margin-bottom: 6px;"><i class="bi bi-clipboard-data-fill" style="padding-right: 5px;"></i>Reservas Recientes</p>
-                        <div class="table-container">
-                            <table class="table table-scrollbar" style="margin: 0;">
+                        
+                        <div class="container" style="display: flex; flex-direction: row; gap: 8px; align-items: end; padding-bottom: 15px; max-width: -webkit-fill-available;">
+                            <div style="flex: 4;">
+                                <p style="font-size: 17px; margin-bottom: 6px;">
+                                    <i class="bi bi-clipboard-data-fill" style="padding-right: 5px;"></i>Reservas Recientes
+                                </p>
+                            </div>
+                            <div  style="flex: 6; display: flex; justify-content: center; align-items: center;">
+                                <div id="btn_show_transportacion" class="btn-transport custom-header-second">
+                                    <i class="material-icons left">airport_shuttle</i>
+                                    Transportación
+                                </div>
+                            </div>
+
+                            <div style="flex: 8;">
+                                <input type="search" name="search" id="search" class="form-control ds-input" placeholder="Search...">
+                            </div>
+                        </div>
+                        <div class="table-container-scroll">
+                            <table id="table-home-reservas" class="table table-bordered table-align-center">
                                 <thead>
-                                    <tr style="color: black; font-size:16px;">
-                                        <th scope="col" style="width: 170px">Fecha de Actividad</th>
-                                        <th scope="col" style="width: 80px">Horario</th>
-                                        <th scope="col">Empresa</th>
-                                        
-                                        <th scope="col">Pax</th>
-                                        <th scope="col">Actividad</th>
-                                        
-                                        <th scope="col">Cliente</th>
-                                        <th scope="col">Booking ID</th>
-                                        <th scope="col">Total</th>
-                                        <th scope="col">Estado</th>
+                                    <tr class="custom-header" style="position: sticky; top: 0; z-index: 1; border-right: 1px solid #ddd; ">
+                                        <th>Fecha de Actividad</th>
+                                        <th>Horario</th>
+                                        <th>Empresa</th>
+                                        <th>Actividad</th>
+                                        <th>Cliente</th>
+                                        <th>Procesado</th>
+                                        <th>Booking</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="RBuscador"></tbody>
                             </table>
                         </div>
                     </div>
+
                     <!--  -->
                     <div class="operation-summary">
                         <p style="font-size: 17px;  margin-bottom: 0px;"><i class="bi bi-activity" style="padding-right: 5px;"></i>Resumen de Operacion</p>
@@ -137,6 +154,9 @@ $token = $_SESSION['user'];
         </div>
     </div>
     <script src="<?= asset('/js/routesapi.js') ?>?v=1"></script>
+    <script src="<?= asset('/js/transportationapi.js') ?>?v=1"></script>
+    <script src="<?= asset('/js/home/modalSearchT.js') ?>?v=1"></script>
+
     <script src="<?= asset('/js/home/resumen-operacion.js') ?>?v=1"></script>
     <script src="<?= asset('/js/home.js') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>

@@ -1,7 +1,7 @@
 // modalType.js
 window.openTypeReservationModal = async function (modalData) {
     const html = `<div class="mb-3">
-        <label class="form-label fw-bold">Canal</label>
+        
         <select id="modalTypeSelect" class="form-select">
             <option value="">Selecciona el tipo de servicio</option>
         </select>
@@ -27,3 +27,9 @@ window.openTypeReservationModal = async function (modalData) {
         } catch(e){ console.error(e); alert("Error en la conexión"); }
     }
 }
+window.closeModal = function () {
+    if (window.currentModal) {
+        window.currentModal.hide();
+        window.currentModal = null;
+    }
+};

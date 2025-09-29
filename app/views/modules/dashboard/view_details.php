@@ -11,55 +11,55 @@
         <?php include_once(__DIR__ . '/../../partials/menu_dash.php') ?>
 
         <div class="container mt-4">
-            <h2 class="text-primary mb-4">Detalles de la Reserva</h2>
-
+           
+             <h3 class="text-primary mb-4">Detalles de la Reserva</h3>
             <!-- BOTONES -->
             <div class="mb-4 d-flex flex-wrap gap-2">
+                
                 <button class="btn btn-info text-white" id="btnAgregarSapa"><i class="fas fa-plus-circle"></i> Agregar Sapa</button>
                 <button class="btn btn-success" id="btnProcesarReserva"><i class="fas fa-check"></i> Procesar Reserva</button>
                 <button class="btn btn-primary" id="btnReagendarReserva" style="border-radius: 6px;"><i class="fas fa-envelope"></i> Reagendar Reserva</button>
                 <button class="btn btn-dark" id="btnAbrirReservaVinculada"><i class="fas fa-link"></i> Reservas vinculadas</button>
                 <!-- <button class="btn btn-warning text-white"><i class="fas fa-bell"></i> Enviar Notificación</button> -->
-                <button class="btn btn-danger" id="btnCancelarReserva"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
-                <button class="btn btn-secondary" id="btnAbrirMensajes"><i class="fas fa-comments"></i> Ver Mensajes</button>
+                <button class="btn btn-secondary" id="btnAbrirMensajes"><i class="fas fa-envelope-open-text"></i> Historial Correos</button>
             </div>
             <!-- INFORMACIÓN USUARIO + RESERVA -->
             <div class="row mb-4">
                 <div class="col-md-4">
-                    <div class="card sombra-custom">
-                        <div class="card-header bg-primary text-white">
+                    <div class="card sombra-custom" style="height: -webkit-fill-available;">
+                        <div class="card-header custom-header text-white">
                             <strong>Datos Usuario</strong>
                         </div>
                         <div class="card-body">
                             <!-- Nombre -->
                             <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-user"></i> Nombre</label>
-                            <input type="text" id="usuario_nombre" class="form-control editable" placeholder="Nombre">
+                                <label class="form-label"><i class="fas fa-user"></i> Nombre</label>
+                                <input type="text" id="usuario_nombre" class="form-control editable" placeholder="Nombre">
                             </div>
                             <!-- Apellido -->
                             <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-user"></i> Apellido</label>
-                            <input type="text" id="usuario_apellido" class="form-control editable" placeholder="Apellido">
+                                <label class="form-label"><i class="fas fa-user"></i> Apellido</label>
+                                <input type="text" id="usuario_apellido" class="form-control editable" placeholder="Apellido">
                             </div>
                             <!-- Email -->
                             <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
-                            <input type="email" id="usuario_email" class="form-control editable" placeholder="Email">
+                                <label class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                                <input type="email" id="usuario_email" class="form-control editable" placeholder="Email">
                             </div>
                             <!-- Teléfono -->
                             <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-phone"></i> Teléfono</label>
-                            <input type="number" id="usuario_telefono" class="form-control editable" placeholder="Teléfono">
+                                <label class="form-label"><i class="fas fa-phone"></i> Teléfono</label>
+                                <input type="number" id="usuario_telefono" class="form-control editable" placeholder="Teléfono">
                             </div>
                             <!-- Hotel -->
                             <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-hotel"></i> Hotel</label>
-                            <input type="text" id="usuario_hotel" class="form-control editable" placeholder="Hotel">
+                                <label class="form-label"><i class="fas fa-hotel"></i> Hotel</label>
+                                <input type="text" id="usuario_hotel" class="form-control editable" placeholder="Hotel">
                             </div>
                             <!-- Cuarto -->
                             <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-door-closed"></i> Cuarto</label>
-                            <input type="text" id="usuario_cuarto" class="form-control editable" placeholder="Cuarto">
+                                <label class="form-label"><i class="fas fa-door-closed"></i> Cuarto</label>
+                                <input type="text" id="usuario_cuarto" class="form-control editable" placeholder="Cuarto">
                             </div>
                         </div>
                     </div>
@@ -67,11 +67,12 @@
 
                 <!-- Datos de la reserva -->
                 <div class="col-md-5">
-                    <div class="card sombra-custom">
-                        <div class="card-header bg-info text-white"><strong>Datos de la Reserva</strong></div>
+                    <div class="card sombra-custom" style="height: -webkit-fill-available;">
+                        <div class="card-header custom-header text-white"><strong>Datos de la Reserva</strong></div>
                         <div class="card-body">
                             <p><strong>Referencia:</strong> <span id="reserva_referencia"></span></p>
                             <p><strong>Actividad:</strong> <span id="reserva_actividad"></span></p>
+                            <p><strong>Empresa:</strong> <span id="company_name"></span></p>
                             <p><strong>Fecha:</strong> <span id="reserva_fecha"></span></p>
                             <p><strong>Hora:</strong> <span id="reserva_hora"></span></p>
                             <p><strong>Booking ID:</strong> <span id="reserva_booking" class="text-primary fw-bold"></span></p>
@@ -94,8 +95,12 @@
                                 <i class="fas fa-edit"></i> Editar Pax
                             </button>
                             <p class="text-end"><strong>Total:</strong> <span id="reserva_total"></span></p>
-                            <button class="btn btn-success" id="btn_pagar"><i class="fas fa-dollar-sign"></i> Pagar</button>
-                            <button class="btn btn-info" id="btn_imprimir"><i class="fas fa-print"></i> Imprimir</button>
+                            <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px; justify-content: end;">
+                                <button class="btn btn-success" id="btn_prueba"><i class="fas fa-dollar-sign"></i> prueba</button>    
+                                <button class="btn btn-success" id="btn_pagar"><i class="fas fa-dollar-sign"></i> Pagar</button>
+                                <button class="btn btn-danger" id="btnCancelarReserva"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
+                            </div>
+                            
                         </div>
                             
                     </div>
@@ -103,8 +108,8 @@
 
                 <!-- Información extra -->
                 <div class="col-md-3">
-                    <div class="card sombra-custom">
-                        <div class="card-header bg-secondary text-white"><strong>Información Extra</strong></div>
+                    <div class="card sombra-custom" style="height: -webkit-fill-available;">
+                        <div class="card-header custom-header text-white"><strong>Información Extra</strong></div>
                         <div class="card-body small">
                             <p><strong>Estado:</strong> <span id="reserva_estado" class="badge"></span></p>
                             <p><strong>Balance:</strong> <span id="reserva_balance" class="badge bg-info"></span></p>
@@ -129,22 +134,53 @@
                         </div>
                     </div>
                 </div>
+                
+
+
                 <!-- Sección de Notas -->
-                <div class="card sombra-custom mt-4">
-                    <div class="card-header bg-light"><strong>Notas</strong></div>
+                <div class="card sombra-custom mt-4" style="padding: 0px;">
+                    <div class="card-header custom-header text-white"><strong>Notas</strong></div>
                     <div class="card-body">
                         <div id="notasList" class="list-group"></div>
+                        <div class="container" style="display: flex; flex-direction: column; gap: 8px;">
+                            
+                            <!-- Últimos mensajes de la reserva -->
+                            <div id="ultimoMensajeReserva" class="mt-3" style="display: none;">
+                                <div id="mensajeTipoBox"></div>
+                            </div>
 
-                        <!-- Input para agregar nueva nota -->
-                        <div class="input-group mt-3">
-                            <textarea id="nuevaNota" class="form-control" placeholder="Agregar comentario..." rows="2"></textarea>
-                            <button class="btn btn-primary" id="btnAgregarNota" type="button">
-                                Enviar <i class="fas fa-paper-plane"></i>
-                            </button>
+                            <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px; align-items: end;">
+                                <div style="flex: 4;">
+                                    <textarea id="nuevaNota" class="form-control" placeholder="Agregar comentario..." rows="2"></textarea>
+                                </div>
+                                <div style="flex: 2;">
+                                    <label for="typenote" style="font-weight: bold; margin-left: 10px;">Tipo:</label>
+                                    <div id="divType">
+                                        <select id="typenote" name="typenote" class="form-control ds-input" style="width: 100%;">
+                                            <option value="nota">Nota</option>
+                                            <option value="importante">Importante</option>        
+                                            <option value="balance">Balance</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="flex: 1;">
+                                    <button class="btn btn-primary" id="btnAgregarNota" type="button">
+                                        Enviar <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
+                <!-- Sección de Notas -->
+                <div class="card sombra-custom mt-4" style="padding: 0px; display: none;">
+                    <div class="card-header custom-header text-white"><strong>Sapas</strong></div>
+                    <div class="card-body">
+                            <!-- SAPAS de la reserva -->
+                            <div id="sapa-container"></div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Modal independiente para Reservas Vinculadas -->
                 <div class="modal fade" id="modalReservasVinculadas" tabindex="-1">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -163,37 +199,41 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="modalGeneric" tabindex="-1" style="background: transparent;width: 40%;">
-                <div class="modal-dialog">
+            <!-- Modal Genérico -->
+            <div class="modal fade" id="modalGeneric" tabindex="-1" style="background: transparent;">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header" style="background: transparent;">
-                            <h5 class="modal-title" id="modalGenericTitle" style = "color: black;"></h5>
-                            <button type="button" class="btn-close" onclick="closeModal()"></button>
-                        </div>
-                        <div class="modal-body" id="modalGenericContent">
-                            <!-- Contenido grande aquí -->
-                        </div>
-                        <div class="modal-footer" style= "flex-direction: row;">
-                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-                            <button type="button" class="btn btn-primary">Guardar</button>
-                        </div>
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title" id="modalGenericTitle" style="color: black;"></h5>
+                        <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button> -->
+                    </div>
+                    <div class="modal-body p-3" id="modalGenericContent">
+                        <!-- Aquí se inyecta tu tarjeta -->
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary">Guardar</button>
+                    </div>
                     </div>
                 </div>
             </div>
+
+
+
             <!-- Modal lateral derecho para mensajes -->
-            <div id="modalMensajes" class="modal-right">
-                <div class="modal-content-right">
-                    <div class="modal-header">
+            <div id="modalMensajes" class="modal-right-note">
+                <div class="modal-content-right-note">
+                    <div class="modal-header-note">
                     <h5>Mensajes de la Reserva</h5>
-                    <button id="btnCerrarModalMensajes" class="btn-close">&times;</button>
+                    <button id="btnCerrarModalMensajes" class="btn-close"></button>
                     </div>
-                    <div class="modal-body" id="mensajesContainer">
+                    <div class="modal-body-note" id="mensajesContainer">
                     <!-- Lista de mensajes cargados aquí -->
                     </div>
-                    <div class="modal-footer">
+                    <!-- <div class="modal-footer">
                     <textarea id="mensajeEditTexto" rows="3" placeholder="Editar mensaje..."></textarea>
                     <button id="btnGuardarMensaje" disabled>Guardar</button>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -209,28 +249,34 @@
         <script src="<?= asset('/js/tiposerviciosapi.js') ?>?v=1"></script>
         <script src="<?= asset('/js/canalesapi.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingmessageapi.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/transportationapi.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/showsapaapi.js') ?>?v=1"></script>
 
         <!-- 2️⃣ Render de items y booking detail -->
         <script src="<?= asset('/js/bookingdetail/renderReservaItems.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/main.js') ?>?v=1"></script>
         <!-- <script src="<?= asset('/js/modalesReserva.js') ?>?v=1"></script> -->
+        <script src="<?= asset('/js/bookingdetail/renderShowsapa.js') ?>?v=1"></script>
         <!-- 3️⃣ Core de modales -->
         <script src="<?= asset('/js/bookingdetail/modalCore.js') ?>?v=1"></script>
         <!-- 4️⃣ Notifications -->
         <script src="<?= asset('/js/bookingdetail/modalWrappers.js') ?>?v=1"></script>
 
         <!-- 5️⃣ Notifications -->
+        <script src="<?= asset('/js/notificationservice/notifications.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/notifications.js') ?>?v=1"></script>
 
         <!-- 6️⃣ Modales específicos -->
         <script src="<?= asset('/js/bookingdetail/notesTimeLine.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalSapa.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalMail.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/bookingdetail/modalPayment.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalReagendar.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalCancel.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalChannel.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalType.js') ?>?v=1"></script>
         <script src="<?= asset('/js/bookingdetail/modalVinculados.js') ?>?v=1"></script>
+        
         
         <!-- <script src="<?= asset('/js/bookingdetail/modalTypes.js') ?>?v=1"></script> -->
         <!-- 7️⃣ Main modal y botones -->

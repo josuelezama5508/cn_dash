@@ -1,5 +1,4 @@
 // modalCore.js
-
 window.closeModal = function() {
     if (currentModal) {
         currentModal.hide();
@@ -39,6 +38,8 @@ window.openModal = async function(url, modalData = {}, title = "") {
                 btnGuardar.onclick = () => confirmSapa(modalData);
             } else if (url.includes('form_cancelar')) {
                 btnGuardar.onclick = () => handleMailCancel(modalData);
+            }else if (url.includes('form_payment')) {
+                btnGuardar.onclick = () => handlePayment(modalData);
             } else {
                 btnGuardar.onclick = () => alert("Acción no implementada para este formulario.");
             }

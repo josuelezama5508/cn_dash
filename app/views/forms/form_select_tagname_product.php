@@ -53,7 +53,7 @@
                                             <div class="row-content-left" style="width: 30%;">
                                                 <input type="checkbox" id="item-${element.id}" name="tags[]" style="width: 20px;">
                                                 <div class="item-code" style="min-width: 70px;">
-                                                    <label for="item-${element.id}" style="font-weight: bold; color: royalblue">${element.reference}</label>
+                                                    <label for="item-${element.id}" style="font-weight: bold; color: royalblue; display: block; max-width: 200px; word-wrap: break-word;white-space: normal;">${element.reference}</label>
                                                 </div>
                                             </div>
                                             <div style="width: 80%;">

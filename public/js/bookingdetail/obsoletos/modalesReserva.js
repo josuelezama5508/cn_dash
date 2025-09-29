@@ -312,11 +312,11 @@ async function openReagendarModal(modalData) {
 
 
     // Inicializa Flatpickr y renderiza horarios
-    setupCalendario(modalData.code_company);
+    setupCalendario(modalData);
 }
 
 // Flatpickr + render de horarios
-function setupCalendario(companycode) {
+function setupCalendario(modalData) {
     flatpickr("#datepicker", {
         inline: true,
         dateFormat: "Y-m-d",
@@ -326,7 +326,7 @@ function setupCalendario(companycode) {
             // Actualiza la fecha en el resumen
             // Llamada a la API para obtener horarios según la fecha seleccionada
             try {
-                const response = await fetch(`${window.url_web}/api/control?getByDispo[empresa]=${companycode}&getByDispo[fecha]=${dateStr}`);
+                const response = await fetch(`${window.url_web}/api/control?getByDispo2[empresa]=${modalData.code_company}&getByDispo2[producto]=${modalData.idproduct}&getByDispo2[fecha]=${dateStr}`);
                 const result = await response.json();
 
                 const select = document.getElementById("nuevo_horario");

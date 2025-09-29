@@ -49,7 +49,7 @@ function initProductForm(input) {
 
     setTimeout(() => {
         // Mostrar el modal
-        $("#overlay2").css({ opacity: "1", visibility: "visible", "z-index": 999999, opacity: .5});
+        $("#overlay2").css({ opacity: "1", visibility: "visible", "z-index": 1050, opacity: .5});
         $("#modalProducts").fadeIn();
 
         createSelectCompany();
@@ -283,7 +283,7 @@ function test(input) {
             [ban, msg] = validate_data(text, regexName);
             break;
         case "productprice[]":
-            [ban, msg] = validate_data(text, regexID);
+            [ban, msg] = validate_data(text, regexPrice);
             break;
         case "denomination[]":
             [ban, msg] = validate_data(text, regexID);

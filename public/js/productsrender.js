@@ -16,11 +16,11 @@ function renderProductRow(element, count) {
         <tr class="product-item-${count}">
             <td><div class="form-group row-content-center"> ${statusDash}
                     ${statusWeb}</div></td>
-            <td><span class="form-group row-content-left" style="font-weight: bold;color: royalblue;">${element.productcode}</span></td>
-            <td><span class="form-group row-content-left">${element.productname}</span></td>
-            <td><span class="form-group row-content-left">${element.language}</span></td>
-            <td><span class="form-group row-content-left">${convert_to_price(element.productprice)}</span></td>
-            <td><span class="form-group row-content-left">${element.denomination}</span></td>
+            <td><span class="form-group row-content-center" style="font-weight: bold;color: royalblue;">${element.productcode}</span></td>
+            <td><span class="form-group row-content-center">${element.productname}</span></td>
+            <td><span class="form-group row-content-center">${element.language}</span></td>
+            <td><span class="form-group row-content-center">${convert_to_price(element.productprice)}</span></td>
+            <td><span class="form-group row-content-center">${element.denomination}</span></td>
             <td><div class="form-group edit-btn edit-product" id=${element.id}><i class="material-icons">edit</i></div></td>
             <td></td>
         </tr>`);

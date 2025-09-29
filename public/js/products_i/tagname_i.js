@@ -67,25 +67,28 @@ function renderTagsTable(data) {
     data.forEach((element, i) => {
         let tagname = '';
         Object.entries(element.tagname).forEach(([key, value]) => {
-            tagname += `<strong style="font-size: 14px;">${key.toUpperCase()}:</strong>
-                        <p style="font-size: 14px; margin: 0;">${value}</p>`;
-        });
+            tagname += `
+                <p style="font-size: 14px; margin: 0;"><strong style="font-size: 14px;">${key.toUpperCase()}: </strong>${value}</p>
+            `;});
 
         let row = `
             <tr class="sortable-row product-tag-item-${element.id}">
-                <td><div style="font-weight: bold; color: royalblue;">
+                <td style="text-align: center;"><div style="font-weight: bold; color: royalblue;">
                     <a href="${window.url_web}/tags/details/${element.tagid}" style="text-decoration: none;">
                         ${element.reference}
                     </a></div></td>
-                <td><div style="display: grid; grid-template-columns: auto 1fr; gap: 10px;">
-                    ${tagname}</div></td>
+                <td style="width: 25%; white-space: normal;">
+                    <div style="display: inline-block; max-width: 200px;">
+                        ${tagname}
+                    </div>
+                </td>
                 <td><div id="tagnametype-${element.id}"></div></td>
                 <td><div id="tagnameclass-${element.id}"></div></td>
                 <td><div id="tagnameprice-${element.id}"></div></td>
                 <td>
                     <div class="ctrl-number" style="display: flex; align-items: center;">
                         <button class="pos-down" type="button">-</button>
-                        <input type="text" name="position" min="1" max="${data.length}" value="${i + 1}">
+                        <input type="text" name="position" min="1" max="${data.length}" value="${element.position}">
                         <button class="pos-up" type="button">+</button>
                     </div>
                 </td>
@@ -100,7 +103,7 @@ function renderTagsTable(data) {
         // Selects dinámicos
         create_select("producttagtype", "producttagtype", `#tagnametype-${element.id}`, element.type);
         create_select("producttagclass", "producttagclass", `#tagnameclass-${element.id}`, element.class);
-        create_select("producttagprice", "prices", `#tagnameprice-${element.id}`, element.priceid);
+        create_select("producttagprice", "pricesNormal", `#tagnameprice-${element.id}`, element.priceid);
     });
 }
 
@@ -130,26 +133,81 @@ function bindTagEvents($table) {
     // Position Up/Down
     $table.on("click", ".pos-up", function () {
         const $row = $(this).closest("tr");
-        moveRowByOffset($row, 1, $table);
+        moveRowByOffset($row, 0, $table);
     });
     $table.on("click", ".pos-down", function () {
         const $row = $(this).closest("tr");
-        moveRowByOffset($row, -1, $table);
+        moveRowByOffset($row, 0, $table);
     });
+    $table.on("change", "input[name='position']", function() {
+        let $row = $(this).closest("tr");
+        let id = parseInt($row.attr("class").match(/product-tag-item-(\d+)/)[1]);
+        
+        let maxPosition = $table.find("tr.sortable-row").length;
+        let position = parseInt($(this).val());
+    
+        // Limitar posición a rango válido
+        if (position < 1) position = 1;
+        else if (position > maxPosition) position = maxPosition;
+    
+        // Actualizar el input para reflejar el límite si se modificó
+        $(this).val(position);
+    
+        updateSingleTagPosition(id, position);
+    });
+    
+    
 }
 
+// function moveRowByOffset($row, offset, $table) {
+//     const $rows = $table.find("tr.sortable-row");
+//     const currentIndex = $rows.index($row);
+//     const targetIndex = currentIndex + offset;
+//     if (targetIndex < 0 || targetIndex >= $rows.length) return;
+
+//     const $target = $rows.eq(targetIndex);
+//     if (offset < 0) $row.insertBefore($target);
+//     else $row.insertAfter($target);
+
+//     updateAllPositions($table);
+// }
 function moveRowByOffset($row, offset, $table) {
-    const $rows = $table.find("tr.sortable-row");
-    const currentIndex = $rows.index($row);
-    const targetIndex = currentIndex + offset;
-    if (targetIndex < 0 || targetIndex >= $rows.length) return;
+    let $input = $row.find('input[name="position"]');
+    let currentPosition = parseInt($input.val());
+    let newPosition = currentPosition + offset;
 
-    const $target = $rows.eq(targetIndex);
-    if (offset < 0) $row.insertBefore($target);
-    else $row.insertAfter($target);
+    // Limitar newPosition para que no sea menor a 1 ni mayor que total de filas
+    const maxPosition = $table.find("tr.sortable-row").length;
+    console.log(maxPosition);
+    if (newPosition < 1 || newPosition > maxPosition) return;
 
-    updateAllPositions($table);
+
+    // Cambiar solo el input del row actual
+    $input.val(newPosition);
+
+    // Obtener id del tag para mandar update
+    let id = parseInt($row.attr("class").match(/product-tag-item-(\d+)/)[1]);
+
+    // Mandar solo esa posición
+    updateSingleTagPosition(id, newPosition);
 }
+
+
+
+async function updateSingleTagPosition(tagitem, position) {
+    let formData = new FormData();
+    formData.append("tagitem", JSON.stringify({ tagitem, position }));
+
+    const res = await fetchAPI(`itemproduct?action=position`, 'PUT', formData)
+        .then(res => res.json());
+
+    // ✅ No validamos nada, siempre recargamos
+    await registered_tagnames();
+
+    return res;
+}
+
+
 
 function updateAllPositions($table) {
     const positions = [];
@@ -177,7 +235,7 @@ async function registered_tagnames() {
     if (response?.data) {
         renderTagsTable(response.data);
         $(".ctrl-number").ctrlNumber();
-        bindTagEvents($table);
+        // bindTagEvents($table);
     }
 }
 

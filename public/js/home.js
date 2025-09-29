@@ -6,10 +6,17 @@ $(document).ready(function() {
     // $("#activandomodal").on("click", function() { activandomodalEvent(); });
     $("#activandomodal").on("click", function() { initBookingForm(this); });
 
-    incoming_bookings("");
+    // incoming_bookings("");
     configurarDatepickerResumen();
-    $("[name='search']").on("input", function() { incoming_bookings($(this).val()); });
-    cargarReservasDelDia(); // Al cargar la página
+    // $("[name='search']").on("input", function() { incoming_bookings($(this).val()); });
+    // cargarReservasDelDia(); // Al cargar la página
+    $("#search").on("input", function() {
+        const query = $(this).val().trim();
+        incoming_bookings(query);
+    });
+
+    // Inicializar la tabla con todas las reservas al cargar
+    incoming_bookings("");
     cargarResumenOperacion(); 
     $("[name='today']").on("click", function () {
         // cargarReservasDelDia();
@@ -26,32 +33,14 @@ $(document).ready(function() {
         const formatted = `${yyyy}-${mm}-${dd}`;
         cargarResumenOperacion(formatted);
     });
+    $(document).ready(function() {
+        $("#btn_show_transportacion").on("click", function() {
+            initModalSearchT(); // llama al modal de transportación
+        });
+    });
     
 });
 
-const cargarReservasDelDia = async () => {
-    const hoy = new Date().toISOString().split('T')[0]; // ejemplo: "2025-08-04"
-    console.log('date:' + hoy);
-    try {
-        const response = await fetchAPI('control', 'POST', { getByDate: hoy });
-        const data = await response.json();
-        console.log(data);
-        const status = response.status;
-
-        if (status === 200 && data.data && data.data.length > 0) {
-            renderizarReservas(data.data); // asegúrate de tener esta función
-        } else {
-            $("#RBuscador").html(`
-                <tr><td colspan="10" style="text-align: center;">No hay reservas para hoy.</td></tr>
-            `);
-        }
-    } catch (error) {
-        console.error("Error al cargar reservas:", error);
-        $("#RBuscador").html(`
-            <tr><td colspan="10" style="text-align: center;">Error al obtener datos.</td></tr>
-        `);
-    }
-};
 const cargarResumenOperacion = async (fecha = null) => {
     let startdate = '';
     let enddate = '';
@@ -179,15 +168,8 @@ function formatearMoneda(monto) {
     return `$${parseFloat(monto).toFixed(2)}`;
 }
 
-function formatearEstado(estado) {
-    const clases = {
-        "Pendiente": "warning",
-        "Confirmado": "success",
-        "Cancelado": "danger"
-    };
-
-    const clase = clases[estado] || "secondary";
-    return `<span class="badge bg-${clase}">${estado}</span>`;
+function formatearEstado(estado, color = "#000") {
+    return `<span class="badge " style="font-size: 14px !important;color: ${color};background:white !important;">${estado}</span>`;
 }
 
 function renderizarReservas(reservas) {
@@ -217,13 +199,13 @@ function renderizarReservas(reservas) {
             <tr>
                 <td>${r.datepicker || '-'}</td>
                 <td>${r.horario || '-'}</td>
-                <td>${r.company_name || '-'}</td>
-                <td><strong>${totalPax}</strong> PAX</td>
+                <td><span class="badge text-white" style="background: ${r.primary_color};" >${r.company_name || '-'}</span></td>
                 <td>${r.actividad || '-'}</td>
                 <td>${(r.cliente_name || '')} ${(r.cliente_lastname || '')}</td>
-                <td><span class="badge bg-secondary">${r.nog || '-'}</span></td>
+                <td><span class="badge bg-secondary text-white" style="background: ${r.procesado == "1" ? "#228B22" : "#DC143C"} !important;">${r.procesado == "1" ? "SI" : "NO"}</span></td>
+                <td><span class="badge custom-nog-color">${r.nog || '-'}</span></td>
                 <td>${formatearMoneda(r.total)}</td>
-                <td>${formatearEstado(r.status)}</td>
+                <td>${formatearEstado(r.status, r.statuscolor)}</td>
                 <td>
                     <button class="btn btn-sm btn-primary ver-detalle" data-nog="${r.nog}">
                         <i class="fas fa-eye"></i>
@@ -246,21 +228,37 @@ function renderizarReservas(reservas) {
 
 
 
-const incoming_bookings = async (condition) => {
-    /*fetchAPI(`bookings?search=${condition}`, 'GET', new FormData())
-    .then(async (response) => {
+const incoming_bookings = async (search) => {
+    try {
+        // Construimos el endpoint dinámico para tu API
+        // Si tu backend usa GET y query string
+        const endpoint = search ? `control?searchReservation=${encodeURIComponent(search)}` : `control?searchReservation`;
+        
+        const response = await fetchAPI(endpoint, "GET");
+        const data = await response.json();
         const status = response.status;
-        const text = await response.json();
-    });*/
-};
 
+        if (status === 200 && data.data && data.data.length > 0) {
+            renderizarReservas(data.data); // reutiliza tu función existente
+        } else {
+            $("#RBuscador").html(`
+                <tr><td colspan="10" style="text-align:center;">No hay reservas para la búsqueda.</td></tr>
+            `);
+        }
+    } catch (error) {
+        console.error("Error al buscar reservas:", error);
+        $("#RBuscador").html(`
+            <tr><td colspan="10" style="text-align:center;">Error al obtener datos.</td></tr>
+        `);
+    }
+};
 
 function initBookingForm(input) {
     $(input).prop("disabled", true);
 
     setTimeout(() => {
         // Mostrar el modal
-        $("#overlay2").css({ opacity: "1", visibility: "visible", "z-index": 999999, opacity: .5});
+        $("#overlay2").css({ opacity: "1", visibility: "visible", "z-index": 1050, opacity: .5});
         $("#modalBooking").fadeIn();
 
         createSelectCompany();

@@ -6,13 +6,33 @@
     </svg>
   </div>
 
-  <h5 class="mb-4 fw-semibold">Crear SAPA</h5>
+ 
+  <!-- Header opcional -->
+  <div class="modal-header border-0">
+    <h5 class="modal-title fw-semibold">Crear SAPA</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+  </div>
 
   <form>
     <div class="row g-3">
+      <!-- <label class="form-check-label" for="empresaname">EMPRESA:</label> -->
+      <div class="d-flex align-items-center gap-2 mt-2">  
+          <img id="logocompany" 
+              style="width:80px; height:50px; object-fit:contain;" 
+              alt="Logo empresa">
+          <input class="form-control" id="empresaname" disabled>
+      </div>
+      <div class="col-md-12">
+        
+        <div class="hotel-search-container" style= "position: relative;">
+            <label for="hotelSearch" class="form-label">Buscar Hotel:</label>
+            <input type="text" id="hotelSearch" class="form-control" placeholder="Escribe para buscar...">
+            <div id="hotelList" class="list-group mt-1" style="max-height:200px; overflow-y:auto;"></div>
+        </div>
 
-      <div class="col-md-6">
-        <label class="form-label">Tipo de traslado:</label><br>
+      </div>
+      <!-- <div class="col-md-6">
+        <label class="form-label">Tipo de transportación:</label><br>
         <div class="form-check form-check-inline">
           <input class="form-check-input" type="radio" name="transporte_tipo" id="terrestre" value="terrestre" checked>
           <label class="form-check-label" for="terrestre">Terrestre</label>
@@ -21,16 +41,45 @@
           <input class="form-check-input" type="radio" name="transporte_tipo" id="maritimo" value="maritimo">
           <label class="form-check-label" for="maritimo">Marítimo</label>
         </div>
+      </div> -->
+      <div class="col-md-6">
+        <label for="cliente_nombre" class="form-label">Nombre del cliente:</label>
+        <input type="text" class="form-control form-control-sm" id="cliente_nombre" name="cliente_nombre">
       </div>
-
       <div class="col-md-6">
         <label for="fecha_traslado" class="form-label">Fecha:</label>
         <input type="date" class="form-control form-control-sm" id="fecha_traslado" name="fecha_traslado">
       </div>
-
       <div class="col-md-6">
-        <label for="cliente_nombre" class="form-label">Nombre del cliente:</label>
-        <input type="text" class="form-control form-control-sm" id="cliente_nombre" name="cliente_nombre">
+        <label for="pax_cantidad" class="form-label">Pax:</label>
+        <input type="number" class="form-control form-control-sm" id="pax_cantidad" name="pax_cantidad">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Tipo de traslado:</label><br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="traslado_tipo" id="redondo" value="redondo" checked>
+          <label class="form-check-label" for="redondo">Redondo</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="traslado_tipo" id="sencillo" value="sencillo">
+          <label class="form-check-label" for="sencillo">Sencillo</label>
+        </div>
+      </div>
+       <!-- Idiomas -->
+      <div class="col-md-6">
+        <label class="form-label">Idioma:</label><br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="idioma" id="idioma_en" value="en">
+          <label class="form-check-label" for="idioma_en">
+              <img src="https://flagcdn.com/us.svg" width="24" alt="Inglés"> Inglés
+          </label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="idioma" id="idioma_es" value="es" checked>
+            <label class="form-check-label" for="idioma_es">
+                <img src="https://flagcdn.com/mx.svg" width="24" alt="Español"> Español
+            </label>
+        </div>
       </div>
 
       <div class="col-md-6">

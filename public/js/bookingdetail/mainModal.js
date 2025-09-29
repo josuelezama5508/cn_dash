@@ -7,3 +7,4 @@ document.getElementById("btnCancelarReserva").addEventListener("click", () => op
 document.getElementById("reserva_canal").addEventListener("click", () => openChannelRepModal(modalData));
 document.getElementById("reserva_rep").addEventListener("click", () => openChannelRepModal(modalData));
 document.getElementById("reserva_tipo").addEventListener("click", () => openTypeReservationModal(modalData));
+document.getElementById("btn_pagar").addEventListener("click", () => openPaymentModal(modalData));

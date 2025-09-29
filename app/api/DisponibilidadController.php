@@ -122,7 +122,7 @@ class DisponibilidadController extends API
                 case 'companycode':
                     // Obtener datos de la empresa
                     // $company = $this->model_empresa->where("clave_empresa = '$search' AND disponibilidad_api = '1'", array(), ["nombre AS companyname", "primario AS primarycolor", "clave_empresa AS companycode", "productos AS products", "dias_dispo", "imagen AS image", "id AS companyid"]);
-                    $company = $this->model_empresa->where("company_code = '$search' AND disponibilidad_api = '1'", array(), ["company_name AS companyname", "primary_color AS primarycolor", "company_code AS companycode", "productos AS products", "dias_dispo", "company_logo AS image", /*"id AS companyid"*/]);
+                    $company = $this->model_empresa->where("company_code = '$search'", array(), ["company_name AS companyname", "primary_color AS primarycolor", "company_code AS companycode", "productos AS products", "dias_dispo", "company_logo AS image", /*"id AS companyid"*/]);
                     if (!$company) return $this->jsonResponse(array('message' => 'El recurso no existe en el servidor.'), 404);
 
                     $company = $company[0];
@@ -172,7 +172,7 @@ class DisponibilidadController extends API
                             if (isset($item['codigoproducto'])) {
                                 $codigoproducto = $item['codigoproducto'];
 
-                                $_product = $this->model_productos->where("product_code = '$codigoproducto' AND active = '1' AND show_dash = '1'", array(), ["product_name AS name", "product_code AS productcode"]);
+                                $_product = $this->model_productos->where("product_code = '$codigoproducto' AND active = '1'", array(), ["product_name AS name", "product_code AS productcode"]);
                                 if (!count($_product)) continue;
                                 $_product = $_product[0];
 

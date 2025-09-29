@@ -123,7 +123,7 @@ class CanalesController extends API
         return [
             'name' => $channel->nombre,
             'type' => $channel->tipo,
-            'phone' => $channel->telefono,
+            'metodopago' => $channel->metodopago,
             'subchannel' => $channel->subCanal
         ];
 
@@ -142,13 +142,13 @@ class CanalesController extends API
 
         $nombre = isset($data['channelname']) ? validate_channelname($data['channelname']) : '';
         $tipo = isset($data['channeltype']) ? validate_channeltype ($data['channeltype']) : '';
-        $telefono = isset($data['channelphone']) ? $data['channelphone'] : '';
+        $metodopago = isset($data['channelmethodpay']) ? $data['channelmethodpay'] : '';
 
         if ($nombre) {
             $_channel = $this->model_channel->insert(array(
                 "nombre" => $nombre,
                 "tipo" => $tipo,
-                "telefono" => $telefono
+                "metodopago" => $metodopago
             ));
             if (!count((array) $_channel)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
 
@@ -184,7 +184,7 @@ class CanalesController extends API
             }
             
             
-            return $this->jsonResponse(["message" => "El recurso fue creado con éxito.","data" => $_channel], 201);
+            return $this->jsonResponse(["message" => "El recurso fue creado con éxito.","data" => $_channel], 204);
         } else {
             return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
         }
@@ -211,14 +211,14 @@ class CanalesController extends API
         if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
 
         $nombre = isset($data['channelname']) ? $data['channelname']: '';
-        $telefono = isset($data['channelphone']) ? $data['channelphone'] : '';
+        $metodopago = isset($data['channelmethodpay']) ? $data['channelmethodpay'] : '';
         $tipo = isset($data['channeltype']) ? $data['channeltype'] : '';
         $subCanal = isset($data['subchannel']) ? $data['subchannel'] : '';
 
         if ($nombre && $tipo && $subCanal) {
             $_channel = $this->model_channel->update($id_channel, array(
                 "nombre" => $nombre,
-                "telefono" => $telefono,
+                "metodopago" => $metodopago,
                 "tipo" => $tipo,
                 "subCanal" => $subCanal,
             ));

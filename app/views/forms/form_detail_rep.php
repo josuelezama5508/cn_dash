@@ -179,7 +179,7 @@
                                     </div>
                                     <div class="form-group" style="display: flex; flex-direction: row; gap: 4px; align-items: center;">
                                         <i class="material-icons">local_atm</i>
-                                        <input type="text" name="repcommission" class="form-control ds-input" value="${data.commission}">
+                                        <input type="number" name="repcommission" class="form-control ds-input" value="${data.commission}">
                                     </div>
                                 </div>
                             </form>
@@ -258,8 +258,8 @@
             <tr class="rep-item-${itemCount}">
                 <td><div class="form-group"><input type="text" name="repname[]" id="rep-name" class="form-control ds-input" placeholder="Nombre"></div></td>
                 <td><div class="form-group"><input type="text" name="repemail[]" id="rep-email" class="form-control ds-input" placeholder="Email"></div></td>
-                <td><div class="form-group"><input type="text" name="repphone[]" id="rep-phone" class="form-control ds-input" placeholder="Teléfono"></div></td>
-                <td><div class="form-group"><input type="text" name="repcommission[]" id="rep-commission" class="form-control ds-input" placeholder="Comisión"></div></td>
+                <td><div class="form-group"><input type="number" name="repphone[]" id="rep-phone" class="form-control ds-input" placeholder="Teléfono"></div></td>
+                <td><div class="form-group"><input type="number" name="repcommission[]" id="rep-commission" class="form-control ds-input" placeholder="Comisión"></div></td>
                 <td>
                     <div class="row-content-right" style="gap: 6px;">
                         <div class="form-group done-btn" style="width: 32px; height: 32px;"><i class="material-icons">done</i></div>
@@ -347,34 +347,31 @@
 
         switch (field) {
             case 'repname[]':
-                [ban, msg] = validate_data(text, regexName);
-                break;
-            case 'repemail[]':
-                [ban, msg] = validate_data(text, regexEmail);
-                if (text.length == 0)
-                    ban = "correcto";
-                break;
-            case 'repphone[]':
-                [ban, msg] = validate_data(text, regexPhone);
-                if (text.length == 0)
-                    ban = "correcto";
-                break;
-            case 'repcommission[]':
-                [ban, msg] = validate_data(text, regexInt);
-                break;
             case 'repname':
                 [ban, msg] = validate_data(text, regexName);
                 break;
+
+            case 'repemail[]':
             case 'repemail':
-                [ban, msg] = validate_data(text, regexEmail);
-                if (text.length == 0)
-                    ban = "correcto";
+                if (text.length === 0) {
+                    ban = "correcto"; // vacío permitido
+                    msg = "";
+                } else {
+                    [ban, msg] = validate_data(text, regexEmail);
+                }
                 break;
+
+            case 'repphone[]':
             case 'repphone':
-                [ban, msg] = validate_data(text, regexPhone);
-                if (text.length == 0)
-                    ban = "correcto";
+                if (text.length === 0) {
+                    ban = "correcto"; // vacío permitido
+                    msg = "";
+                } else {
+                    [ban, msg] = validate_data(text, regexPhone);
+                }
                 break;
+
+            case 'repcommission[]':
             case 'repcommission':
                 [ban, msg] = validate_data(text, regexInt);
                 break;
@@ -382,6 +379,7 @@
 
         return result_validate_data(input, field, ban, msg);
     }
+
 
 
     function cancelEvent(widget = null) {

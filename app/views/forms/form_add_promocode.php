@@ -41,8 +41,8 @@
 
         </form>
         <!-- Modal -->
-        <div id="modal-products" class="modalhome" style="display: none;">
-            <div class="modal-content" style="max-width: 700px; width: 100%;">
+        <div id="modal-products" class="modalhome" style="display: none; width: 700px !important; background: #ffffff !important; border: 2px solid #ddd;">
+            <div class="modal-content">
                 <h4>Selecciona productos</h4>
                 <div style="margin-bottom: 10px;">
                     <label>
@@ -52,14 +52,14 @@
                 </div> 
                 <div id="product-list" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="gap: 10px;">
                 <button id="confirm-products" class="btn btn-primary">Confirmar</button>
                 <button id="close-modal" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
-        <div id="modal-companies" class="modalhome" style="display: none;">
-            <div class="modal-content" style="max-width: 700px; width: 100%;">
-                <h4>Selecciona productos</h4>
+        <div id="modal-companies" class="modalhome" style="display: none; width: 700px !important; background: #ffffff !important; border: 2px solid #ddd;">
+            <div class="modal-content" style="max-width: 700px; width: 100%; background: #ffffff !important; ">
+                <h4>Selecciona Empresas</h4>
                 <div style="margin-bottom: 10px;">
                     <label>
                         <input type="checkbox" id="select-all-companies">
@@ -68,9 +68,9 @@
                 </div> 
                 <div id="company-list" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="gap: 10px;">
                 <button id="confirm-company" class="btn btn-primary">Confirmar</button>
-                <button id="close-modal" class="btn btn-secondary">Cancelar</button>
+                <button id="close-modal-company" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
         <!--  -->

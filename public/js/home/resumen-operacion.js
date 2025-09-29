@@ -11,7 +11,8 @@ function renderResumenOperacion(data) {
         const card = document.createElement('div');
         card.className = 'card mb-3 shadow-sm';
 
-        const fecha = new Date(dia.fecha);
+        const fecha = new Date(dia.fecha + 'T00:00:00');
+
         const fechaLegible = fecha.toLocaleDateString('es-MX', {
             weekday: 'long',
             year: 'numeric',
@@ -27,7 +28,7 @@ function renderResumenOperacion(data) {
             return `
                 <tr>
                     <td style="width: 120px;">${r.horario}</td>
-                    <td>${r.actividad}</td>
+                    <td style="width: 50%;">${r.actividad}</td>
                     <td style="width: 60px;"><strong>${r.tickets}</strong></td>
                     <td>${itemsStr}</td>
                     <td style="width: 90px;">
@@ -43,7 +44,7 @@ function renderResumenOperacion(data) {
         }).join('');
 
         card.innerHTML = `
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div class="card-header custom-header text-white d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-calendar-event me-2"></i>${fechaLegible}</strong>
                 <span class="badge bg-light text-dark">${dia.reservas.length} reservas</span>
             </div>
@@ -146,15 +147,15 @@ function abrirModalDetalle(detalles, horario) {
                         <input class="form-check-input" type="checkbox" disabled style="transform: scale(0.8);">
                     </div>
                 </td>
-                <td><strong>SI</strong></td>
+                <td><strong>${(res.procesado == "0" ? "NO" : "SI")}</strong></td>
                 <td class="text-start">
-                    <div class="fw-semibold">${res.cliente_name} ${res.cliente_lastname}</div>
+                    <div class="fw-semibold">${res.cliente_name} ${res.cliente_lastname || ""}</div>
                     <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
                     <i class="bi bi-camera-fill text-primary"></i>
                 </td>
                 <td>
                     <div class="fw-bold text-info">${res.username || 'FERNANDA'}</div>
-                    <div class="small text-muted">${res.canal_nombre || 'WHATSAPP'}</div>
+                    <div class="small text-muted">${res.canal_nombre || ''}</div>
                 </td>
                 <td>
                     ${statusBadge}

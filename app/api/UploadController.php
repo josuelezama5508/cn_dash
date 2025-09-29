@@ -1,25 +1,28 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
+require_once __DIR__ . '/../models/UserModel.php';
 
 
 class UploadController extends API
 {
     private $image_directory;
+    private $model_user;
 
     public function __construct()
     {
         $this->image_directory = __DIR__ . '/../../uploads/images/';
+        $this->model_user = new UserModel();
     }
 
 
     public function post($params = [])
     {
         $headers = getallheaders();
-        $token = $headers['Authorization'] ?? null;
-        if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $user_id = Token::validateToken($token);
-        if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+        $validation = $this->model_user->validateUserByToken($headers);
+        if ($validation['status'] !== 'SUCCESS') {
+            return $this->jsonResponse(['message' => $validation['message']], 401);
+        }
+        $userData = $validation['data'];
 
         $image_name = '';
         if (strpos($_SERVER["CONTENT_TYPE"], "multipart/form-data") === 0) {

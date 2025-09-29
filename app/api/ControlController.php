@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Models.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/HistoryModel.php';
 require_once __DIR__ . '/../models/HistoryMailModel.php';
+require_once __DIR__ . '/../models/BookingMessageModel.php';
 
 
 class ControlController extends API
@@ -17,6 +18,8 @@ class ControlController extends API
     private $model_product;
     private $model_combo;
     private $model_tag;
+    private $model_bookingmessage;
+    private $model_empresa;
     public function __construct()
     {
         $this->model_control = new Control();
@@ -28,6 +31,8 @@ class ControlController extends API
         $this->model_product = new Productos();
         $this->model_combo = new Combo();
         $this->model_tag = new Tag();
+        $this->model_bookingmessage = new BookingMessage();
+        $this->model_empresa = new Empresa();
     }
 
     private function get_params($params = [])
@@ -40,12 +45,16 @@ class ControlController extends API
             return ['deleteRegister', $params['deleteRegister']];
         }if (isset($params['getByDate'])) {
             return ['getByDate', $params['getByDate']];
+        }if (isset($params['searchReservation'])) {
+            return ['searchReservation', $params['searchReservation']];
         }if (isset($params['getByDatePickup'])) {
             return ['getByDatePickup', $params['getByDatePickup']];
         }if (isset($params['nog'])) {
             return ['nog', $params['nog']];
         }if (isset($params['getByDispo'])) {
             return ['getByDispo', $params['getByDispo']];
+        }if (isset($params['getByDispo2'])) {
+            return ['getByDispo2', $params['getByDispo2']];
         }if (isset($params['reagendar'])) {
             return ['reagendar', $params['reagendar']];
         }if (isset($params['procesado'])) {
@@ -96,9 +105,11 @@ class ControlController extends API
                     // 1. Si se pasa fecha específica, traer reservas de esa fecha
                     $fecha = $search['fecha'] ?? null;
                     $empresa = $search['empresa'] ?? null;
+                    $producto = $search['producto'] ?? null;
                     // Traer todas las reservas de la fecha (o todas si no hay fecha)
                     $dispoControl = $this->model_control->getByDispo($fecha); // [{hora, ocupado}]
-                    $dataDispo = $this->model_dispo->getDisponibilityByEnterprise($empresa); // [{horario, cupo,...}]
+                    $dataDispo = $this->model_dispo->getDisponibilityByEnterprise($empresa); 
+                    
                     $dataControl = [];
                     // Guardar disponibilidad total por fecha
                     $dispoPorFecha = [];
@@ -136,11 +147,117 @@ class ControlController extends API
                     ], 200);
                 
                     break;
+                case 'getByDispo2':
+                    $fecha = $search['fecha'] ?? null;
+                    $empresaParam = $search['empresa'] ?? null;
+                    $producto = $search['producto'] ?? null;
+                
+                    $dispoControl = $this->model_control->getByDispo($fecha); // [{hora, ocupado}]
+                    $dataproduct = $this->model_product->find($producto);
+                    $dataenterprise = $this->model_empresa->getAllCompaniesDispo();
+                    if (!$dataproduct || !isset($dataproduct->product_code)) {
+                        return $this->jsonResponse([
+                            'error' => 'Producto no encontrado o sin código'
+                        ], 400);
+                    }
+                    
+                    $productCode = isset($dataproduct->product_code) ? $dataproduct->product_code : "";
+
+                    $dataDispo = [];
+                    $empresasRelacionadas = [];
+                    $disponibilidadPorEmpresa = [];
+                
+                    // 🔹 Buscar empresas relacionadas al producto
+                    foreach ($dataenterprise as $ent) {
+                        $productosJson = $ent->productos;
+                        $productos = json_decode($productosJson, true);
+                
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($productos)) {
+                            foreach ($productos as $p) {
+                                if (isset($p['codigoproducto']) && $p['codigoproducto'] === $productCode) {
+                                    $empresasRelacionadas[] = $ent;
+                
+                                    $result = $this->model_dispo->getDisponibilityByEnterprise($ent->company_code);
+                                    if (!empty($result)) {
+                                        $disponibilidadPorEmpresa[] = [
+                                            'empresa' => $ent->company_code,
+                                            'disponibilidad' => $result
+                                        ];
+                                        $dataDispo = array_merge($dataDispo, $result);
+                                    }
+                
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                
+                    // 🔹 Si no se encontró disponibilidad por relaciones, usar la empresa directamente (último recurso)
+                    if (empty($dataDispo) && !empty($empresaParam)) {
+                        $fallbackDispo = $this->model_dispo->getDisponibilityByEnterprise($empresaParam);
+                        if (!empty($fallbackDispo)) {
+                            $dataDispo = $fallbackDispo;
+                            $disponibilidadPorEmpresa[] = [
+                                'empresa' => $empresaParam,
+                                'disponibilidad' => $fallbackDispo
+                            ];
+                        }
+                    }
+                
+                    // 🔹 Procesar horarios
+                    $dataControl = [];
+                    $dispoPorFecha = [];
+                
+                    foreach ($dataDispo as $dispo) {
+                        $horaDispo = $dispo->horario;
+                        $cupoTotal = (int)$dispo->cupo;
+                        $timeDispo = strtotime($horaDispo);
+                
+                        $ocupado = 0;
+                        foreach ($dispoControl as $reserva) {
+                            $timeReserva = strtotime($reserva['hora']);
+                            if ($timeReserva === $timeDispo) {
+                                $ocupado = (int)$reserva['ocupado'];
+                                break;
+                            }
+                        }
+                
+                        $disponibilidad = $cupoTotal - $ocupado;
+                        $fechaClave = $fecha ?? date('Y-m-d');
+                
+                        if (!isset($dispoPorFecha[$fechaClave])) {
+                            $dispoPorFecha[$fechaClave] = 0;
+                        }
+                
+                        $dispoPorFecha[$fechaClave] += $disponibilidad;
+                
+                        $dataControl[] = [
+                            'fecha' => $fechaClave,
+                            'hora' => date('g:i A', $timeDispo),
+                            'cupo' => $cupoTotal,
+                            'ocupado' => $ocupado,
+                            'disponibilidad' => $disponibilidad
+                        ];
+                    }
+                
+                    // 🔹 Devolver datos
+                    return $this->jsonResponse([
+                        'data' => $dataControl,
+                        'total_disponibilidad' => $dispoPorFecha,
+                        'dataproduct' => $dataproduct,
+                        'dataenterprise' => $dataenterprise,
+                        'relations' => $empresasRelacionadas,
+                        'dispoenterprise' => $disponibilidadPorEmpresa
+                    ], 200);
+                    break;
                     case 'vinculados':
                         $dataControl =  $this->model_control->getLinkedReservations($search);
                         break;
                     case 'getByDatePickup':
                         $dataControl = $this->model_control->getByDatePickup($search['startdate'], $search['enddate']);
+                        break;
+                    case 'searchReservation':
+                        $dataControl = $this->model_control->searchReservation($search);
                         break;
                        
             }
@@ -222,7 +339,27 @@ class ControlController extends API
                         $this->model_control->delete($controlInsert->id);
                         return $this->jsonResponse(['message' => 'Error al crear detalles de reserva (BookingDetails)'], 500);
                     }
-                
+                    if(!empty($data['nota'])){
+                        $camposMesagge = [
+                            'idpago'   => $controlInsert->id,
+                            'mensaje'  => $data['nota'] ?? null,
+                            'usuario'   =>  $userData->id,
+                            'tipomessage'       => 'nota',
+                        ];
+                        $responseMessage = $this->model_bookingmessage->insert($camposMesagge);
+
+                        if ($responseMessage && isset($responseMessage->id)) {
+                            $this->registrarHistorial(
+                                'Reservas',
+                                $responseMessage->id,
+                                'create',
+                                'Se creó mensaje hijo',
+                                $userData->id ?? 0,
+                                null,
+                                $camposMesagge
+                            );
+                        }
+                    }
                     $this->registrarHistorial(
                         'Reservas',
                         $controlInsert->id,
@@ -319,7 +456,27 @@ class ControlController extends API
                                 unset($dataDetailsHijo['id']); // quitar id si viene heredado
                             
                                 $bookingHijo = $this->model_bookingDetails->insert($dataDetailsHijo);
-                            
+                                if (!empty($dataControlHijo['nota'])) {
+                                    $camposMesaggeHijo = [
+                                        'idpago' => $controlHijo->id,
+                                        'mensaje'  => $dataControlHijo['nota'] ?? null,
+                                        'usuario'   =>  $userData->id,
+                                        'tipomessage'       => 'nota',
+                                    ];
+                                    $responseMessageHijo = $this->model_bookingmessage->insert($camposMesaggeHijo);
+            
+                                    if ($responseMessageHijo && isset($responseMessageHijo->id)) {
+                                        $this->registrarHistorial(
+                                            'Reservas',
+                                            $responseMessageHijo->id,
+                                            'create',
+                                            'Se creó mensaje hijo',
+                                            $userData->id ?? 0,
+                                            null,
+                                            $camposMesaggeHijo
+                                        );
+                                    }
+                                }
                                 if ($bookingHijo && !empty($bookingHijo->id)) {
                                     $this->registrarHistorial(
                                         'Reservas',

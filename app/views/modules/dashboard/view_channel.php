@@ -23,7 +23,7 @@
                                 <tr>
                                     <th scope="col">Canalp</th>
                                     <th scope="col" style="width: 80px;">Rep</th>
-                                    <th scope="col" style="width: 280px;">Teléfono</th>
+                                    <th scope="col" style="width: 280px;">Metodo de pago</th>
                                     <th scope="col" style="width: 260px;">Tipo</th>
                                     <th scope="col" style="width: 80px;"></th>
                                 </tr>

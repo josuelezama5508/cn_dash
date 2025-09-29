@@ -18,6 +18,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     const reserva = json.data[0];
     modalData = reserva;
     console.log("Reserva completa:", reserva);
+    // 1. Registro del Service Worker (se hace al cargar la página)
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    navigator.serviceWorker.register('/cn_dash/public/js/notificationservice/sw.js')
+      .then(function(registration) {
+        console.log('Service Worker registrado');
+      })
+      .catch(function(error) {
+        console.error('Error al registrar Service Worker:', error);
+      });
+  } else {
+    alert('Tu navegador no soporta Service Workers o Push API');
+  }
+
+  // 2. Evento click para pedir permiso y mostrar notificación
+  $('#btn_prueba').on('click', function() {
+    Notification.requestPermission().then(function(permission) {
+      if (permission === 'granted') {
+        // Payload para la notificación
+        const payload = {
+          title: 'Reserva creada',
+          body: '¡Se ha creado una nueva reserva!',
+          icon: '/icon.png',
+          url: 'http://localhost/cn_dash/detalles-reserva/view/'
+        };
+  
+        fetch('http://localhost/cn_dash/api/notificationservice?action=sendNotification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // Agrega aquí si usas token de autenticación, ejemplo:
+            // 'Authorization': 'Bearer TU_TOKEN_AQUI'
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Notificación enviada al servidor:', data);
+          // alert('Notificación enviada al servidor. Revisa la consola.');
+        })
+        .catch(error => {
+          console.error('Error al enviar notificación:', error);
+          // alert('Error al enviar notificación. Revisa la consola.');
+        });
+  
+      } else {
+        // alert('Permiso de notificaciones denegado');
+      }
+    });
+  });
+  
+
+    if (modalData.id) {
+      renderUltimoMensajeContent(modalData.id);
+      mostrarSapas(modalData.id);
+    }
     // Botón cerrar modal
     $('#btnCerrarModalMensajes').on('click', cerrarModalMensajes);
 
@@ -27,6 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const items = JSON.parse(reserva.items_details || "[]");
 
     // Función para renderizar datos de reserva e items
+    
     function renderReserva() {
       // Datos usuario
      camposUsuario.nombre.val(usuarioOriginal.nombre);
@@ -38,6 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Datos reserva
       $("#reserva_actividad").text(reserva.actividad ?? 'N/A');
+      $("#company_name").text(reserva.company_name ?? 'N/A');
       $("#reserva_fecha").text(reserva.datepicker ?? 'N/A');
       $("#reserva_hora").text(reserva.horario ?? 'N/A');
       $("#reserva_booking").text(reserva.nog ?? 'N/A');
@@ -194,34 +252,34 @@ document.addEventListener("DOMContentLoaded", async () => {
       bsToast.show();
       toast.on('hidden.bs.toast', () => toast.remove());
     }
-    function mostrarToastOnObject(mensaje, $input, tipo = "success") {
-      // Crear toast
-      const toast = $(`
-        <div class="toast align-items-center text-white ${tipo==='success'?'bg-success':'bg-danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true" style="position:absolute; z-index:9999;">
-          <div class="d-flex">
-            <div class="toast-body">${mensaje}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-          </div>
-        </div>
-      `);
+    // function mostrarToastOnObject(mensaje, $input, tipo = "success") {
+    //   // Crear toast
+    //   const toast = $(`
+    //     <div class="toast align-items-center text-white ${tipo==='success'?'bg-success':'bg-danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true" style="position:absolute; z-index:9999;">
+    //       <div class="d-flex">
+    //         <div class="toast-body">${mensaje}</div>
+    //         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    //       </div>
+    //     </div>
+    //   `);
     
-      // Agregar al body
-      $("body").append(toast);
+    //   // Agregar al body
+    //   $("body").append(toast);
     
-      // Calcular posición sobre el input
-      const offset = $input.offset();
-      toast.css({
-        top: offset.top - toast.outerHeight() - 5, // arriba del input
-        left: offset.left,
-        minWidth: $input.outerWidth()
-      });
+    //   // Calcular posición sobre el input
+    //   const offset = $input.offset();
+    //   toast.css({
+    //     top: offset.top - toast.outerHeight() - 5, // arriba del input
+    //     left: offset.left,
+    //     minWidth: $input.outerWidth()
+    //   });
     
-      const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
-      bsToast.show();
+    //   const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
+    //   bsToast.show();
     
-      // Remover al ocultarse
-      toast.on('hidden.bs.toast', () => toast.remove());
-    }
+    //   // Remover al ocultarse
+    //   toast.on('hidden.bs.toast', () => toast.remove());
+    // }
     
     // Debounce para guardar cambios
     const debounceTimers = {};
@@ -246,7 +304,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (campo === 'nombre') data.cliente_name = valor;
       else if (campo === 'apellido') data.cliente_lastname = valor;
       else data[campo] = valor;
-    
+      modalData[campo] = valor;
       try {
         const res = await fetchAPI("control", "PUT", { client: data });
         if (res.ok) {

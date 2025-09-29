@@ -21,10 +21,10 @@ class Control extends ModelTable
         }
         // Definir campos a seleccionar (usa alias si hay ambigüedad)
         $fields = [
-            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company',
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company', 'C.procesado',
             'B.*',
-            'CO.company_name',
-            'S.name AS status'
+            'CO.company_name, CO.primary_color',
+            'S.name AS status, S.color AS statuscolor'
         ];
         // INNER JOIN con bookingdetails
         $join = "C INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
@@ -35,6 +35,57 @@ class Control extends ModelTable
         // Ejecutar la consulta
         return $this->consult($fields, $join, $condicion, ['fecha' => $date]);
     }
+    public function getByDateLatest()
+    {
+        
+        // Definir campos a seleccionar (usa alias si hay ambigüedad)
+        $fields = [
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company', 'C.procesado',
+            'B.*',
+            'CO.company_name, CO.primary_color',
+            'S.name AS status, S.color AS statuscolor'
+        ];
+        // INNER JOIN con bookingdetails
+        $join = "C INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+        INNER JOIN bookingdetails AS B ON C.idpago = B.idpago INNER JOIN estatus AS S ON C.status = S.id_status
+            ";
+        // Condición: solo los registros con fecha de hoy en `bookingdetails.fecha_details`
+        $condicion = "1=1 ORDER BY C.idpago DESC LIMIT 100";
+        // Ejecutar la consulta
+        return $this->consult($fields, $join, $condicion);
+    }
+    public function searchReservation($search) {
+        if ($search === '') {
+            return $this->getByDateLatest();
+        }
+    
+        $campos = [
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company', 
+            'C.procesado',
+            'B.*',
+            'CO.company_name, CO.primary_color',
+            'S.name AS status, S.color AS statuscolor'
+        ];
+    
+        $join = "C 
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
+            INNER JOIN estatus AS S ON C.status = S.id_status";
+    
+        $cond = "(
+            LOWER(C.nog) LIKE :search OR
+            LOWER(C.cliente_name) LIKE :search OR
+            LOWER(C.cliente_lastname) LIKE :search OR
+            LOWER(CONCAT(C.cliente_lastname, ' ', C.cliente_name)) LIKE :search
+        ) ORDER BY C.idpago DESC LIMIT 100";
+    
+        $params = [
+            'search' => "%".strtolower($search)."%"
+        ];
+    
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    
     public function getByDatePickup($startDate = null, $endDate = null)
     {
         if ($startDate === null) $startDate = date('Y-m-d');
@@ -43,18 +94,18 @@ class Control extends ModelTable
         // 1) Traer reservas raw
         $sql = "
             SELECT 
-                C.idpago, C.actividad, C.datepicker, C.horario, 
+                C.idpago, C.actividad, C.datepicker, C.horario, C.procesado,
                 C.cliente_name, C.cliente_lastname, C.nog, C.code_company, 
                 C.balance, C.checkin, C.canal,
                 B.items_details, B.*,
                 CO.company_name, S.name AS status,
-                U.user_name AS username
+                U.name AS username
             FROM control C
             INNER JOIN bookingdetails B ON C.idpago = B.idpago
             INNER JOIN companies CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
             INNER JOIN estatus S ON C.status = S.id_status
             INNER JOIN users U ON B.usuario = U.user_id
-            WHERE DATE(C.datepicker) BETWEEN :startDate AND :endDate AND C.status != 2 AND C.status != 0
+            WHERE DATE(C.datepicker) BETWEEN :startDate AND :endDate AND C.status != 2 AND C.status != 0 AND C.procesado = 1
             ORDER BY C.datepicker, C.horario, C.actividad
         ";
     
@@ -178,13 +229,13 @@ class Control extends ModelTable
         // Definir campos a seleccionar (usa alias si hay ambigüedad)
         $fields = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.canal, C.email, C.telefono, C.hotel, C.nota, C.habitacion, 
-            C.referencia, C.tipo AS type, C.codepromo, C.procesado, C.checkin' ,
+            C.referencia, C.tipo AS type, C.codepromo, C.procesado, C.checkin, C.balance, C.moneda' ,
             'B.*',
-            'CO.company_name',
-            'S.name AS status',
+            'CO.company_name, CO.primary_color, CO.company_logo',
+            'S.name AS status, S.color AS statuscolor',
             'CH.nombre AS canal_nombre',
             'R.nombre AS rep_nombre',
-            'P.product_code'
+            'P.product_code, P.lang_id AS lang, P.product_id AS idproduct'
         ];
         // INNER JOIN con bookingdetails
         $join = "C INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
@@ -257,6 +308,7 @@ class Control extends ModelTable
         // Ejecutar la consulta
         return $this->consult($fields, $join, $condicion, ['nog' => $nog]);
     }
+    
     public function insertControl(array $data)
     {
         return $this->insert($data);
@@ -311,10 +363,13 @@ class Empresa extends ModelTable
         parent::__construct();
     }
     function get_all_companies() {
-        return $this->where("active = '1'");
+        return $this->where("active = '1' ORDER BY company_name ASC");
     }
     function getAllCompanies(){
         return $this->where("1=1");
+    }
+    function getAllCompaniesDispo(){
+        return $this->where("disponibilidad_api = '1' AND active = '1'");
     }
     function getCompanyByCode($code){
         return $this->where('company_code = :code', ['code' => $code]);
@@ -322,6 +377,7 @@ class Empresa extends ModelTable
     function getActiveCompanyByCode($code){
         return $this->where('company_code = :code AND active = 1', ['code' => $code]);
     }
+    
     public function getClave()
     {
         $cadena = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -339,6 +395,7 @@ class Empresa extends ModelTable
         }
         return $temp;
     }
+    
 }
 
 
@@ -437,6 +494,7 @@ class Productos extends ModelTable
     function getByIdPlatform($id){
         return $this->where("product_id = :id", ['id' => $id]);
     }
+    
 }
 
 
@@ -450,8 +508,9 @@ class Disponibilidad extends ModelTable
         parent::__construct();
     }
     function getDisponibilityByEnterprise($clave){
-        return $this->where('clave_empresa = :clave', ['clave' => $clave]);
-    }
+        return $this->where("clave_empresa = :clave AND status = 1", ['clave' => $clave]);
+    }    
+    
 }
 
 
@@ -481,13 +540,13 @@ class Canal extends ModelTable
     {
         $where = "activo = '1'";
         if ($search !== '') {
-            $where .= " AND CONCAT(nombre, ' ', tipo, ' ', telefono, ' ', subCanal) LIKE '%$search%'";
+            $where .= " AND CONCAT(nombre, ' ', tipo, ' ', metodopago, ' ', subCanal) LIKE '%$search%'";
         }
 
         return $this->where(
             "$where ORDER BY $this->id_table ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC",
             [],
-            ["nombre AS name", "telefono AS phone", "tipo AS type"]
+            ["nombre AS name", "metodopago", "tipo AS type"]
         );
     }
     function getChannelById($id)
@@ -718,7 +777,7 @@ class Transportation extends ModelTable
         // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 0"; //ACTIVADOS
         // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 1"; //DESACTIVADOS
         $join = ""; //AMBOS
-        $cond = "1=1 ORDER BY id_transportacion ASC";
+        $cond = "mark = 0 ORDER BY id_transportacion ASC";
         $params = [];
         return $this->consult($campos, $join, $cond, $params, false);
     }
@@ -734,7 +793,7 @@ class Transportation extends ModelTable
 
         $cond = "LOWER(hotel) IS NOT NULL AND hotel <> ''";
         $params = [];
-        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search)  ORDER BY id_transportacion ASC";
+        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search) AND mark = 0  ORDER BY id_transportacion ASC";
         $params['search'] = "%$search%";
         return $this->consult($campos, $join, $cond, $params, false);
     }
@@ -742,6 +801,22 @@ class Transportation extends ModelTable
     {
         if ($search === '') {
             return $this->getAllDataDefault();
+        }
+        $campos = ["*"];
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 0"; //ACTIVADOS
+        // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 1"; //DESACTIVADOS
+        $join = ""; //AMBOS
+
+        $cond = "LOWER(hotel) IS NOT NULL AND hotel <> ''";
+        $params = [];
+        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search) AND mark = 0  ORDER BY id_transportacion ASC";
+        $params['search'] = "%$search%";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    function searchTransportationEnableHome($search = '')
+    {
+        if ($search === '') {
+            return "";
         }
         $campos = ["*"];
         // $join = "H LEFT JOIN transportation T ON LOWER(H.nombre) LIKE LOWER(CONCAT('%', T.hotel, '%')) AND T.mark = 0"; //ACTIVADOS

@@ -9,12 +9,14 @@ class BookingMessageController extends API
     private $model_history;
     private $model_user;
     private $model_bookingmessage;
+    private $model_control;
 
     function __construct()
     {
         $this->model_history = new History();
         $this->model_user = new UserModel();        
         $this->model_bookingmessage = new BookingMessage();
+        $this->model_control = new Control();
     }
     private function get_params($params = [])
     {
@@ -26,6 +28,9 @@ class BookingMessageController extends API
         } else if (isset($params['getNotesIdPagoUser'])) {
             $action = 'getNotesIdPagoUser';
             $search = $params['getNotesIdPagoUser'];
+        }else if (isset($params['getLastNoteIdPago'])) {
+            $action = 'getLastNoteIdPago';
+            $search = $params['getLastNoteIdPago']; // ✅ Este es el fix
         }
 
 
@@ -54,6 +59,9 @@ class BookingMessageController extends API
                         return $this->jsonResponse(['message' => 'Parámetro getNotesIdPagoUser inválido'], 400);
                     }
                     $response = $this->model_bookingmessage->searchNotesByIdPagoUser($decoded['id'], $decoded['user']);
+                    break;
+                case 'getLastNoteIdPago':
+                    $response = $this->model_bookingmessage->searchLastNoteByIdPago($search);
                     break;
             }
     
@@ -101,39 +109,59 @@ class BookingMessageController extends API
         switch ($action) {
             case 'create':
                 $idpago   = trim($data['idpago'] ?? '');
-                $mensaje = trim($data['mensaje'] ?? '');
-                $usuario   = $userData->id;
-                $tipomessage       = trim($data['tipomessage'] ?? 'nota');
-
+                $mensaje  = trim($data['mensaje'] ?? '');
+                $usuario  = $userData->id;
+                $tipomessage = trim($data['tipomessage'] ?? 'nota');
+            
                 if ($mensaje === '') {
                     return $this->jsonResponse(['message' => 'El campo mensaje es obligatorio.'], 400);
                 }
-
-                $camposMesagge = [
-                    'idpago'   => $idpago,
-                    'mensaje' => $mensaje,
-                    'usuario'   => $usuario,
-                    'tipomessage'       => $tipomessage,
-                ];
-
-                $responseMessage = $this->model_bookingmessage->insert($camposMesagge);
-
-                if ($responseMessage && isset($responseMessage->id)) {
-                    $this->registrarHistorial(
-                        $data['module'],
-                        $responseMessage->id,
-                        'create',
-                        'Se creó mensaje',
-                        $userData->id ?? 0,
-                        null,
-                        $camposMesagge
-                    );
-                } else {
-                    return $this->jsonResponse(['message' => 'No se pudo crear el mensaje.'], 500);
+            
+                // Buscar la reserva madre para obtener el nog
+                $controlData = $this->model_control->find($idpago);
+                if (!$controlData) {
+                    return $this->jsonResponse(['message' => 'Reserva no encontrada.'], 404);
                 }
-
+            
+                // Obtener madre e hijos relacionados
+                $DataCombos = $this->model_control->getLinkedReservations($controlData->nog);
+            
+                $insertados = [];
+                foreach ($DataCombos as $combo) {
+                    $camposMesagge = [
+                        'idpago'      => $combo->id,
+                        'mensaje'     => $mensaje,
+                        'usuario'     => $usuario,
+                        'tipomessage' => $tipomessage,
+                    ];
+            
+                    $responseMessage = $this->model_bookingmessage->insert($camposMesagge);
+            
+                    if ($responseMessage && isset($responseMessage->id)) {
+                        $this->registrarHistorial(
+                            $data['module'],
+                            $responseMessage->id,
+                            'create',
+                            'Se creó mensaje',
+                            $userData->id ?? 0,
+                            null,
+                            $camposMesagge
+                        );
+                        $insertados[] = $responseMessage;
+                    }
+                }
+            
+                if (empty($insertados)) {
+                    return $this->jsonResponse(['message' => 'No se pudo crear ningún mensaje.'], 500);
+                }
+            
                 $httpCode = 201;
+                $response = [
+                    'message' => 'Mensajes creados correctamente',
+                    'registros' => $insertados
+                ];
                 break;
+            
             default:
                 return $this->jsonResponse(['message' => 'Acción inválida.', 'action' => $action], 400);
         }
@@ -277,8 +305,6 @@ class BookingMessageController extends API
         }
     }
 
-
-        
     private function registrarHistorial($module, $row_id, $action, $details, $user_id, $oldData, $newData)
     {
         $this->model_history->insert([

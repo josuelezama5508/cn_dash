@@ -15,8 +15,8 @@
                     <div id="divType" style="width: 100%;"></div>
                 </div>
                 <div class="form-group" style="flex: 1;">
-                    <label style="font-weight: 700;">Teléfono:</label>
-                    <input type="text" name="channelphone" class="form-control ds-input">
+                    <label style="font-weight: 700;">Metodo de Pago:</label>
+                    <input type="text" name="channelmethodpay" class="form-control ds-input">
                 </div>
                 <div class="form-group" style="width: 120px;">
                     <label style="font-weight: 700;">Subcanal:</label> <span style="color: red;">*</span>
@@ -50,7 +50,7 @@
 
                     $("#divType").html(create_channel_type(data.type));
                     $("[name='channelname']").val(data.name)
-                    $("[name='channelphone']").val(data.phone)
+                    $("[name='channelmethodpay']").val(data.metodopago)
                     $("#divSubchannel").html(create_channel_subchannel(data.subchannel));
                 }
             })
@@ -64,7 +64,7 @@
         let condition = $("[name='channelid']").val();
         let formData = new FormData(document.getElementById("form-edit-channel"));
 
-        fetchAPI(`canales?getById=${condition}`, 'PUT', formData)
+        fetchAPI(`canales?id=${condition}`, 'PUT', formData)
             .then(async (response) => {
                 const status = response.status;
                 // const text = await response.json();
@@ -90,7 +90,7 @@
                 case 'channeltype':
                     [ban, msg] = validate_data(texto, regexChannelType);
                     break;
-                case 'channelphone':
+                case 'channelmethodpay':
                     [ban, msg] = validate_data(texto, /[a-zA-Z0-9.-]+/);
                     if (texto.length == 0)
                         ban = "correcto";

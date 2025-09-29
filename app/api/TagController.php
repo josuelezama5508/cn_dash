@@ -83,7 +83,7 @@ class TagController extends API
                     $ptags_id = array();
                     $productcode = isset($params['productcode']) ? $params['productcode'] : '';
                     if ($productcode) {
-                        $ptags = $this->model_itemproduct->where("productcode = '$productcode'");
+                        $ptags = $this->model_itemproduct->where("productcode = '$productcode' AND active = '1'");
                         if ($ptags) foreach ($ptags as $row) $ptags_id[] = $row->tag_id;
                     }
 
@@ -130,8 +130,8 @@ class TagController extends API
             $languageArray = isset($data['language']) ? (array) $data['language'] : [];
             $tagnameArray = isset($data['tagname']) ? (array) $data['tagname'] : [];
 
-            $tagname = $this->model_tag->where("tag_index LIKE '%$tagreference%'");
-            if ($tagname) return $this->jsonResponse(["message" => "Ya existe un recurso similar y no se puede duplicar."], 409);
+            // $tagname = $this->model_tag->where("tag_index LIKE '%$tagreference%'");
+            // if ($tagname) return $this->jsonResponse(["message" => "Ya existe un recurso similar y no se puede duplicar."], 409);
 
             // Estructura del tagname
             $tagname = [];

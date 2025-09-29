@@ -1,0 +1,18 @@
+[
+    {
+        "endpoint": "https:\/\/wns2-bn3p.notify.windows.com\/w\/?token=BQYAAACwjfnZEJCAltuJx1qwZjHbNsBYWGfxmNzvKQ9C9aA1AM4k0W%2bLhAFuAlaf3O6NqJ56o6jq9xkBy8xlO0R9IIyc%2bE8CTAWMZ%2fRS25%2fxOmQsl16xGLm0edU9K%2bYePJtT0pCAZtHQ7UotdJycgJa1OeogRLUiKjiz0LP39quq5n%2fORvi4U7WZz5SzglZ7Pv2z4kUZ%2fRRGJeQGT32ezW3XjeM9wKfoibg0q%2b9u3FiXuz8MRt3JGE9lwBo8w8v8n6%2f2ew%2fFvcH0qOLrZD%2ft2KY9CbzziuyGd58ITPmGxYisn98kDXgNAfhkIhPOvGbysJ%2fANNM%3d",
+        "expirationTime": null,
+        "keys": {
+            "p256dh": "BBmShZ4NeL8GPSuatywKHYHQZcQpmTok_A7CeJY2nmyHry79ajhy2IjlTbmOKCJp80Wn-r6A7BjagmNjE1D88OA",
+            "auth": "JVIQ15uTPTG5wf44rSf0AQ"
+        }
+    },
+    {
+        "endpoint": "https:\/\/fcm.googleapis.com\/fcm\/send\/dmi5M9_NHIs:APA91bFQCN1EqtfYy4V8pbWqQ7pYuY_A6RNEnJvAZQ60LDKUDGOnVkOPM3zP1VNyxYCogYQlAisPXrT_fST0Nd9cOBHtCMUH25ybjAx5SrP91W9N5hTOf8LsMkBhtyl6ASh7MeiyHNtF",
+        "expirationTime": null,
+        "keys": {
+            "p256dh": "BNfbOqdSk7ot8jzJHUj2YqO-q_ATKY7d7hV3V7lqro1e4ZEyJRn2kQmZwGXRL0B7OYrEkME3WLiQJ0vaAcLm9I4",
+            "auth": "lkxztxI1UYgCru_NFbl_QA"
+        }
+    }
+]

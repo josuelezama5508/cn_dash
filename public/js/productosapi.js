@@ -22,17 +22,28 @@ async function fetch_product(productcode, lang = "en") {
 }
 // 🔹 Recibe el producto y lo pinta en el DOM
 function render_product(product) {
-    // Si product es null o undefined, crear un objeto vacío para evitar errores
-    const safeProduct = product[0] || {};
+    let safeProduct = {};
+
+    // Si es un array, toma el primer elemento
+    if (Array.isArray(product)) {
+        safeProduct = product[0] || {};
+    } 
+    // Si es un objeto directamente
+    else if (product && typeof product === 'object') {
+        safeProduct = product;
+    }
 
     const name = safeProduct.product_name || 'N/A';
     const id = safeProduct.id || 'N/A';
+
     console.log("PrintProductname");
     console.log(product);
     console.log(name);
+
     $("#PrintProductname").text(name);
     // $("#productname").attr("data-product-id", id);
 }
+
 // ✅ Solo consulta API
 async function fetch_registered_products(productcode) {
     try {
@@ -66,11 +77,10 @@ function render_registered_products(data) {
         companyid = element.company;
         globalCompanyId = companyid;
 
-        if (element.location_image || element.location_description || element.location_url) {
+        if (element.location_image || element.link_book) {
             locations[element.id] = {
                 image: element.location_image,
-                description: element.location_description,
-                url: element.location_url
+                url: element.link_book
             };
         }
 
@@ -109,17 +119,17 @@ async function fetch_products(companycode) {
         return [];
     }
 }
-function render_products(products, target = "#productSelect") {
-    const $select = $(target);
-    let options = '<option value="0">Selecciona un producto</option>';
+// function render_products(products, target = "#productSelect") {
+//     const $select = $(target);
+//     let options = '<option value="0">Selecciona un producto</option>';
 
-    products.forEach(p => {
-        // 🔹 value = productcode, data-product-id = id
-        options += `<option value="${p.productcode}" data-product-id="${p.id}" data-product-name="${p.productname}">${p.productname}</option>`;
-    });
+//     products.forEach(p => {
+//         // 🔹 value = productcode, data-product-id = id
+//         options += `<option value="${p.productcode}" data-product-id="${p.id}" data-product-name="${p.productname}">${p.productname}</option>`;
+//     });
 
-    $select.html(options);
-}
+//     $select.html(options);
+// }
 async function fetch_products_languague(companycode, lang = "en", platform = "dash") {
     try {
         const langdata = {
@@ -141,17 +151,79 @@ async function fetch_products_languague(companycode, lang = "en", platform = "da
         return null;
     }
 }
+// function render_products(products, target = "#productSelect") {
+//     const $select = $(target);
+//     $select.empty();
+
+//     let options = '<option value="0">Selecciona un producto</option>';
+
+//     if (Array.isArray(products)) {
+//         products.forEach(p => {
+//             const shortText = p.productname.length > 60 
+//                 ? p.productname.slice(0, 40) + '…' 
+//                 : p.productname;
+
+//             options += `
+//                 <option 
+//                     value="${p.productcode}" 
+//                     data-product-id="${p.id}" 
+//                     title="${p.productname}" 
+//                     data-product-name="${p.productname}">
+//                     ${shortText}
+//                 </option>`;
+//         });
+//     }
+
+//     $select.html(options);
+// }
 function render_products(products, target = "#productSelect") {
     const $select = $(target);
+    // $select.empty();
+
     let options = '<option value="0">Selecciona un producto</option>';
 
-    products.forEach(p => {
-        // 🔹 value = productcode, data-product-id = id
-        options += `<option value="${p.productcode}" data-product-id="${p.id}" data-product-name="${p.productname}">${p.productname}</option>`;
-    });
+    if (Array.isArray(products)) {
+        products.forEach(p => {
+            options += `
+                <option 
+                    value="${p.productcode}" 
+                    data-product-id="${p.id}" 
+                    data-description="${p.productname}"
+                    title="${p.productname}">
+                    ${p.productname}
+                </option>`;
+        });
+    }
 
     $select.html(options);
+
+    // Si ya está inicializado, destrúyelo primero
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.select2('destroy');
+    }
+
+    // Reiniciar Select2 con configuración
+    $select.select2({
+        width: 'style',                  // respeta el estilo definido por CSS
+        dropdownAutoWidth: true,        // auto ancho en dropdown
+        minimumResultsForSearch: Infinity,  // 🔥 sin buscador
+        templateResult: formatOption,   // texto completo en dropdown
+        templateSelection: formatSelected // texto corto al seleccionar
+    });
 }
+
+function formatOption(option) {
+    if (!option.id) return option.text;
+    const description = $(option.element).data('description') || option.text;
+    return $('<div style="white-space: normal;">' + description + '</div>');
+}
+
+function formatSelected(option) {
+    if (!option.id) return option.text;
+    const description = $(option.element).data('description') || option.text;
+    return description.length > 40 ? description.slice(0, 40) + '…' : description;
+}
+
     //APARTADO PARA BUSCAR PRODUCTOS POR LENGUAJE Y CODIGO DE PRODUCTO REFERENTE A LA PLATAFORMA SOLICITADA.
 // 🔹 Consulta productos por lenguaje y plataforma(WEB O DASH)
 async function fetch_products_lang(productcode, lang = "en", platform = "dash") {

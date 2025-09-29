@@ -1,5 +1,5 @@
 window.descuentoAplicado = 0;
-
+window.soloAddons = false;
 // --- Consulta items de un producto ---
 async function fetch_items(productcode) {
     if (!productcode) {
@@ -24,7 +24,7 @@ async function fetch_items(productcode) {
 }
 
 // --- Renderiza los items en la tabla ---
-function renderItems(items, lang = "en") {
+async function renderItems(items, lang = "en") {
     
     if (!Array.isArray(items) || items.length === 0) {
         $("#productdetailspax").html('<tr><td colspan="3" class="text-muted">Sin productos disponibles</td></tr>');
@@ -62,7 +62,9 @@ function renderItems(items, lang = "en") {
                 <td class="td-price">${precio} ${moneda}</td>
             </tr>`;
     };
-
+    const onlyAddons = items.every(i => i.typetag.toLowerCase() === 'addon');
+    window.soloAddons = onlyAddons;
+    console.log("SOLO ADDONS EN ITEMSAPI.JS: " + window.soloAddons);
     // Filtrar items
     const rowPax = items.filter(i => i.typetag.toLowerCase() !== 'addon').map(createRow).join('');
     const rowAddons = items.filter(i => i.typetag.toLowerCase() === 'addon').map(createRow).join('');
@@ -77,6 +79,12 @@ function renderItems(items, lang = "en") {
     // $('#productdetailspax input[type="text"]:not([data-type="tour"])').on('input change', function() {
     //     ReservationValidator.validateOtherTickets();
     // });
+    // Ocultar o mostrar el bloque de tours si no hay productos
+    if (window.soloAddons) {
+        $('#toursBlock').addClass('hidden'); // 👈 ocultar si solo hay addons
+    } else {
+        $('#toursBlock').removeClass('hidden'); // 👈 mostrar si hay tours
+    }
 }
 function calcularTotal() {
     let subtotal = 0; // 🔹 Total sin balance ni descuentos
@@ -92,30 +100,49 @@ function calcularTotal() {
 
     // Mostrar/ocultar addons según rango pax
     let anyAddonVisible = false;
+
     $('#productdetailsaddons tr').each(function () {
         const $row = $(this);
-        const $checkbox = $row.find('input[type="checkbox"]');
-        const reference = $checkbox.data('reference') || "";
+        const $input = $row.find('input'); // Soporta checkbox y text
+        const reference = $input.data('reference') || "";
         const match = reference.toString().match(/(\d+)\s*-\s*(\d+)/);
-        let showRow = false;
 
-        if (match) {
+        if (window.soloAddons) {
+            $row.show();
+            $input.prop('disabled', false);
+            anyAddonVisible = true;
+        } else if (match) {
             const min = parseInt(match[1], 10);
             const max = parseInt(match[2], 10);
-            showRow = totalPax >= min && totalPax <= max;
-        }
+            const showRow = totalPax >= min && totalPax <= max;
 
-        if (showRow) {
-            $row.show();
-            $checkbox.prop('disabled', false);
-            anyAddonVisible = true;
+            if (showRow) {
+                $row.show();
+                $input.prop('disabled', false);
+                anyAddonVisible = true;
+            } else {
+                if ($input.is(':checkbox')) {
+                    $input.prop('checked', false);
+                } else if ($input.is('[type="text"]')) {
+                    $input.val("0");
+                }
+                $input.prop('disabled', true);
+                
+                if ($input.is(':checkbox')) {
+                    $input.prop('checked', false);
+                }
+                $row.hide();
+            }
         } else {
-            $row.hide();
-            $checkbox.prop('checked', false).prop('disabled', true);
+            // Sin rango
+            $row.show();
+            $input.prop('disabled', false);
+            anyAddonVisible = true;
         }
     });
 
     $('#addonsBlock').toggleClass('hidden', !anyAddonVisible);
+
 
     // Procesar total y resumen
     function procesarTabla(selector, isAddon = false) {
@@ -124,25 +151,31 @@ function calcularTotal() {
             const $inputNumber = $row.find('input[type="text"]');
             const $checkbox = $row.find('input[type="checkbox"]');
             const precioTexto = $row.find('td.td-price').text() || "0";
-
+    
             if ($inputNumber.length) {
                 const cantidad = parseFloat($inputNumber.val()) || 0;
                 const nombre = $inputNumber.data('name') || "???";
                 const precio = parseFloat(precioTexto.replace(/[^0-9.-]+/g, "")) || 0;
-
-                if (!isAddon && cantidad > 0) {
+    
+                if (cantidad > 0) {
                     subtotal += cantidad * precio;
-                    ticketsResumen.push(`${cantidad} x ${nombre}`);
+    
+                    if (isAddon) {
+                        addonsResumen.push(`${cantidad} x ${nombre}`);
+                    } else {
+                        ticketsResumen.push(`${cantidad} x ${nombre}`);
+                    }
                 }
             } else if ($checkbox.length && $checkbox.is(':checked') && !$checkbox.is(':disabled')) {
                 const nombre = $checkbox.data('name') || "???";
                 const precio = parseFloat($checkbox.data('price')) || 0;
-
+    
                 subtotal += precio;
                 addonsResumen.push(`1 x ${nombre}`);
             }
         });
     }
+    
 
     procesarTabla('#productdetailspax tr', false);
     procesarTabla('#productdetailsaddons tr', true);
@@ -155,7 +188,7 @@ function calcularTotal() {
     total = descuentoAplicado ? subtotal * descuentoAplicado : subtotal;
 
     // Mostrar el total en el input editable de balance
-    // $('#RBalanced').val(total.toFixed(2));
+    $('#RBalanced').val(total.toFixed(2));
 
     // Mostrar en resumen
     $('#PrintTotal').text(total.toFixed(2));

@@ -24,7 +24,7 @@ class PrecioController extends API
         // $user_id = Token::validateToken($token);
         // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
 
-        $prices = $this->model_price->where("active = '1'", array(), ["price"]);
+        $prices = $this->model_price->where("active = '1' ORDER BY price ASC ", array(), ["price"]);
         foreach ($prices as $i => $row) {
             $prices[$i]->price = convert_to_price($row->price);
         }

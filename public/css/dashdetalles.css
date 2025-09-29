@@ -10,12 +10,17 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .card-body {
-    max-height: 70vh; /* Máximo 70% de la altura de la ventana */
+    /* max-height: 70vh; */
     overflow-y: auto; /* Scroll si el contenido supera la altura */
 }
+.is-invalid {
+  border: 1px solid #dc3545 !important;
+  background-color: #fff0f0;
+}
+
 /*MODIFCAR PARA ABAJO YA QUE LOS CSS SE COMPARTEN, HACERLO ESPECÍFICOS*/
 /* Modal lateral derecho - estilo básico */
-.modal-right {
+.modal-right-note {
     position: fixed;
     top: 0;
     right: -400px; /* Oculto fuera de pantalla */
@@ -29,22 +34,22 @@
     flex-direction: column;
   }
   
-  .modal-right.show {
+  .modal-right-note.show {
     right: 0; /* Aparece visible */
   }
   
-  .modal-content-right {
+  .modal-content-right-note {
     display: flex;
     flex-direction: column;
     height: 100%;
   }
   
-  .modal-header, .modal-footer {
+  .modal-header-note, .modal-footer-note {
     padding: 10px;
     border-bottom: 1px solid #ddd;
   }
   
-  .modal-header {
+  .modal-header-note {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -52,13 +57,13 @@
     color: white;
   }
   
-  .modal-body {
+  .modal-body-note {
     padding: 10px;
     flex-grow: 1;
     /* overflow-y: auto; */
   }
   
-  .modal-footer {
+  .modal-footer-note {
     border-top: 1px solid #ddd;
     display: flex;
     flex-direction: column;
@@ -84,4 +89,88 @@
     background-color: gray;
     cursor: not-allowed;
   }
-  
+#ultimoMensajeReserva {
+  max-height: 350px;
+  overflow-y: auto;
+  /* border: 1px solid #ddd; */
+  border-radius: 8px;
+  padding: 0;
+  background-color: transparent;
+  position: relative;
+}
+
+#mensajeTipoBox .mensaje-item {
+    border-radius: 6px;
+    margin-bottom: 12px;
+    padding: 12px;
+    transition: background-color 0.3s;
+}
+
+#mensajeTipoBox .mensaje-item.respuesta {
+    font-size: 0.85rem;
+    background-color: #f8f9fa;
+    margin-left: 48px;
+    border-left: 3px solid #ccc;
+}
+
+#mensajeTipoBox .mensaje-item.principal {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #ffffff;
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.table-container-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+  display: block;
+}
+
+.table-container-scroll table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+.table-container-scroll thead,
+.table-container-scroll tbody {
+  display: contents;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.table-container-scroll tbody {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.table-container-scroll th,
+.table-container-scroll td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px;
+  border: transparent;
+  background-color: transparent;
+}
+
+.table-container-scroll td {
+  background-color: white !important;
+}
+.table-container-scroll thead th{
+  color: white;
+}
+/* Oculta visualmente los días deshabilitados y deja espacio vacío */
+.flatpickr-day.flatpickr-disabled {
+  color: transparent;      /* El texto desaparece */
+  background: none;        /* Sin fondo */
+  pointer-events: none;    /* No clickeable */
+  border: none;            /* Sin borde */
+}
+
+/* Opcional: si quieres mantener el tamaño del día para que no se achique */
+.flatpickr-day.flatpickr-disabled::before {
+  content: "";
+  display: block;
+  height: 100%;
+}

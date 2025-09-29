@@ -5,7 +5,7 @@ window.handleMail = async function(modalData) {
 
     const idioma = document.querySelector('input[name="idioma"]:checked')?.value || 'es';
     const solicitarId = document.getElementById('solicitar_id')?.checked || false;
-    const destinatario = document.getElementById('destinatario')?.value.trim();
+    const destinatario = document.getElementById('cliente_nombre')?.value.trim();
     const correo = document.getElementById('correo_destino')?.value.trim();
     const comentario = document.getElementById('comentario_notif')?.value.trim();
     const idpago = modalData?.id ?? document.getElementById('idpago')?.value;
@@ -37,10 +37,26 @@ window.handleMail = async function(modalData) {
 }
 
 // Inicialización si necesitas algo más al abrir modalMail
-window.initModalMail = function() {
+window.initModalMail = function(modalData) {
     const radios = document.querySelectorAll('input[name="notificacion_tipo"]');
     const pickupFields = document.getElementById('pickup_fields');
     const solicitarIdToggle = document.getElementById('solicitar_id');
+    const lang = modalData?.lang;
+
+    
+    const clienteNombre = `${modalData.cliente_name || ''} ${modalData.cliente_lastname || ''}`.trim();
+    document.getElementById('cliente_nombre').value = clienteNombre;
+    const correoInput = document.getElementById('correo_destino');
+    if (correoInput) correoInput.value = modalData.email || '';
+    // Establecer idioma según modalData.lang
+    if (lang === 1) {
+        document.getElementById('idioma_en').checked = true;
+    } else if (lang === 2) {
+        document.getElementById('idioma_es').checked = true;
+    }
+    // Deshabilitar los radios de idioma
+    document.getElementById('idioma_en').disabled = true;
+    document.getElementById('idioma_es').disabled = true;
 
     if (pickupFields) pickupFields.classList.add('d-none');
 
@@ -61,4 +77,23 @@ window.initModalMail = function() {
     if ((document.getElementById('voucher')?.checked || document.getElementById('clima')?.checked) && solicitarIdToggle) {
         solicitarIdToggle.closest('.form-check').style.display = 'none';
     }
+    // ==== NUEVO: pintar datos de la empresa ====
+    const logo = document.getElementById("logocompany");
+    const empresaName = document.getElementById("empresaname");
+
+    if (logo && modalData?.company_logo) {
+        logo.src = modalData.company_logo;
+    }
+
+    if (empresaName && modalData?.company_name) {
+        empresaName.value = modalData.company_name;
+        empresaName.disabled = true; // desactiva el input
+        // o si prefieres que se vea pero no se edite, solo readonly:
+        // empresaName.readOnly = true;
+
+        if (modalData?.primary_color) {
+            empresaName.style.color = modalData.primary_color;
+        }
+    }
 }
+

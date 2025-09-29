@@ -49,3 +49,9 @@ window.openChannelRepModal = async function (modalData) {
         } catch(e) { console.error(e); alert("Error en la conexión"); }
     }
 }
+window.closeModal = function () {
+    if (window.currentModal) {
+        window.currentModal.hide();
+        window.currentModal = null;
+    }
+};

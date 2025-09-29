@@ -12,8 +12,10 @@ $(document).ready(async function () {
     const products = await fetch_registered_products(productcode);
     render_registered_products(products);
     // --- Tagnames
-    registered_tagnames();
-
+    const $table = $("#sortable-table");
+    bindTagEvents($table); // solo una vez
+    registered_tagnames(); // ya carga todo
+    
     // --- Eventos Productos ---
     $(document).on("click", ".add-product", function () { initProductsForm(this); });
     $("#RProducts").on("click", ".save-btn", function () { postProduct(this); });

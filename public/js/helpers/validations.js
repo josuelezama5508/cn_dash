@@ -1,3 +1,4 @@
+
 const ReservationValidator = (() => {
     const focusFirst = (el) => { 
         if (el) {
@@ -13,7 +14,15 @@ const ReservationValidator = (() => {
         input.toggleClass("input-error", !valid);
         return valid;
     };
-
+    const validateLastName = ($el) => {
+        const input = $el ? $($el) : $('input[placeholder="Apellidos"]');
+        const val = input.val().trim();
+        const isClean = /^[^<>()'*/\\"]*$/g.test(val);
+        const valid = val === "" || isClean;
+        console.log("Validando Comentarios:", valid);
+        input.toggleClass("input-error", !valid && val !== "");
+        return valid;
+    };
     const validateCompany = ($el) => {
         const input = $el || $('#companySelect');
         const valid = input.val() && input.val() !== "0";
@@ -87,14 +96,20 @@ const ReservationValidator = (() => {
         return fechaSelected;
     };
 
-    const validateHorario = () => {
-        const $horarioCard = $('#horariosDisponibles .horario-card.seleccionado');
-        const valid = $horarioCard.length > 0;
+    // const validateHorario = () => {
+    //     const $horarioCard = $('#horariosDisponibles .horario-card.seleccionado');
+    //     const valid = $horarioCard.length > 0;
+    //     console.log("Validando Horario:", valid);
+    //     $('#horariosDisponibles').toggleClass("input-error", !valid);
+    //     return valid;
+    // };
+    const validateHorario = ($el) => {
+        const input = $el || $('#selectHorario');
+        const valid = !!input.val();
         console.log("Validando Horario:", valid);
-        $('#horariosDisponibles').toggleClass("input-error", !valid);
+        input.toggleClass("input-error", !valid);
         return valid;
     };
-
     const validateTotal = ($el) => {
         const input = $el || $('#totalPaxPrice');
         const valid = input.val() && parseFloat(input.val()) > 0;
@@ -109,27 +124,99 @@ const ReservationValidator = (() => {
         console.log("Validando campo opcional:", valid);
         if (valid) $el.removeClass("input-error");
     };
-
-    const validateAll = () => {
+    const validateEmail = ($el) => {
+        const input = $el || $('input[placeholder="Correo Cliente"]');
+        const val = input.val().trim();
+        const valid = val === "" || /^[\w\.-]+@[\w\.-]+\.\w{2,}$/.test(val);
+        console.log("Validando Correo:", valid);
+        input.toggleClass("input-error", !valid && val !== "");
+        return valid;
+    };
+    const validatePhone = ($el) => {
+        const input = $el || $('input[placeholder="Telefono Cliente"]');
+        const val = input.val().trim();
+        const valid = val === "" || /^\d{10}$/.test(val);
+        console.log("Validando Teléfono:", valid);
+        input.toggleClass("input-error", !valid && val !== "");
+        return valid;
+    };
+    const safeTextRegex = /^[a-zA-Z0-9\s]*$/;
+    const validateComments = ($el) => {
+        const input = $el || $('.comentario-opcional');
+        const val = input.val().trim();
+        const isClean = safeTextRegex.test(val);
+        const valid = val === "" || isClean;
+        console.log("Validando Comentarios:", valid);
+        input.toggleClass("input-error", !valid && val !== "");
+        return valid;
+    };
+    const validateCommentsVoucher = ($el) => {
+        const input = $el || $("#voucherCode");
+        const val = input.val().trim();
+        const valid = val !== "" && safeTextRegex.test(val); // requerido + sin caracteres raros
+        console.log("Validando Voucher:", valid);
+        input.toggleClass("input-error", !valid);
+        return valid;
+    };
+    const validateAll = (soloAddons) => {
         console.log("🧪 Iniciando validación completa...");
+        console.log("🧪 VALOR DE SOLO ADDONS... " + soloAddons);
+
         let isValid = true;
+    
         isValid &= validateNombre();
+        isValid &= validateLastName();
         isValid &= validateCompany();
         isValid &= validateProduct();
         isValid &= validateTourTypeSelect();
-        isValid &= validateTourTypeInput();
-        // isValid &= validateOtherTickets();
+        
         isValid &= validateChannel();
         isValid &= validateLanguage();
         isValid &= validateDate();
-        isValid &= validateHorario();
+        if(!soloAddons){
+            isValid &= validateTourTypeInput();
+            isValid &= validateHorario();
+        }
         isValid &= validateTotal();
+    
+        // 🔹 Validaciones opcionales pero obligatorias si tienen valor
+        isValid &= validateEmail();
+        isValid &= validatePhone();
+        isValid &= validateComments();
+        console.log("✅ Validación completa:", !!isValid);
+        return !!isValid;
+    };
+    const validateAllVoucher = (soloAddons) => {
+        console.log("🧪 Iniciando validación completa...");
+        console.log("🧪 VALOR DE SOLO ADDONS... " + soloAddons);
+        let isValid = true;
+    
+        isValid &= validateNombre();
+        isValid &= validateLastName();
+        isValid &= validateCompany();
+        isValid &= validateProduct();
+        isValid &= validateTourTypeSelect();
+        isValid &= validateChannel();
+        isValid &= validateLanguage();
+        isValid &= validateDate();
+        if(!soloAddons){
+            isValid &= validateHorario(); 
+            isValid &= validateTourTypeInput();
+        }
+        isValid &= validateTotal();
+    
+        // 🔹 Validaciones opcionales pero obligatorias si tienen valor
+        isValid &= validateEmail();
+        isValid &= validatePhone();
+        isValid &= validateComments();
+        isValid &= validateCommentsVoucher();
         console.log("✅ Validación completa:", !!isValid);
         return !!isValid;
     };
 
     return {
         validateNombre,
+        validateLastName,
         validateCompany,
         validateProduct,
         validateTourTypeSelect,
@@ -141,6 +228,12 @@ const ReservationValidator = (() => {
         validateHorario,
         validateTotal,
         validateOptionalFields,
-        validateAll
+        validateEmail,         // 👈 Agrega esto
+        validatePhone,         // 👈 Agrega esto
+        validateComments,      // 👈 Y esto
+        validateCommentsVoucher,
+        validateAll,
+        validateAllVoucher,
     };
+
 })();

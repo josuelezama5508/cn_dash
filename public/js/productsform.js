@@ -136,7 +136,7 @@ function product_items_are_valid() {
             case 'showpanel[]': [ban, msg] = validate_data(texto, regexID); break;
             case 'productname[]': [ban, msg] = validate_data(texto, regexName); break;
             case 'productlang[]': [ban, msg] = validate_data(texto, regexID); break;
-            case 'productprice[]': [ban, msg] = validate_data(texto, regexID); break;
+            case 'productprice[]': [ban, msg] = validate_data(texto, regexPrice); break;
             case 'denomination[]': [ban, msg] = validate_data(texto, regexID); break;
             case 'description[]': 
                 [ban, msg] = validate_data(texto, regexTextArea);
