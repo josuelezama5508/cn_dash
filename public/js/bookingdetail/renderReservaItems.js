@@ -1,3 +1,4 @@
+let descuentoAplicado = 0;
 async function openEditarPaxModal() {
     if (!modalData?.product_code) {
         alert("No se encontró el código de producto");
@@ -5,7 +6,6 @@ async function openEditarPaxModal() {
     }
 
     const itemsBase = await fetch_items(modalData.product_code);
-
     let selectedItems = [];
     try {
         selectedItems = JSON.parse(modalData.items_details || '[]');
@@ -21,10 +21,7 @@ async function openEditarPaxModal() {
 
     const createRow = (item, index) => {
         let tagname = {};
-        try {
-            tagname = JSON.parse(item.tagname);
-        } catch {}
-
+        try { tagname = JSON.parse(item.tagname); } catch {}
         const lang = modalData.lang == 1 ? 'en' : 'es';
         const name = (tagname[lang] || item.reference || `Item ${index + 1}`).trim();
         const reference = item.reference || '';
@@ -47,20 +44,18 @@ async function openEditarPaxModal() {
                 </div>`;
         } else if (classtag === 'checkbox') {
             const checked = (selectedValue == "1" || selectedValue == 1) ? "checked" : "";
-            inputControl = `
-                <input type="checkbox" class="detalles-pax-checkbox form-check-input"
-                    data-name="${name}" data-price="${price}" data-reference="${reference}" ${checked}>`;
+            inputControl = `<input type="checkbox" class="detalles-pax-checkbox form-check-input"
+                                data-name="${name}" data-price="${price}" data-reference="${reference}" ${checked}>`;
         } else {
             inputControl = `<span class="text-muted">Sin control</span>`;
         }
 
-        return `
-            <tr>
-                <td>${name}</td>
-                <td class="text-center">${inputControl}</td>
-                <td class="text-end">${price}</td>
-                <td class="text-end">${moneda}</td>
-            </tr>`;
+        return `<tr>
+                    <td>${name}</td>
+                    <td class="text-center">${inputControl}</td>
+                    <td class="text-end">${price}</td>
+                    <td class="text-end">${moneda}</td>
+                </tr>`;
     };
 
     // Detectar si todos son addons
@@ -134,7 +129,7 @@ async function openEditarPaxModal() {
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <h6 class="mb-3 text-primary fw-bold">Detalles de actividad</h6>
-                    <p class="mb-1"><strong>Actividad:</strong> 
+                    <p class="mb-1" style="width: 500px;"><strong>Actividad:</strong> 
                         <span class="text-success">${modalData.actividad }</span>
                     </p>
                     <p class="mb-1"><strong>Balance:</strong> 
@@ -147,7 +142,7 @@ async function openEditarPaxModal() {
                         <span id="pax-count" class="badge bg-info text-dark">0</span>
                     </p>
                     <p class="mb-0"><strong>Total:</strong> 
-                        <span class="fw-bold text-dark">$<span id="pax-total">0.00</span> ${modalData.moneda}</span>
+                        <span class="fw-bold text-dark">$<span id="pax-total">0.00</span> </span>
                     </p>
                 </div>
             </div>
@@ -156,6 +151,19 @@ async function openEditarPaxModal() {
     document.getElementById("modalGenericContent").innerHTML = tableHtml + resumenHTML;
     document.getElementById("modalGenericTitle").innerText = "Editar Pax";
 
+    // Aplicar código promocional si existe
+    if (modalData.codepromo?.trim()) {
+        try {
+            const promoResponse = await fetchAPI(`promocode?codecompany=${encodeURIComponent(modalData.code_company)}&codepromo=${encodeURIComponent(modalData.codepromo)}`, 'GET');
+            const promoData = await promoResponse.json();
+            if (promoResponse.ok && promoData.data?.length) {
+                const descuento = parseFloat(promoData.data[0].descount) / 100;
+                if (!isNaN(descuento)) descuentoAplicado = 1 - descuento;
+            }
+        } catch (error) {
+            console.error("Error al validar promoción:", error);
+        }
+    }
     // Event listeners
     actualizarResumen();
 
@@ -306,10 +314,23 @@ function actualizarResumen() {
             anyAddonVisible = true;
         }
     });
+    // Aplicar descuento
+    const totalConDescuento = descuentoAplicado > 0 ? total * descuentoAplicado : total;
+    const porcentajeDescuento = ((1 - descuentoAplicado) * 100).toFixed(0);
+
+    const totalElem = document.getElementById("pax-total");
+    if (descuentoAplicado > 0) {
+        totalElem.innerHTML = `
+            <span style="text-decoration:line-through; color:#999;">$${total.toFixed(2)}</span>
+            <br><span style="color:green; font-weight:bold;">$${totalConDescuento.toFixed(2)}</span>
+            <br><small style="color:orange;">Descuento: ${porcentajeDescuento}%</small>`;
+    } else {
+        totalElem.textContent = total.toFixed(2);
+    }
 
     // 3. Actualizar contadores y total
     document.getElementById("pax-count").innerText = pax;
-    document.getElementById("pax-total").innerText = total.toFixed(2);
+    // document.getElementById("pax-total").innerText = total.toFixed(2);
 
     // 4. Mostrar u ocultar el bloque de addons si no hay ninguno visible
     const addonsBlock = document.getElementById("addonsBlockModal");
