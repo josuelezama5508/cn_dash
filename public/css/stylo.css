@@ -433,7 +433,9 @@ span, p,  .booking-salmon h2 span {
   }
   
 
-
+  #toursBlockModal, #addonsBlockModal {
+      width: 100%;
+  }
 
 /* Cuando la pantalla sea menor o igual a 1360px */
 @media (max-width: 1360px) {
@@ -441,7 +443,7 @@ span, p,  .booking-salmon h2 span {
         flex-direction: column;
     }
     #toursBlockModal, #addonsBlockModal {
-        width: -webkit-fill-available;
+        width: 100%;
     }
 }
 

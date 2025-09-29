@@ -147,17 +147,30 @@ class RepController extends API
     
         $idrep = validate_id(safe_array_get($params, 'id', 0));
         $old_data = $this->model_rep->find($idrep);
-        if (!count((array)$old_data)) return $this->jsonResponse(["message" => "El representante que intentas modificar no existe."], 404);
+        if (!count((array)$old_data)) {
+            return $this->jsonResponse(["message" => "El representante que intentas modificar no existe."], 404);
+        }
     
         $data = json_decode(file_get_contents("php://input"), true);
-        if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
+        if (!isset($data)) {
+            return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
+        }
     
-        $nombre   = validate_repname(safe_array_get($data, 'repname', null));
-        $telefono = validate_phone(safe_array_get($data, 'repphone', null));
-        $email    = validate_email(safe_array_get($data, 'repemail', null));
-        $comision = validate_int(safe_array_get($data, 'repcommission', null));
+        // --- Acepta ambos nombres ---
+        $nombre   = validate_repname(
+            safe_array_get($data, 'repname', safe_array_get($data, 'name', null))
+        );
+        $telefono = validate_phone(
+            safe_array_get($data, 'repphone', safe_array_get($data, 'phone', null))
+        );
+        $email    = validate_email(
+            safe_array_get($data, 'repemail', safe_array_get($data, 'email', null))
+        );
+        $comision = validate_int(
+            safe_array_get($data, 'repcommission', safe_array_get($data, 'commission', null))
+        );
     
-        if (!empty($nombre) && !empty($comision)) {
+        if (!empty($nombre) && $comision !== null) {
             $_rep = $this->model_rep->update($idrep, [
                 "nombre"   => $nombre,
                 "telefono" => $telefono ?: null,
@@ -171,6 +184,7 @@ class RepController extends API
     
         return $this->jsonResponse(["message" => "Nombre y comisión son obligatorios para actualizar."], 400);
     }
+    
     
     public function delete($params = [])
     {

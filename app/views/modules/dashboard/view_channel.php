@@ -38,7 +38,7 @@
         </div>
     </main>
 
-    <script src="<?= asset('/js/channel.js') ?>?v=1"></script>
+    <script src="<?= asset('/js/channel.js?123') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>
 </body>
 

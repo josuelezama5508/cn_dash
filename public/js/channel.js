@@ -200,7 +200,7 @@ async function btnDeleteEvent(id) {
     }
 
     instance_of_modal = $.confirm({
-        title: "¿Eliminar canal?",
+        title: "¿Desactivar canal?",
         boxWidth: "400px",
         content: ``,
         useBootstrap: false,
@@ -210,25 +210,17 @@ async function btnDeleteEvent(id) {
                 btnClass: "btn-green",
                 action: async function () {
                     try {
-                        // Obtener reps asociados al canal
-                        const responseReps = await fetchAPI(`rep?channelid=${id}`, "GET");
-                        const repsJson = await responseReps.json();
-                        const rep_ids = repsJson.data.map(rep => rep.id);
+                        // Llamar al endpoint con PUT para desactivar
+                        const putResponse = await fetchAPI(`canales?id=${id}`, "PUT", { desactivar: true });
 
-                        // Construir query con reps[] y id
-                        const queryParams = buildQueryParams({ id: id, reps: rep_ids });
-
-                        // Llamar al endpoint con DELETE y query string correcta
-                        const deleteResponse = await fetchAPI(`canales?${queryParams}`, "DELETE");
-
-                        if (deleteResponse.status === 204) {
+                        if (putResponse.status === 204) {
                             location.reload();
                         } else {
-                            const error = await deleteResponse.json();
-                            console.error("Error al eliminar canal:", error.message);
+                            const error = await putResponse.json();
+                            console.error("Error al desactivar canal:", error.message);
                         }
                     } catch (error) {
-                        console.error("Error al procesar la eliminación del canal:", error);
+                        console.error("Error al procesar la desactivación del canal:", error);
                     }
                     return false;
                 }

@@ -196,42 +196,48 @@ class CanalesController extends API
     public function put($params = [])
     {
         $headers = getallheaders();
-            // Validar token con el modelo user
         $validation = $this->model_user->validateUserByToken($headers);
         if ($validation['status'] !== 'SUCCESS') {
             return $this->jsonResponse(['message' => $validation['message']], 401);
         }
         $userData = $validation['data'];
+    
         $id_channel = isset($params['id']) ? validate_id($params['id']) : 0;
         $old_data = $this->model_channel->where("id_channel = '$id_channel' AND activo = '1'");
-        if (!count($old_data)) return $this->jsonResponse(array('message' => 'El recurso no existe en el servidor.'), 404);
+        if (!count($old_data)) return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.'], 404);
+    
         $old_data = $old_data[0];
-
         $data = json_decode(file_get_contents("php://input"), true);
+    
         if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-
-        $nombre = isset($data['channelname']) ? $data['channelname']: '';
+    
+        // Si viene desactivar = true, solo actualiza activo
+        if (isset($data['desactivar']) && $data['desactivar'] === true) {
+            $updated = $this->model_channel->update($id_channel, ["activo" => 0]);
+            if ($updated) return $this->jsonResponse(["message" => "Canal desactivado."], 204);
+            return $this->jsonResponse(["message" => "Error al desactivar canal."], 500);
+        }
+    
+        // Actualización normal
+        $nombre = isset($data['channelname']) ? $data['channelname'] : '';
         $metodopago = isset($data['channelmethodpay']) ? $data['channelmethodpay'] : '';
         $tipo = isset($data['channeltype']) ? $data['channeltype'] : '';
         $subCanal = isset($data['subchannel']) ? $data['subchannel'] : '';
-
-        if ($nombre && $tipo && $subCanal) {
-            $_channel = $this->model_channel->update($id_channel, array(
+    
+        if ($nombre && $tipo) {
+            $_channel = $this->model_channel->update($id_channel, [
                 "nombre" => $nombre,
                 "metodopago" => $metodopago,
                 "tipo" => $tipo,
                 "subCanal" => $subCanal,
-            ));
-            if ($_channel) {
-                return $this->jsonResponse(["message" => "Actualización exitosa del recurso."], 204);
-            }
-        } else {
-            return $this->jsonResponse(["message" => "Datos incorrectos enviados en la actualización."], 400);
+            ]);
+            if ($_channel) return $this->jsonResponse(["message" => "Actualización exitosa del recurso."], 204);
+            return $this->jsonResponse(["message" => "Error en la actualización."], 500);
         }
-
-        return $this->jsonResponse($data, 200);
+    
+        return $this->jsonResponse(["message" => "Datos incorrectos enviados en la actualización."], 400);
     }
-
+    
 
     public function delete($params = [])
     {

@@ -18,10 +18,10 @@
                     <label style="font-weight: 700;">Metodo de Pago:</label>
                     <input type="text" name="channelmethodpay" class="form-control ds-input">
                 </div>
-                <div class="form-group" style="width: 120px;">
+                <!-- <div class="form-group" style="width: 120px;">
                     <label style="font-weight: 700;">Subcanal:</label> <span style="color: red;">*</span>
                     <div id="divSubchannel" style="width: 100%;"></div>
-                </div>
+                </div> -->
             </div>
             <!--  -->
         </form>
@@ -51,7 +51,7 @@
                     $("#divType").html(create_channel_type(data.type));
                     $("[name='channelname']").val(data.name)
                     $("[name='channelmethodpay']").val(data.metodopago)
-                    $("#divSubchannel").html(create_channel_subchannel(data.subchannel));
+                    // $("#divSubchannel").html(create_channel_subchannel(data.subchannel));
                 }
             })
             .catch((error) => {});

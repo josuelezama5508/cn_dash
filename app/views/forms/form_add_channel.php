@@ -24,6 +24,7 @@
                 <i class="material-icons left">add</i>ADD REP
             </button>
         </div>
+        
         <!--  -->
         <form id="form-add-rep">
             <table class="table table-scrollbar" style="margin: 0;">

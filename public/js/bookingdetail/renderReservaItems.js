@@ -77,7 +77,7 @@ async function openEditarPaxModal() {
         .join('');
 
     const tableHtml = `
-            <div id="modalContentWrapper" class="row g-3">
+            <div id="modalContentWrapper" class="column g-3">
                 <div id="toursBlockModal" class="col-12 col-md-6">
                     <div class="border-bottom border-danger pb-2 mb-2">
                         <span class="ms-2 fw-bold">
@@ -133,7 +133,10 @@ async function openEditarPaxModal() {
         <div id="pax-summary" class="mt-3">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <h6 class="mb-3 text-primary fw-bold">Resumen</h6>
+                    <h6 class="mb-3 text-primary fw-bold">Detalles de actividad</h6>
+                    <p class="mb-1"><strong>Actividad:</strong> 
+                        <span class="text-success">${modalData.actividad }</span>
+                    </p>
                     <p class="mb-1"><strong>Balance:</strong> 
                         <span class="text-success">$${parseFloat(modalData.balance || 0).toFixed(2)} USD</span>
                     </p>

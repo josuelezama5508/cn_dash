@@ -50,7 +50,7 @@ class Control extends ModelTable
         INNER JOIN bookingdetails AS B ON C.idpago = B.idpago INNER JOIN estatus AS S ON C.status = S.id_status
             ";
         // Condición: solo los registros con fecha de hoy en `bookingdetails.fecha_details`
-        $condicion = "1=1 ORDER BY C.idpago DESC LIMIT 100";
+        $condicion = "CO.statusD = '1' ORDER BY C.idpago DESC LIMIT 100";
         // Ejecutar la consulta
         return $this->consult($fields, $join, $condicion);
     }
@@ -63,7 +63,7 @@ class Control extends ModelTable
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company', 
             'C.procesado',
             'B.*',
-            'CO.company_name, CO.primary_color',
+            'CO.company_name, CO.primary_color, CO.statusD',
             'S.name AS status, S.color AS statuscolor'
         ];
     
@@ -72,7 +72,7 @@ class Control extends ModelTable
             INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
             INNER JOIN estatus AS S ON C.status = S.id_status";
     
-        $cond = "(
+        $cond = "CO.statusD = '1' AND (
             LOWER(C.nog) LIKE :search OR
             LOWER(C.cliente_name) LIKE :search OR
             LOWER(C.cliente_lastname) LIKE :search OR
