@@ -292,22 +292,44 @@ class Control extends ModelTable
     
         return $resultado;
     }
-    public function getLinkedReservations($nog){
+    public function getLinkedReservations($nog) {
         if ($nog === null) {
-            return 'false';
+            return [];
         }
-        // Definir campos a seleccionar (usa alias si hay ambigüedad)
+    
         $fields = [
-            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion' , 
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, 
+             C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion',
             'S.name AS statusname'
         ];
-        // INNER JOIN con bookingdetails
+    
         $join = "C INNER JOIN estatus AS S ON C.status = S.id_status";
-        // Condición: solo los registros con fecha de hoy en `bookingdetails.fecha_details`
-        $condicion = "C.nog = :nog OR C.referencia = :nog";
-        // Ejecutar la consulta
-        return $this->consult($fields, $join, $condicion, ['nog' => $nog]);
+    
+        // Paso 1: traer la reserva que coincide con el nog actual
+        $reservaActual = $this->consult($fields, $join, "C.nog = :nog", ['nog' => $nog]);
+    
+        if (empty($reservaActual)) {
+            return [];
+        }
+    
+        $reserva = $reservaActual[0];
+    
+        // Paso 2: identificar madre
+        if (empty($reserva->referencia)) {
+            // si no tiene referencia, ella es la madre
+            $nogMadre = $reserva->nog;
+        } else {
+            // si tiene referencia, esa referencia es la madre
+            $nogMadre = $reserva->referencia;
+        }
+    
+        // Paso 3: traer madre + todos los hijos vinculados a esa madre
+        $condicion = "(C.nog = :nogMadre OR C.referencia = :nogMadre)";
+        $params = ['nogMadre' => $nogMadre];
+    
+        return $this->consult($fields, $join, $condicion, $params);
     }
+    
     
     public function insertControl(array $data)
     {
@@ -685,7 +707,7 @@ class Itemproduct extends ModelTable
     }
     
     function getDataItem($clave){
-        $campos = ["IP.producttag_type AS typetag, IP.producttag_class AS classtag", "T.tag_index AS reference, T.tag_name AS tagname", "PR.price as price", "CC.denomination AS moneda"];
+        $campos = ["IP.producttag_type AS typetag, IP.producttag_class AS classtag", "T.tag_index AS reference, T.tag_name AS tagname, T.tag_id AS idtag", "PR.price as price", "CC.denomination AS moneda"];
         $join = "IP INNER JOIN tags AS T ON IP.tag_id = T.tag_id INNER JOIN prices AS PR ON IP.price_id = PR.price_id INNER JOIN currency_codes AS CC ON PR.id_currency = CC.currency_id ";
         $cond = "IP.productcode = :clave AND IP.active = '1'";
         $params = ['clave' => $clave];

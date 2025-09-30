@@ -33,12 +33,17 @@ async function renderItems(items, lang = "en") {
     }
     
     const createRow = (item) => {
+        
+        console.log("#############################################################");
+        console.log(item);
+        console.log("#############################################################");
         let tagname = {};
         try {
             tagname = JSON.parse(item.tagname);
         } catch {
             console.warn("Nombre mal formado:", item.tagname);
         }
+        const id = item.idtag;
         const name = tagname[lang.toLowerCase()] || tagname.en || "";
         const reference = item.reference || "";
         const precio = item.price || "0.00";
@@ -48,11 +53,11 @@ async function renderItems(items, lang = "en") {
         let controlHtml = item.classtag === 'number' ? `
             <div class="ctrl-number" min="0">
                 <button class="btn-minus" type="button">-</button>
-                <input type="text" value="0" data-reference="${reference}" aria-label="${name}" data-name="${name}" data-price="${precio}" data-type="${tipo}" data-moneda="${moneda}">
+                <input type="text" value="0" data-reference="${reference}" data-id="${id}" aria-label="${name}" data-name="${name}" data-price="${precio}" data-type="${tipo}" data-moneda="${moneda}">
                 <button class="btn-plus" type="button">+</button>
             </div>` :
             (item.classtag === 'checkbox' ? `
-                <input type="checkbox" class="ctrl-checkbox" id="${reference}" aria-label="${name}" data-reference="${reference}" data-name="${name}" data-price="${precio}" data-type="${tipo}" data-moneda="${moneda}">` :
+                <input type="checkbox" class="ctrl-checkbox" data-id="${id}" " aria-label="${name}" data-reference="${reference}" data-name="${name}" data-price="${precio}" data-type="${tipo}" data-moneda="${moneda}">` :
             `<span>Sin control definido</span>`);
 
         return `

@@ -77,6 +77,8 @@ class ControlController extends API
             return ['client', $params['client']];
         }if (isset($params['pax'])) {
             return ['pax', $params['pax']];
+        }if (isset($params['getTagId'])) {
+            return ['getTagId', $params['getTagId']];
         }
         
         return ['', null];
@@ -259,6 +261,9 @@ class ControlController extends API
                     case 'searchReservation':
                         $dataControl = $this->model_control->searchReservation($search);
                         break;
+                    case 'getTagId':
+                        $dataControl = $this->model_tag->find($search);
+                        break;
                        
             }
             if (empty($dataControl)) {
@@ -383,6 +388,7 @@ class ControlController extends API
                     $combosArray = [];
                     $productosHijos = [];
                     $productoHijoLang = [];
+                    $itemsTags = [];
                     $data_langId= ($data['lang'] == 'en') ?  1 : 2 ;
                     $combosData = $this->model_combo->getByClave($productoPrincipal[0]->product_code ?? '');
                     if (!empty($combosData[0]->combos)) {
@@ -412,42 +418,52 @@ class ControlController extends API
                                 // 🔹 Filtrar items_details según linked_tags
                                 $itemsOriginales = json_decode($data['items_details'], true);
                                 $itemsFiltrados = [];
-                                $itemsFiltrados = [];
+
                                 foreach ($itemsOriginales as $item) {
-                                    if ($item['item'] > 0) {
-                                        $tags = $this->model_tag->getTagByReference($item['reference']); // array de objetos
-                                        if (!empty($tags)) {
-                                            $tag = $tags[0]; // primer objeto
-                                            if (!empty($tag->linked_tags)) {
-                                                $linkedTags = json_decode($tag->linked_tags, true); // linked_tags como array
-                                                foreach ($linkedTags as $linked) {
-                                                    if (($linked['product_code'] ?? null) === $clave) {
-                                                        // recorremos los tags de linked_tags
-                                                        foreach ($linked['tags'] as $linkedTag) {
-                                                            $linkedTagIndex = $linkedTag['tag_index'] ?? null;
-                                                            if ($linkedTagIndex) {
-                                                                // buscamos el tag real por tag_index
-                                                                $linkedTagData = $this->model_tag->getTagByReference($linkedTagIndex);
-                                                                if (!empty($linkedTagData)) {
-                                                                    $linkedTagObj = $linkedTagData[0];
-                                                                    $tagName = json_decode($linkedTagObj->tag_name, true);
+                                    if (isset($item['item']) && $item['item'] > 0) {
+                                        $tag = $this->model_tag->find((int)$item['idreference']); // buscar por ID
+
+                                        if (!empty($tag) && !empty($tag->linked_tags)) {
+                                            $linkedTags = json_decode($tag->linked_tags, true);
+
+                                            foreach ($linkedTags as $linked) {
+                                                if (($linked['product_code'] ?? null) === $clave) {
+                                                    foreach ($linked['tags'] as $linkedTag) {
+                                                        if (isset($linkedTag['idreference'])) {
+                                                            $linkedTagObj = $this->model_tag->find((int)$linkedTag['idreference']);
+
+                                                            if (!empty($linkedTagObj)) {
+                                                                $reference = $linkedTagObj->tag_index;
+                                                                $tagName = json_decode($linkedTagObj->tag_name, true);
+                                                                $name = $tagName[$data['lang']] ?? $item['name'];
+
+                                                                // ✅ Verificamos si ya existe este reference en el array
+                                                                $index = array_search($reference, array_column($itemsFiltrados, 'reference'));
+
+                                                                if ($index !== false) {
+                                                                    // Ya existe → sumamos el item
+                                                                    $itemsFiltrados[$index]['item'] += $item['item'];
+                                                                } else {
+                                                                    // No existe → lo agregamos
                                                                     $itemsFiltrados[] = [
                                                                         'item' => $item['item'],
-                                                                        'name' => $tagName['en'] ?? $item['name'],
-                                                                        'reference' => $linkedTagObj->tag_index,
+                                                                        'name' => $name,
+                                                                        'reference' => $reference,
                                                                         'price' => "0.00",
                                                                         'tipo' => $item['tipo']
                                                                     ];
                                                                 }
                                                             }
                                                         }
-                                                        break; // ya encontramos el product_code correcto, no seguimos
                                                     }
+                                                    break; // solo tomamos la primera coincidencia por combo
                                                 }
                                             }
                                         }
                                     }
                                 }
+
+                                
                                 
                             
                                 $dataDetailsHijo = (array)$dataDetails;
@@ -502,7 +518,8 @@ class ControlController extends API
                         'booking_details' => $bookingDetailsInsert,
                         'combosArray' => $combosArray,
                         'productosHijos' => $productosHijos,
-                        'pructoHijosLang' => $productoHijoLang
+                        'pructoHijosLang' => $productoHijoLang,
+                        'itemtags' => $itemsTags
                     ], 201);
                     break;
                 

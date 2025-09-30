@@ -63,14 +63,14 @@ async function fetch_registered_products(productcode) {
     }
 }
 // ✅ Renderiza productos en el DOM
-function render_registered_products(data) {
+function render_registered_products(data, is_combo) {
     let companyname = "Sin empresa";
     let companyid = 0;
     let locations = [];
     let hasCombo = false;
-
+    if (is_combo == 1) hasCombo = true;
     data.forEach((element) => {
-        if (element.is_combo == 1) hasCombo = true;
+        
 
         let count = itemProductCount;
         companyname = element.companyname;

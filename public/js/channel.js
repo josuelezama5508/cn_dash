@@ -35,11 +35,9 @@ const registered_channel = async (condition) => {
                         <td class="channel-type">${element.type}</td>
                         <td>
                             <div class="channel-actions">
-                                <button class="edit-btn" id="channel-${element.id}">
-                                    <i class="material-icons">edit</i>
+                                <button class="edit-btn" id="channel-${element.id}" style="background: transparent; border: none;"><i class="material-icons" style="color: #03a9f4;">edit</i>
                                 </button>
-                                <button class="delete-btn" id="channel-${element.id}">
-                                    <i class="material-icons">delete</i>
+                                <button class="delete-btn" id="channel-${element.id}" style="background: transparent; border: none;"><i class="material-icons" style="color: red;">delete</i>
                                 </button>
                             </div>
                         </td>

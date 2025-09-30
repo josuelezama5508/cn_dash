@@ -25,7 +25,7 @@ window.openReagendarModal = async function(modalData) {
             </div>
         </div>
         <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
-            <div class="mb-3" style="flex: 2;">
+            <div class="mb-3" style="flex: 1;">
                 <label class="form-label fw-bold">Enviar notificación</label>
                 <select id="enviar_notificacion" class="form-select">
                     <option value="1" selected>Sí, enviar notificación</option>
@@ -42,7 +42,7 @@ window.openReagendarModal = async function(modalData) {
             </div>
         </div>
         <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
-            <div class="mb-3" style="flex: 2;">
+            <div class="mb-3" style="flex: 1;">
                 <label class="form-label fw-bold">Nueva Fecha</label>
                 <input type="text" id="datepicker" class="form-control" required value="${modalData.datepicker}">
             </div>
@@ -56,14 +56,23 @@ window.openReagendarModal = async function(modalData) {
         </div>
         
         <div class="mb-3">
-            <label class="form-label fw-bold">Descripción / Nota</label>
-            <textarea id="descripcion" class="form-control" rows="3">${modalData.nota || ''}</textarea>
+            <label class="form-label fw-bold">Comentario</label>
+            <textarea id="descripcion" class="form-control" rows="3">${''}</textarea>
         </div>
     </form>
     `;
 
     document.getElementById("modalGenericContent").innerHTML = html;
     document.getElementById("modalGenericTitle").innerText = "Reagendar Reserva";
+    // Desactivar la opción que no corresponde al idioma seleccionado
+    const idiomaSelect = document.getElementById('idioma');
+    const selectedLang = modalData?.lang === 1 ? 'en' : 'es';
+
+    for (const option of idiomaSelect.options) {
+        if (option.value !== selectedLang) {
+            option.disabled = true;
+        }
+    }
 
     const modalEl = document.getElementById('modalGeneric');
     modalEl.removeAttribute('aria-hidden');
@@ -100,7 +109,7 @@ async function cargarHorarios(companyCode, productId, fecha) {
                     horarios.forEach(h => {
                         const option = document.createElement("option");
                         option.value = h.hora;
-                        option.textContent = `${h.hora} (${h.disponibilidad} disponibles)`;
+                        option.textContent = `${h.hora}`;
                         select.appendChild(option);
                     });
                 } else {

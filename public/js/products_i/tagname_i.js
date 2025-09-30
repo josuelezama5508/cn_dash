@@ -93,7 +93,7 @@ function renderTagsTable(data) {
                     </div>
                 </td>
                 <td>
-                    <div class="form-group delete-product-tag" data-id="${element.id}">
+                    <div class="form-group delete-product-tag" data-id="${element.tagid}">
                         <i class="material-icons" style="color: red; cursor: pointer;">delete</i>
                     </div>
                 </td>

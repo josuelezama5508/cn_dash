@@ -50,13 +50,14 @@ window.initModalMail = function(modalData) {
     if (correoInput) correoInput.value = modalData.email || '';
     // Establecer idioma según modalData.lang
     if (lang === 1) {
-        document.getElementById('idioma_en').checked = true;
+        document.getElementById('idioma_en').checked = true;    
+        document.getElementById('idioma_es').disabled = true;
     } else if (lang === 2) {
         document.getElementById('idioma_es').checked = true;
+            // Deshabilitar los radios de idioma
+        document.getElementById('idioma_en').disabled = true;
     }
-    // Deshabilitar los radios de idioma
-    document.getElementById('idioma_en').disabled = true;
-    document.getElementById('idioma_es').disabled = true;
+
 
     if (pickupFields) pickupFields.classList.add('d-none');
 

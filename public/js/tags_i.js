@@ -7,10 +7,11 @@ $(document).ready(function() {
     $(document).on("click", "#saveProductItem", function () { save_item_tag() });
 
     // --- NUEVO: eventos para relation combo ---
-    $(document).on("click", "#addRelationRow", function () {
-        addRelationRow();
+    $(document).on("click", "#addRelationRow", async function () {
+        const products = await fetchProductList();
+        await addRelationRow("", "", products);
     });
-
+    
     $(document).on("click", ".removeRelationRow", function () {
         $(this).closest("tr").remove();
     });
@@ -166,25 +167,25 @@ async function renderRelationCombo(data) {
 async function fetchProductList() {
     const res = await fetchAPI('products?getDataDash=1', 'GET');
     const json = await res.json();
-    return json.data || [];
+    return json.data || []; 
 }
-
 async function fetchTagsForProduct(productCode) {
     const res = await fetchAPI(`itemproduct?getAllTagProducts=${productCode}`, 'GET');
     const json = await res.json();
 
     if (!json.data || !Array.isArray(json.data)) return [];
 
-    // Extraemos los nombres de los tags en inglés
+    // Devolver array de objetos { id, tag_index }
     return json.data.map(tagObj => {
         try {
             const index = JSON.parse(tagObj.tag_index);
-            return index;
+            return { id: tagObj.tag_id, tag_index: index };
         } catch (e) {
-            return tagObj.tag_index;
+            return { id: tagObj.tag_id, tag_index: tagObj.tag_index };
         }
     });
 }
+
 
 async function addRelationRow(productCode = "", tagIndex = "", products) {
     const productOptions = products.map(p =>
@@ -227,18 +228,24 @@ async function addRelationRow(productCode = "", tagIndex = "", products) {
 async function updateTagSelect($productSelect, $tagSelect, selectedTag = "") {
     const productCode = $productSelect.val();
     const tags = await fetchTagsForProduct(productCode);
-
+    
     // Limpiar y rellenar select
     $tagSelect.empty();
     tags.forEach(t => {
-        $tagSelect.append(`<option value="${t}" ${t === selectedTag ? 'selected' : ''}>${t}</option>`);
+        $tagSelect.append(`
+            <option value="${t.tag_index}" data-id="${t.id}" ${t.tag_index === selectedTag ? 'selected' : ''}>
+                ${t.tag_index}
+            </option>
+        `);
     });
     $tagSelect.css("min-width", "200px");
+
     // Si no hay tags, reemplazar por input manual
     if (tags.length === 0) {
         $tagSelect.replaceWith(`<input type="text" class="tag_index" value="${selectedTag}">`);
     }
 }
+
 function getRelationComboJSON() {
     const rows = $("#relationComboTable tbody tr");
     const relationCombo = [];
@@ -247,21 +254,33 @@ function getRelationComboJSON() {
         const productCode = $(this).find(".product_code").val();
         const $tagSelect = $(this).find(".tag_index");
 
-        // Obtener tag_index del select o del input si no hay tags
-        const tagIndex = $tagSelect.is("select") 
-            ? $tagSelect.val() 
-            : $tagSelect.val(); // si fuera input manual también usamos val()
+        if (!productCode || !$tagSelect.length) return;
 
-        if (productCode && tagIndex) {
+        let tagData = [];
+
+        if ($tagSelect.is("select")) {
+            const selectedOption = $tagSelect.find("option:selected");
+            const tagIndex = selectedOption.val();
+            const tagId = selectedOption.attr("data-id") || null;
+
+            if (tagIndex) tagData.push({ tag_index: tagIndex, id: tagId });
+        } else {
+            // input manual
+            const tagIndex = $tagSelect.val();
+            if (tagIndex) tagData.push({ tag_index: tagIndex, id: null });
+        }
+
+        if (tagData.length > 0) {
             relationCombo.push({
                 product_code: productCode,
-                tags: [{ tag_index: tagIndex }]
+                tags: tagData
             });
         }
     });
 
     return JSON.stringify(relationCombo);
 }
+
 
 
 // ======================= SAVE ======================= //
@@ -280,6 +299,12 @@ function save_item_tag() {
 
         // --- NUEVO: adjuntar relationcombo ---
         formData.append("relationcombo", getRelationComboJSON());
+        console.log("========= FormData contenido =========");
+        for (const pair of formData.entries()) {
+            console.log(`[FormData] ${pair[0]}:`, pair[1]);
+        }
+        console.log("======================================");
+
 
 
         fetchAPI(`tags?tagid=${condition}`, 'PUT', formData)
@@ -290,7 +315,7 @@ function save_item_tag() {
             if (status == 200) {
                 setTimeout(() => {
                     uploadScreen.close();
-                    location.reload();
+                    // location.reload();
                 }, 900);
             }
           })

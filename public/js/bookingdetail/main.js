@@ -40,10 +40,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           title: 'Reserva creada',
           body: '¡Se ha creado una nueva reserva!',
           icon: '/icon.png',
-          url: 'http://localhost/cn_dash/detalles-reserva/view/'
+          url: 'https://6b287d39f8e9.ngrok-free.app/cn_dash/detalles-reserva/view/'
         };
   
-        fetch('http://localhost/cn_dash/api/notificationservice?action=sendNotification', {
+        fetch('https://6b287d39f8e9.ngrok-free.app/cn_dash/api/notificationservice?action=sendNotification', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

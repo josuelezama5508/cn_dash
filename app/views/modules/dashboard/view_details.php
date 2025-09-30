@@ -267,15 +267,15 @@
         <script src="<?= asset('/js/bookingdetail/notifications.js') ?>?v=1"></script>
 
         <!-- 6️⃣ Modales específicos -->
-        <script src="<?= asset('/js/bookingdetail/notesTimeLine.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalSapa.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalMail.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalPayment.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalReagendar.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalCancel.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalChannel.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalType.js') ?>?v=1"></script>
-        <script src="<?= asset('/js/bookingdetail/modalVinculados.js') ?>?v=1"></script>
+        <script src="<?= asset('/js/bookingdetail/notesTimeLine.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalSapa.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalMail.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalPayment.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalReagendar.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalCancel.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalChannel.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalType.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalVinculados.js') ?>?v=12"></script>
         
         
         <!-- <script src="<?= asset('/js/bookingdetail/modalTypes.js') ?>?v=1"></script> -->

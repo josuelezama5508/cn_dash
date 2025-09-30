@@ -150,7 +150,8 @@ function fetchAPI(endpoint, method = "GET", formData = null) {
             options.headers['Content-Type'] = 'application/json';
         }
     }
-    const url = `${window.url_web.replace(/\/$/, '')}/api/${endpoint}`;
+    const base = `${location.protocol}//${location.host}/cn_dash/api`;
+    const url = `${base}/${endpoint}`;
     console.log('%c[fetchAPI] ➜', 'color: #00c853; font-weight: bold;');
     console.log('URL:', url);
     console.log('Method:', method);

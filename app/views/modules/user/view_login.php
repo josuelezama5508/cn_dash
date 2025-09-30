@@ -38,7 +38,8 @@
     <!-- CDN de Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" href="<?= asset('/css/stylo.css') ?>?v=1">
+    <link rel="stylesheet" href="/cn_dash/public/css/stylo.css?v=1">
+
 
     <style>
         .cardmodal-header {
@@ -59,7 +60,7 @@
 <body>
     <!--  -->
     <div class="cold-mod-normal" style="padding: 30px 100px;">
-        <img src="<?= asset('/img/logo-snorkel.png') ?>" style="float: left; width: 120px;    ">
+        <img src="/cn_dash/public/img/logo-snorkel.png">
     </div>
     <!--  -->
     <main class="content">
@@ -77,10 +78,10 @@
                     <!--  -->
                     <form id="form-login" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
                         <div class="form-group">
-                            <input type="text" name="username" class="form-control ds-input" placeholder="Usuario">
+                            <input type="text" name="username" class="form-control ds-input" placeholder="Usuario" autocomplete="username">
                         </div>
                         <div class="form-group">
-                            <input type="password" name="password" class="form-control ds-input" placeholder="Contraseña">
+                            <input type="password" name="password" class="form-control ds-input" placeholder="Contraseña" autocomplete="current-password">
                         </div>
                     </form>
                     <!--  -->
@@ -93,7 +94,7 @@
         <!--  -->
     </main>
 
-    <script src="<?= asset('/js/login.js') ?>?v=1"></script>
+    <script src="/cn_dash/public/js/login.js?v=1"></script>
 </body>
 
 </html>

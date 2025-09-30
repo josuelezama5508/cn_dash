@@ -18,7 +18,7 @@
                     <input type="search" name="search" class="form-control ds-input" placeholder="Search...">
                     <!--  -->
                     <div style="margin-bottom: 20px;">
-                        <table class="table table-scrollbar" style="margin: 0;">
+                        <table class="table table-hover" style="margin: 0;">
                             <thead>
                                 <tr>
                                     <th scope="col">Canalp</th>

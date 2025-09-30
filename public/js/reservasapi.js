@@ -42,6 +42,7 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
                 reference: $input.data('reference'),
                 price: $input.data('price'),
                 tipo: $input.data('type'),
+                idreference: `${$input.data('id')}`
             });
         }
     });
@@ -55,6 +56,7 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
                 reference: $checkbox.data('reference'),
                 price: $checkbox.data('price'),
                 tipo: $checkbox.data('type'),
+                idreference: `${$checkbox.data('id')}`
             });
         }
     });
@@ -119,10 +121,12 @@ function render_reservationResponse(buttonId, responseObj) {
         // Esperar 2 segundos antes de redirigir
         setTimeout(() => {
             hideLoadingModal(); // ⬅️ Ocultar modal justo antes de redirigir
-            window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
+            // window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
         }, 1000);
 
     } else {
+        console.log("🔍 responseObj:", responseObj);
+
         console.error("❌ Error al procesar reserva:", result);
         hideLoadingModal(); // ⬅️ Ocultar solo si hubo error
         alert(`Error al procesar ${buttonId}: ${result.message || "Error inesperado."}`);

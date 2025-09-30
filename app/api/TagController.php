@@ -207,7 +207,7 @@ class TagController extends API
             $relationcombo = isset($data['relationcombo']) ? json_decode($data['relationcombo'], true) : [];
 
             $tagname = $this->model_tag->where("tag_index LIKE '%$tagreference%' AND tag_id != '$search' AND active = '1'");
-            if ($tagname) return $this->jsonResponse(["message" => "Ya existe un recurso similar y no se puede duplicar."], 409);
+            // if ($tagname) return $this->jsonResponse(["message" => "Ya existe un recurso similar y no se puede duplicar."], 409);
 
             // Estructura del tagname
             $tagname = [];
@@ -230,8 +230,14 @@ class TagController extends API
 
                     $linked_tags[] = [
                         'product_code' => $item['product_code'],
-                        'tags' => array_map(fn($t) => ['tag_index' => $t['tag_index']], $item['tags'])
+                        'tags' => array_map(function ($t) {
+                            return [
+                                'tag_index' => $t['tag_index'],
+                                'idreference' => $t['id'] ?? null
+                            ];
+                        }, $item['tags'])
                     ];
+                    
                 }
             }
             $linked_tags = ($linked_tags != []) ? json_encode($linked_tags) : null;

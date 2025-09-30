@@ -55,8 +55,8 @@
         <!--  -->
         <!--  -->
         <div style="display: flex; flex-direction: row; gap: 10px;">
-            <button id="FAddRepItem" class="btn-icon" style="z-index: 10;"><i class="material-icons left">add</i>ADD REP</button>
-            <button id="FSaveAllReps" class="btn-icon"><i class="material-icons left">save</i>Guardar Todo</button>
+            <button id="FAddRepItem" class="btn-icon" style="z-index: 10; color: #FFF; background: #007bff; border-radius: 3px; border:none;"><i class="material-icons left">add</i>ADD REP</button>
+            <button id="FSaveAllReps" class="btn-icon" style="color: #FFF; background: #28a745; border-radius: 3px; border:none;"><i class="material-icons left">save</i>Guardar Todo</button>
         </div>
     </div>
 </section>
@@ -203,7 +203,7 @@
 
                     (text.data).forEach(element => {
                         rows += `
-                        <span class="chip" style="background: #53e659; color: #FFF; display: flex; flex-direction: row; align-items: center; align-items: center;  gap: 10px" id="rep-${element.id}">
+                        <span class="chip" style="background: #17a2b8; border-radius: 5px; color: #FFF; display: flex; flex-direction: row; align-items: center; align-items: center;  gap: 10px" id="rep-${element.id}">
                             <label class="detail-rep" style="cursor: pointer;">${element.name}</label><i class="close material-icons delete-rep" style="cursor: pointer;">close</i>
                         </span>`;
                     });

@@ -1,26 +1,31 @@
 // modalVinculados.js
-window.renderizarReservasVinculadas = function(reservas) {
-    if (!Array.isArray(reservas) || reservas.length === 0)
-        return `<p class="text-center">No hay reservas vinculadas.</p>`;
+window.renderizarReservasVinculadas = function(reservas, nogActual) {
+    const hasData = Array.isArray(reservas) && reservas.length > 0;
 
-    const rows = reservas.map(r => `
-        <tr>
-            <td>${r?.datepicker ?? '-'}</td>
-            <td>${r?.horario ?? '-'}</td>
-            <td>${(r?.cliente_name ?? '-') + ' ' + (r?.cliente_lastname ?? '-')}</td>
-            <td>${r?.actividad ?? '-'}</td>
-            <td>${r?.nog ?? '-'}</td>
-            <td>${r?.total ?? 0}</td>
-            <td>${r?.statusname ?? '-'}</td>
-            <td>
-                <button class="btn btn-sm btn-primary ver-detalle" data-nog="${r?.nog ?? ''}">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    const content = hasData
+        ? reservas.map(r => `
+            <tr>
+                <td>${r?.datepicker ?? '-'}</td>
+                <td>${r?.horario ?? '-'}</td>
+                <td>${(r?.cliente_name ?? '-') + ' ' + (r?.cliente_lastname ?? '-')}</td>
+                <td>${r?.actividad ?? '-'}</td>
+                <td>${r?.nog ?? '-'}</td>
+                <td>${r?.total ?? 0}</td>
+                <td>${r?.statusname ?? '-'}</td>
+                <td>
+                    ${
+                        r?.nog == nogActual
+                            ? `<span class="badge bg-secondary">this</span>`
+                            : `<button class="btn btn-sm btn-primary ver-detalle" data-nog="${r?.nog ?? ''}">
+                                   <i class="fas fa-eye"></i>
+                               </button>`
+                    }
+                </td>
+            </tr>
+        `).join('')
+        : `<tr><td colspan="8" class="text-center">No hay reservas vinculadas.</td></tr>`;
 
-    return `<div class="table-responsive">
+    return `<div class="table-responsive" style="min-width: 1000px;">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -28,18 +33,19 @@ window.renderizarReservasVinculadas = function(reservas) {
                     <th>NOG</th><th>Total</th><th>Status</th><th>Acción</th>
                 </tr>
             </thead>
-            <tbody>${rows}</tbody>
+            <tbody>${content}</tbody>
         </table>
     </div>`;
 }
+
 
 window.openModalReservasVinculadas = async function(nog) {
     try {
         const res = await fetchAPI(`control?vinculados=${encodeURIComponent(nog)}`, "GET");
         const json = await res.json();
-        const reservas = (json?.data || []).filter(r => r?.nog && r.nog !== nog);
+        const reservas = json?.data || [];
 
-        document.getElementById("reservasVinculadasContent").innerHTML = renderizarReservasVinculadas(reservas);
+        document.getElementById("reservasVinculadasContent").innerHTML = renderizarReservasVinculadas(reservas, nog);
         const modalEl = document.getElementById('modalReservasVinculadas');
         modalEl.removeAttribute('aria-hidden');
         const modal = new bootstrap.Modal(modalEl);
@@ -54,8 +60,12 @@ window.openModalReservasVinculadas = async function(nog) {
             });
         });
 
-    } catch (err) { console.error(err); showNotification("No se pudieron cargar las reservas vinculadas.", 'danger'); }
+    } catch (err) { 
+        console.error(err); 
+        showNotification("No se pudieron cargar las reservas vinculadas.", 'danger'); 
+    }
 }
+
 
 window.closeModalReservas=function() {
     if(window.currentReservasModal){

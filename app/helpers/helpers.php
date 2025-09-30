@@ -38,8 +38,22 @@ function getCurrentView()
 
 function domain()
 {
-    return (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/' .  base_path();
+    $isSecure = false;
+
+    if (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+        (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+        (!empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'https') ||
+        (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+    ) {
+        $isSecure = true;
+    }
+
+    $protocol = $isSecure ? 'https://' : 'http://';
+
+    return $protocol . $_SERVER['HTTP_HOST'] . '/' . base_path();
 }
+
 
 function asset($path)
 {

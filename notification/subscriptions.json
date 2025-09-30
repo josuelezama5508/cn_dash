@@ -14,5 +14,29 @@
             "p256dh": "BNfbOqdSk7ot8jzJHUj2YqO-q_ATKY7d7hV3V7lqro1e4ZEyJRn2kQmZwGXRL0B7OYrEkME3WLiQJ0vaAcLm9I4",
             "auth": "lkxztxI1UYgCru_NFbl_QA"
         }
+    },
+    {
+        "endpoint": "https:\/\/wns2-bn3p.notify.windows.com\/w\/?token=BQYAAADIzDHeLxhBfI4lYVbfumIpPbQHEvln2T20IGvJqp32mt1m6c%2baZaEg%2b8JpmmH9NlvFEkfKV6ETFVPfgZXMSCRgrJuOIEFyw3RTPymJnPVj7fKcNUfTPh89LQ6BaxeBtqJn2F%2fcQyU%2bgUflvnbjtMOM7KuHTdoVeeVwXJauEAAAhD3lUJlKZjsEGuIA4KpJLt1oCMyg9LVcTVNIktF3EKKPgUsa9p3rm7X%2fCOCCXuITZXiHGhVtsKnsIZbwlGlFU87dW3W2eqE1Q7Z5WkJsopk6Y5z3GDLURaDQ3NEbPxtS1%2ftJEM0BBOWoPp7wZyl8yy4%3d",
+        "expirationTime": null,
+        "keys": {
+            "p256dh": "BHzaUX3QyPH4H5aIof8sdfQDJ7S6c02Lq-PfEub3f-iTm52eKsJz2rKiKTn8SFCzLVIqxgkz5lpWbnGwIJLWwFI",
+            "auth": "G8qvxx3xnMny-Oda-M6Qyg"
+        }
+    },
+    {
+        "endpoint": "https:\/\/wns2-bn3p.notify.windows.com\/w\/?token=BQYAAAC5sz6S0sKwv30yL2d5cLBK7ETp4ppV%2fcKUbHXwknZt55D9wtv%2bXEcPjBxt5SwJOvj67SNCTwoFCRS0G%2bxn%2fNdxaoapRcpxBo%2fJPqt%2byQzSR6cLRJ2NkBcfzw00sM0nARpJZIFYfR5aoTsQLShhnPtsJrPImEhlYSpQ2uJGaSSy1dbZqVfk41qI%2bhn4bho%2bpNt2USmTy3RqgiWt1bpa9TyjLQmhQmdVtYkFgPStcPHzkXfFuioqiUVa044hWthBA4CZKgWEaJ%2b%2biuqSO7zyxulHMVbROMOSZ05edIOMORVHZVcVaUg0Rj7zgNAaQQydmXHpyocanmsvR4tlM%2fWjhcNM",
+        "expirationTime": null,
+        "keys": {
+            "p256dh": "BGAmZ1s-d5JQ1eqKUxjfTDusQNbU1l4tEuW12SYHFjPtv86_RcgfZUxq5eSYHVLcDrV2_Zihan-qrnJNsQV8fd4",
+            "auth": "dDko249wnvEPl-E_-udXeg"
+        }
+    },
+    {
+        "endpoint": "https:\/\/fcm.googleapis.com\/fcm\/send\/dnzrSOu9WP4:APA91bFPF82dTG91ojTbeZUaHfwSMUCe9UFIqGYmuhoLqvJ2KqeaBAJXIbwXyYauxbrTJnBUx08HfmeXPHHfURpmLrP_K4plPkmVykyYuNYyMgsUdf35QLTDljdnDjWEzFChako_nfeh",
+        "expirationTime": null,
+        "keys": {
+            "p256dh": "BBQ0yiUr2VbEo-mg_Cel_UEod8gHXMJjxT-wc8UDEEX1oZNVxVHIJ9N3irtsUwjFWmoh4Tp0mdz6zbx93MTGjew",
+            "auth": "DEoy6gOR5PnXiPio8NwBmw"
+        }
     }
 ]

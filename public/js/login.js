@@ -24,7 +24,11 @@ function sendEvent() {
     if (!isValid) return;
     block_form(true);
     
-    fetch(`${window.url_web}/login`, {
+    const base = `${location.protocol}//${location.host}/cn_dash`;
+    console.log(`${base}/login`);
+    fetch(`${base}/login`, {
+
+
         method: "POST",
         headers: {
             'Accept': 'application/json',

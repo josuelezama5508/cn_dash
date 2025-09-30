@@ -10,7 +10,24 @@ $(document).ready(async function () {
     const productcode = $("[name='productcode']").val();
 
     const products = await fetch_registered_products(productcode);
-    render_registered_products(products);
+    const comboData = await fetch_combo_by_code(productcode);
+
+    let is_combo = 0;
+
+    // Verificar si comboData.combos contiene un array no vacío
+    if (comboData?.combos) {
+        try {
+            const parsedCombos = JSON.parse(comboData.combos);
+            if (Array.isArray(parsedCombos) && parsedCombos.length > 0) {
+                is_combo = 1;
+            }
+        } catch (e) {
+            console.error("Error al parsear combos:", e);
+        }
+    }
+
+    render_registered_products(products, is_combo);
+
     // --- Tagnames
     const $table = $("#sortable-table");
     bindTagEvents($table); // solo una vez
@@ -31,7 +48,7 @@ $(document).ready(async function () {
     });
 
     // --- Combos iniciales ---
-    const comboData = await fetch_combo_by_code(productcode);
+    
     console.log(comboData);
     if (comboData) {
         idCombo = comboData.id;

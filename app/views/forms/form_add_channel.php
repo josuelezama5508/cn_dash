@@ -18,12 +18,7 @@
                 </div>
             </div>
         </div>
-        <!--  -->
-        <div class="form-group">
-            <button id="addRepItem" class="btn-icon">
-                <i class="material-icons left">add</i>ADD REP
-            </button>
-        </div>
+        
         
         <!--  -->
         <form id="form-add-rep">
@@ -41,6 +36,12 @@
             </table>
         </form>
         <!--  -->
+        <!--  -->
+        <div class="form-group">
+            <button id="addRepItem" class="btn-icon" style="color: #FFF; background: #007bff; border-radius: 3px; border: none;">
+                <i class="material-icons left">add</i>ADD REP
+            </button>
+        </div>
     </div>
 </section>
 
@@ -72,7 +73,7 @@
             <tr class="rep-item-${count}">
                 <td><div class="form-group" style="flex: 1;"><input type="text" name="repname[]" class="form-control ds-input" placeholder="Nombre"></div></td>
                 <td><div class="form-group" style="flex: 1;"><input type="text" name="repemail[]" class="form-control ds-input" placeholder="Email"></div></td>
-                <td><div class="form-group" style="flex: 1;"><input type="number" name="repphone[]" class="form-control ds-input" placeholder="Metodo de pago"></div></td>
+                <td><div class="form-group" style="flex: 1;"><input type="number" name="repphone[]" class="form-control ds-input" placeholder="Telefono"></div></td>
                 <td><div class="form-group" style="flex: 1;"><input type="number" name="repcommission[]" class="form-control ds-input" placeholder="Comisión"></div></td>
                 <td>
                     <div class="form-group delete-btn delete-rep" style="width: 32px; height: 32px;"><i class="material-icons">cancel</i></div>
