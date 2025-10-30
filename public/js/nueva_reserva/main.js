@@ -45,6 +45,57 @@ $(document).ready(async function () {
         calcularTotal();
     });
     // bindCompanyProductLanguageEvents();
+    // --- Registrar suscripción al cargar la página ---
+    (async function registerWebPush() {
+        if (!("serviceWorker" in navigator)) {
+            console.warn("Service Worker no soportado en este navegador.");
+            return;
+        }
+
+        try {
+            // Registrar SW
+            const swRegistration = await navigator.serviceWorker.register('/cn_dash/public/js/notificationservice/sw.js');
+            console.log("Service Worker registrado:", swRegistration);
+
+            // Solicitar permiso
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") {
+                console.warn("Permiso de notificaciones denegado.");
+                return;
+            }
+
+            // Suscribirse
+            const subscription = await swRegistration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(
+                    'BCjPb7dVEemXyruccqydhfkgjhK9eZBzjGT8i6Q49o9HYMyRYscCygePBzqvq_zNU3MI54Mr1-at-j1zlbV8Grc'
+                )
+            });
+
+            // Enviar a tu API
+            const response = await fetchAPI('notificationservice', 'POST', subscription);
+            const data = await response.json();
+            console.log("Registro de suscripción:", data);
+
+        } catch (error) {
+            console.error("Error al registrar Web Push:", error);
+        }
+
+        // Helper: convertir clave VAPID
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+    })();
+
 });
 async function productSelection(productCode) {
     // Si no hay producto, limpia todo
@@ -167,31 +218,35 @@ function bindReservationButtons() {
         $(showSelector).show();
     };
 
-    $("#btnPagarAhora").click(() => toggleSections("#mainButtons", "#pagarAhoraOpciones"));
-    $("#btnPaymentRequest").click(() => toggleSections("#mainButtons", "#paymentRadios"));
-    $("#btnBalance").click(() => {
-        console.log("🧪 [btnBalance] Valor actual de soloAddons:", window.soloAddons);
-        enviarReservaConEstatus("btnBalance", 3, "", "dash", window.soloAddons);
+    const setHiddenMethod = (method) => {
+        $("#metodopago").val(method); // 🟢 actualizar hidden
+    };
 
+    // ==== BOTONES PRINCIPALES ====
+    $("#btnPagarAhora").click(() => toggleSections("#mainButtons", "#pagarAhoraOpciones"));
+
+    $("#btnPaymentRequest").click(() => {
+        toggleSections("#mainButtons", "#paymentRadios");
+        setHiddenMethod("paymentrequest"); // PaymentRequest
     });
 
-    
+    $("#btnBalance").click(() => {
+        console.log("🧪 [btnBalance] Valor actual de soloAddons:", window.soloAddons);
+        setHiddenMethod("balance"); // Balance
+        enviarReservaConEstatus("btnBalance", 3, "", "dash", window.soloAddons);
+    });
 
+    // ==== VOUCHER / OTRO ====
     $("#btnConfirmVoucher").click(() => {
         const $voucher = $("#voucherCode");
         const voucherCode = $voucher.val().trim();
 
-        // validar solo si está visible
-        // if ($voucher.is(":visible") && !ReservationValidator.validateCommentsVoucher($voucher)) {
-        //     ReservationValidator.focusFirst($voucher);
-        //     return;
-        // }
-
-        // 🔹 status 1 = voucher, 0 = otro
-        const status = 1;
+        const status = 1; // voucher
         const buttonId = voucherSource === "voucher" ? "btnConfirmVoucher" : "btnOtro";
-        console.log("🧪 [btnBalance] Valor actual de soloAddons:", window.soloAddons);
-        enviarReservaConEstatus(buttonId, status, voucherCode, "dash", window.soloAddons);
+
+        setHiddenMethod("voucher"); // Voucher
+        console.log("🧪 [btnConfirmVoucher] Valor actual de soloAddons:", window.soloAddons);
+        enviarReservaConEstatus(buttonId, status, voucherCode, "dash", window.soloAddons, true);
     });
 
     $("#btnVoucher").click(() => showVoucherInput("voucher"));
@@ -203,7 +258,19 @@ function bindReservationButtons() {
 
     $("#btnVolverPagarAhora").click(() => toggleSections("#pagarAhoraOpciones", "#mainButtons"));
     $("#btnVolverPayment").click(() => toggleSections("#paymentRadios", "#mainButtons"));
+
+    // ==== NUEVO: ENVIO DESDE PAYMENTRADIOS ====
+    $("#btnSendPayment").click(() => {
+        const selectedMethod = $('input[name="paymentMethod"]:checked').val();
+        if (!selectedMethod) {
+            alert("Selecciona un método de pago");
+            return;
+        }
+        setHiddenMethod("paymentrequest");
+        enviarReservaConEstatus("btnSendPayment", 1, "", "dash", window.soloAddons);
+    });
 }
+
 
 function showVoucherInput(source) {
     voucherSource = source; // "voucher" o "otro"
@@ -229,14 +296,14 @@ async function handleRepSelectChange() {
     if (val === "add") {
         $(this).val("");
         const channelId = $("#channelSelect").val();
-        if (!channelId) return alert("Primero selecciona un canal para agregar representantes.");
+        if (!channelId) return "";
         $("#repFormContainer").html(`
             <form id="formAddRepInline">
                 <div class="form-group">
                     <label>Nombre</label>
                     <input type="text" id="repNombre" class="form-control" required style="margin-bottom: 10px;"/>
                 </div>
-                <button type="button" id="btnSaveRepInline" class="btn btn-success">Guardar representante</button>
+                <button type="button" id="btnSaveRepInline" class="btn btn-success">Guardar</button>
                 <button type="button" id="btnCancelRepInline" class="btn btn-secondary">Cancelar</button>
             </form>
         `);
@@ -262,9 +329,9 @@ async function handleSaveRep() {
             render_reps(updatedReps);
             $("#repSelect").val(data.id);
             $("#repFormContainer").empty();
-            alert("Representante agregado correctamente.");
+            // alert("Representante agregado correctamente.");
         } else {
-            alert("Error al guardar representante.");
+            console.error("Error al guardar representante.");
         }
     } catch (err) {
         console.error("Error al guardar rep:", err);
@@ -632,6 +699,8 @@ function bindRepEvents(){
         render_repName(rep);
         // onRepChange($(this).val());
     });
+    
+
 }
 function showLoadingModal() {
     const modal = new bootstrap.Modal(document.getElementById('loadingModal'));

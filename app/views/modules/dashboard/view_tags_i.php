@@ -1,14 +1,4 @@
-<!DOCTYPE html>
-<?php 
 
-$token = $_SESSION['user'];
-?>
-<script>
-  // Exportamos token a JS globalmente
-//   const TOKEN = '<?php echo $token; ?>';
-//   const check = false;
-//   console.log("check:", check);
-</script>
 <html lang="es">
 
 <head>

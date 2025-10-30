@@ -70,7 +70,7 @@ function render_add_channel_form() {
                 </div>
 
                 <div class="form-group">
-                    <button id="addRepItem" class="btn-icon" type="button">
+                    <button id="addRepItem" class="btn-icon" type="button" style="color: #FFF; background: #007bff; border-radius: 3px; border:none;">
                         <i class="material-icons left">add</i> ADD REP
                     </button>
                 </div>
@@ -79,7 +79,7 @@ function render_add_channel_form() {
                     <table class="table table-scrollbar" style="margin: 0;">
                         <thead>
                             <tr>
-                                <th>Nombre</th>
+                                <th></th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -111,7 +111,7 @@ $(document).on("click", "#btnCancelChannel", function (e) {
 function create_rep_item() {
     const companycode = $("#companySelect").val();
     if (!companycode || companycode === "0") {
-        alert("Por favor selecciona una empresa antes de agregar reps.");
+        alert("Por favor selecciona una empresa antes de agregar repsssss.");
         return;
     }
 
@@ -243,7 +243,7 @@ function render_reps(reps) {
         $repSelect.append('<option value="">No hay representantes</option>');
     }
     // ✅ opción fija "Agregar"
-    // $repSelect.append('<option value="add">➕ Agregar</option>');
+    $repSelect.append('<option value="add">➕ Agregar</option>');
 }
 // 🔹 Evento para detectar si eligen "Agregar"
 // Evento cambio en reps: si eligen "Agregar" mostrar form inline en repFormContainer
@@ -252,77 +252,123 @@ $('#repSelect').on('select2:select', function (e) {
     const val = e.params.data.id;
     console.log("🎯 select2 seleccionado:", val);
 
-    // if (val === "add") {
-    //     $(this).val("").trigger('change');
+    if (val === "add") {
+        $(this).val("").trigger('change');
 
-    //     const channelId = $("#channelSelect").val();
-    //     if (!channelId) {
-    //         alert("Primero selecciona un canal para agregar representantes.");
-    //         return;
-    //     }
+        const channelId = $("#channelSelect").val();
+        if (!channelId) {
+            ReservationValidator.validateChannel('#channelSelect');
 
-    //     render_add_rep_form(channelId);
-    // }
+            // alert("Primero selecciona un canal para agregar representantes.");
+            return;
+        }
+
+        render_add_rep_form(channelId);
+    }
 });
 $(document).on("click", "#addRepItem", function(e) {
     create_rep_item(e);
     
 });
+// 🔹 Validación continua para #channel-name
+$(document).on("input change", "#channel-name", function () {
+    const value = $(this).val();
+    const validation = validateFieldById("comentario", value);
+
+    if (!validation.valid) {
+        $(this).addClass("input-error");
+    } else {
+        $(this).removeClass("input-error");
+    }
+});
+
 function create_rep_item(e) {
-    const companycode = $("#companySelect").val();
-    if (!companycode || companycode === "0") {
-        alert("Por favor selecciona una empresa antes de agregar reps.");
+    const companycode = $("#channelSelect").val();     // SELECT
+    const channelname = $("#channel-name").val();      // INPUT
+
+    const isCompanySelected = companycode && companycode !== "0";
+    const channelValidation = validateFieldById("comentario", channelname);
+
+    let allowAdd = true;
+
+    // ✅ Validar si ya hay repname[] existentes, y si son válidos
+    $("input[name='repname[]']").each(function () {
+        const val = $(this).val().trim();
+        const validation = validateFieldById("comentario", val);
+
+        if (!val || !validation.valid) {
+            $(this).addClass("input-error");
+            allowAdd = false;
+        } else {
+            $(this).removeClass("input-error");
+        }
+    });
+
+    // ❌ Si no se cumple ninguna condición válida, no continuar
+    if (!isCompanySelected && (!channelname || !channelValidation.valid) && !allowAdd) {
+        $("#channel-name").addClass("input-error");
         return;
     }
-    e.preventDefault(); // evita que el botón recargue la página si está dentro de un form
-    $("#form-add-rep").slideDown(); // animación para mostrar el formulario
-    // let isValid = rep_items_are_valid();
-    // if (!isValid) return;
+
+    // ❌ Si ya hay repname[] inválido, no agregar otro
+    if (!allowAdd) {
+        return;
+    }
+
+    e.preventDefault();
+
+    $("#form-add-rep").slideDown();
 
     let count = itemProductCount;
     let item = `
         <tr class="rep-item-${count}">
-            <td><input type="text" name="repname[]" class="form-control ds-input" placeholder="Nombre"></td>
-            <td><div class="delete-btn delete-rep"><i class="material-icons">cancel</i></div></td>
+            <td>
+                <input type="text" name="repname[]" class="form-control ds-input"
+                    placeholder="Nombre" onchange="validateRepInput(this)">
+            </td>
+            <td>
+                <div class="delete-btn delete-rep"><i class="material-icons">cancel</i></div>
+            </td>
         </tr>`;
     itemProductCount++;
     $("#addRep").append(item);
 }
 
-// // Función para pintar formulario para agregar reps dentro de repFormContainer
-// function render_add_rep_form(channelId) {
-//     const html = `
-//         <section style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-top: 15px;">
-//             <h4>Agregar representante</h4>
-//             <form id="formAddRepInline">
-//                 <div class="form-group">
-//                     <label>Nombre <span style="color:red;">*</span></label>
-//                     <input type="text" id="repNombreInline" class="form-control" required />
-//                 </div>
-//                 <div class="form-group">
-//                     <label>Teléfono</label>
-//                     <input type="text" id="repTelefonoInline" class="form-control" />
-//                 </div>
-//                 <div class="form-group">
-//                     <label>Email</label>
-//                     <input type="email" id="repEmailInline" class="form-control" />
-//                 </div>
-//                 <div class="form-group">
-//                     <label>Comisión</label>
-//                     <input type="number" step="0.01" id="repComisionInline" class="form-control" />
-//                 </div>
-//                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
-//                     <button type="submit" class="btn btn-green">Guardar</button>
-//                     <button type="button" id="cancelAddRepInline" class="btn btn-red">Cancelar</button>
-//                 </div>
-//             </form>
-//         </section>
-//     `;
-//     $("#repFormContainer").html(html);
 
-//     // Guardamos el channelId para usarlo en el submit
-//     $("#formAddRepInline").data("channelId", channelId);
-// }
+// Función para pintar formulario para agregar reps dentro de repFormContainer
+function render_add_rep_form(channelId) {
+    const html = `
+        <section style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <h4>Agregar representante</h4>
+            <form id="formAddRepInline">
+                <div class="form-group">
+                    <label>Nombre <span style="color:red;">*</span></label>
+                    <input type="text" id="repNombreInline" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" id="repTelefonoInline" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="repEmailInline" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Comisión</label>
+                    <input type="number" step="0.01" id="repComisionInline" class="form-control" />
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                    <button type="submit" class="btn btn-green">Guardar</button>
+                    <button type="button" id="cancelAddRepInline" class="btn btn-red">Cancelar</button>
+                </div>
+            </form>
+        </section>
+    `;
+    $("#repFormContainer").html(html);
+
+    // Guardamos el channelId para usarlo en el submit
+    $("#formAddRepInline").data("channelId", channelId);
+}
 
 // Evento submit para guardar rep inline
 $(document).on("submit", "#formAddRepInline", async function (e) {
@@ -458,4 +504,21 @@ function render_channelName(channel) {
 }
 function render_repName(rep) {
     $("#PrintRep").text(rep?.nombre || "N/A");
+}
+async function fetch_channels_by_name(name) {
+    try {
+        const response = await fetchAPI(`canales?getChannelsByName=${encodeURIComponent(name)}`, "GET");
+        const data = await response.json();
+
+        // Normalizamos la data para que siempre sea un array
+        if (response.ok && data.data) {
+            return Array.isArray(data.data) ? data.data : [data.data];
+        } else {
+            console.warn("No se encontraron canales.");
+            return [];
+        }
+    } catch (error) {
+        console.error("Error al obtener canales:", error);
+        return [];
+    }
 }

@@ -34,3 +34,11 @@ window.openPaymentModal = function(modalData = {}) {
             if (typeof initModalCancel === "function") initModalPayment(modalData);
         });
 }
+// Abrir modal de Pagos
+window.openUpdateSapaModal = function(modalData = {}) {
+    openModal(`${window.url_web}/detalles-reserva/form_update_sapa`, modalData, "")
+        .then(() => {
+            // Inicialización específica del modal cancel
+            if (typeof initModalUpdateSapa === "function") initModalUpdateSapa(modalData);
+        });
+}

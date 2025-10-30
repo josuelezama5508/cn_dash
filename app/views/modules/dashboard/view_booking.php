@@ -24,7 +24,6 @@
                     </div>
                     <section class="header-reserva" style="display:flex; gap:10px; align-items:center; width:80%;">
                         <img id="logocompany" style="width:80px; height:50px; object-fit:contain;" alt="Logo empresa">
-                        <!-- <input type="hidden" id="slug" name="slug" value="<?= $data['slug'] ?>"> -->
                         <div style="flex:2;">
                             <label for="companySelect" style="font-weight:bold;">Empresa:</label>
                             <select id="companySelect" class="form-control ds-input" style="width:100%;"></select>
@@ -196,6 +195,9 @@
                     <!--  -->
                     <div class="booking-container booking-blue full-width-container" >
                         <div class="container full-width-inner" style="border-color: transparent;">
+                            <!-- hidden de motodopago -->
+                             
+                            <input type="hidden" id="metodopago" name="metodopago" value="">
                             <!-- Botones principales -->
                             <div id="mainButtons">
                                 <button class="btn-primary" id="btnPagarAhora">Pagar Ahora</button>
@@ -223,12 +225,29 @@
                             </div>
                             <!-- Opciones de Payment Request -->
                             <div id="paymentRadios" style="display: none;">
-                                <label><input type="radio" name="paymentMethod" value="stripe"> Stripe</label>
-                                <label><input type="radio" name="paymentMethod" value="paypal"> PayPal</label>
-                                <button class="btn-back corner-button" id="btnVolverPayment"  style ="position: absolute; right: 0;bottom: 0;">
+
+                                <!-- Contenedor de radios y botón -->
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                    
+                                    <!-- Radios en fila -->
+                                    <div style="display: flex; flex-direction: row; gap: 15px; justify-content: center;">
+                                        <label><input type="radio" name="paymentMethod" value="stripe"> Stripe</label>
+                                        <label><input type="radio" name="paymentMethod" value="paypal"> PayPal</label>
+                                    </div>
+
+                                    <!-- Botón enviar pago -->
+                                    <div style="text-align: center;">
+                                        <button class="btn-primary" id="btnSendPayment">Enviar Pago</button>
+                                    </div>
+
+                                </div>
+
+                                <!-- Botón volver -->
+                                <button class="btn-back corner-button" id="btnVolverPayment" style="position: absolute; right: 0; bottom: 0;">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                             </div>
+
                         </div>
                     </div>
                     <!--  -->
@@ -369,6 +388,8 @@
             </div>
         </div>
     </div>
+    
+    <script src="<?= asset('/js/helpers/validator.js') ?>?v=1"></script>
     <script src="<?= asset('/js/nueva_reserva/datafunctions.js') ?>?v=1"></script>
     <script src="<?= asset('/js/helpers/validations.js') ?>?v=1"></script>
     <script src="<?= asset('/js/empresasapi.js') ?>?v=1"></script>

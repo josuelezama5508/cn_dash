@@ -1,4 +1,6 @@
-let descuentoAplicado = 0;
+let descuentoAplicado = null;
+let totalBalance = 0;
+let totalAnterior = 0;
 async function openEditarPaxModal() {
     if (!modalData?.product_code) {
         alert("No se encontró el código de producto");
@@ -53,7 +55,7 @@ async function openEditarPaxModal() {
         return `<tr>
                     <td>${name}</td>
                     <td class="text-center">${inputControl}</td>
-                    <td class="text-end">${price}</td>
+                    <td class="text-end">$${price}</td>
                     <td class="text-end">${moneda}</td>
                 </tr>`;
     };
@@ -124,29 +126,113 @@ async function openEditarPaxModal() {
 
 
 
-    const resumenHTML = `
-        <div id="pax-summary" class="mt-3">
+        const resumenHTML = `
+            <div id="pax-summary" class="mt-3">
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <h6 class="mb-3 text-primary fw-bold">Detalles de actividad</h6>
-                    <p class="mb-1" style="width: 500px;"><strong>Actividad:</strong> 
-                        <span class="text-success">${modalData.actividad }</span>
-                    </p>
-                    <p class="mb-1"><strong>Balance:</strong> 
-                        <span class="text-success">$${parseFloat(modalData.balance || 0).toFixed(2)} USD</span>
-                    </p>
-                    <p class="mb-1"><strong>Total Anterior:</strong> 
-                        <span class="text-muted">$${parseFloat(modalData.total || 0).toFixed(2)} USD</span>
-                    </p>
-                    <p class="mb-1"><strong>PAX:</strong> 
-                        <span id="pax-count" class="badge bg-info text-dark">0</span>
-                    </p>
-                    <p class="mb-0"><strong>Total:</strong> 
-                        <span class="fw-bold text-dark">$<span id="pax-total">0.00</span> </span>
-                    </p>
+                <h6 class="mb-3 text-primary fw-bold">Detalles de actividad</h6>
+                <table class="table table-sm table-borderless mb-0" style="width: auto;">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Tipo de cambio:</th>
+                            <td>
+                                <div class="input-group" style="width: fit-content;">
+                                    <span class="input-group-text">${modalData.moneda === 'MXN' ? 'MXN → USD' : 'USD → MXN'}</span>
+                                    <input type="number" class="form-control form-control-sm" id="input-tipo-cambio" value="0.00" min="0.01" step="0.01" style="width: 100px;">
+                                    
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">Actividad:</th>
+                            <td><span class="text-dark fw-medium">${modalData.actividad}</span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Pax:</th>
+                            <td>
+                                <span id="pax-count" class="badge bg-info text-dark d-none">0</span>
+
+                                <div id="pax-detail-list" class="text-dark fw-medium"></div>
+                            </td>
+                        </tr>
+                        
+                        <tr id="addons-summary-row" class="d-none">
+                            <th scope="row">Addons:</th>
+                            <td><span id="addons-summary" class="text-dark fw-medium"></span></td>
+                        </tr>
+                       <tr id="row-descuento">
+                            <th scope="row">Descuento:</th>
+                            <td colspan="3">
+                                <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold text-danger">$</span>
+                                <span id="input-discount" 
+                                        class="fw-bold text-danger"
+                                        data-original="0.00">0.00</span>
+                                <span class="fw-bold text-danger" id="descuento-moneda-icon">${modalData.moneda}</span>
+                                </div>
+                            </td>
+                       </tr>
+
+
+
+                        <tr>
+                            <th scope="row">Subtotal:</th>
+                            <td colspan="3">
+                                <div class="d-flex align-items-center gap-2">
+                                <span>$</span>
+                                <span data-original="0.00" id="subtotal">0</span>
+                                <span id="descuento-moneda-icon-subtotal">${modalData.moneda}</span>
+                                </div>
+                            </td>
+                            
+                        </tr>
+                        
+                       <tr>
+                            <th scope="row">Balance:</th>
+                            <td>
+                                <div class="input-group" style="width: fit-content;">
+                                    <input
+                                        type="number"
+                                        class="form-control form-control-sm text-success"
+                                        id="input-balance"
+                                        value="${parseFloat(modalData.balance || 0).toFixed(2)}"
+                                        step="0.01"
+                                        style="width: 100px;"
+                                    />
+                                    <button class="btn btn-sm btn-outline-secondary" id="toggle-currency" type="button" title="Cambiar moneda">
+                                       ${modalData.moneda}
+                                    </button>
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Total:</th>
+                            <td>
+                                <div class="input-group" style="width: fit-content;">
+                                    <input
+                                        type="number"
+                                        class="form-control form-control-sm fw-bold text-dark"
+                                        id="input-total"
+                                        value="0.00"
+                                        step="0.01"
+                                        style="width: 100px;"
+                                    />
+                                    <button class="btn btn-sm btn-outline-secondary" id="toggle-currency-2" type="button" title="Cambiar moneda">
+                                        ${modalData.moneda}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
                 </div>
             </div>
-        </div>`;
+            </div>`;
+
+        
 
     document.getElementById("modalGenericContent").innerHTML = tableHtml + resumenHTML;
     document.getElementById("modalGenericTitle").innerText = "Editar Pax";
@@ -158,38 +244,105 @@ async function openEditarPaxModal() {
             const promoData = await promoResponse.json();
             if (promoResponse.ok && promoData.data?.length) {
                 const descuento = parseFloat(promoData.data[0].descount) / 100;
-                if (!isNaN(descuento)) descuentoAplicado = 1 - descuento;
+                if (!isNaN(descuento)) descuentoAplicado = 1 - descuento; // aplica descuento solo si hay promo
             }
         } catch (error) {
             console.error("Error al validar promoción:", error);
+            descuentoAplicado = null; // mantener null si falla
         }
+    } else {
+        descuentoAplicado = null; // no hay promo, sin descuento
     }
     // Event listeners
     actualizarResumen();
+    let currentMoneda = modalData.moneda; // USD o MXN
+    const $totalInput = $("#input-total");
+    const $balanceInput = $("#input-balance");
+    const $discountInput = $("#input-discount");
+    const $spanSubtotal = $("#subtotal");
+    // Guardar valores originales solo una vez
+    if ($totalInput.data("original") === undefined) $totalInput.data("original", parseFloat($totalInput.val()));
+    if ($balanceInput.data("original") === undefined) $balanceInput.data("original", parseFloat($balanceInput.val()));
+    if ($discountInput.data("original") === undefined) $discountInput.data("original", parseFloat($discountInput.text()));
+    if ($spanSubtotal.data("original") === undefined) $spanSubtotal.data("original", parseFloat($spanSubtotal.text()));
+    $(document).off('click', '#toggle-currency, #toggle-currency-2');
+    $(document).on('click', '#toggle-currency, #toggle-currency-2', function () {
+        const $tipoCambioInput = $("#input-tipo-cambio");
+        const tipoCambio = parseFloat($("#input-tipo-cambio").val()) || 1;
 
-    $(document).off('input change', '.detalles-pax-input, .detalles-pax-checkbox');
-    $(document).on('input change', '.detalles-pax-input, .detalles-pax-checkbox', actualizarResumen);
+        const origTotal = $totalInput.data("original");
+        const origBalance = $balanceInput.data("original");
+        const origDiscount = $discountInput.data("original");
+        const origSubtotal = $spanSubtotal.data("original");
 
-    $(document).off('click', '.btn-plus');
-    $(document).on('click', '.btn-plus', function () {
-        const input = $(this).siblings('input');
-        let val = parseInt(input.val()) || 0;
-        input.val(val + 1).trigger('input');
-    });
 
-    $(document).off('click', '.btn-minus');
-    $(document).on('click', '.btn-minus', function () {
-        const input = $(this).siblings('input');
-        let val = parseInt(input.val()) || 0;
-        if (val > 0) {
-            input.val(val - 1).trigger('input');
+        
+        if (currentMoneda === "USD") {
+            $totalInput.val((parseFloat($totalInput.val()) * tipoCambio).toFixed(2));
+            $balanceInput.val((parseFloat($balanceInput.val()) * tipoCambio).toFixed(2));
+            $discountInput.text((parseFloat($discountInput.text()) * tipoCambio).toFixed(2));
+            $spanSubtotal.text((parseFloat($spanSubtotal.text()) * tipoCambio).toFixed(2));
+            
+            currentMoneda = "MXN";
+        } else {
+            $totalInput.val((parseFloat($totalInput.val()) / tipoCambio).toFixed(2));
+            $balanceInput.val((parseFloat($balanceInput.val()) / tipoCambio).toFixed(2));
+            $discountInput.text((parseFloat($discountInput.text()) / tipoCambio).toFixed(2));
+            $spanSubtotal.text((parseFloat($spanSubtotal.text()) / tipoCambio).toFixed(2));
+            currentMoneda = "USD";
         }
+        
+        // Actualizar texto de todos los botones
+        $("#toggle-currency, #toggle-currency-2").text(currentMoneda);
+        $("#descuento-moneda-icon").text(currentMoneda);
+        $("#descuento-moneda-icon-subtotal").text(currentMoneda);
+    });
+    
+    
+
+    
+    $(document).off('input change', '.detalles-pax-inputx');
+    $(document).on('input change', '.detalles-pax-input', actualizarResumen);
+    $(document).off('change', '.detalles-pax-checkbox');
+    $(document).on('change', '.detalles-pax-checkbox', function () {
+        const input = $(this);
+        // Guardamos el estado como 1/0
+        input.data('original', input.prop('checked') ? 1 : 0);
+        actualizarResumen();
+    });
+    $(document).on('input change', '.detalles-pax-input', function() {
+        const val = parseInt($(this).val()) || 0;
+        $(this).data('original', val); // actualizado
+        actualizarResumen();
+    });
+    
+    // Después de inyectar el HTML del modal:
+    $("#modalContentWrapper").off('click', '.btn-plus');
+    $("#modalContentWrapper").off('click', '.btn-minus');
+
+    $("#modalContentWrapper").on('click', '.btn-plus, .btn-minus', function () {
+        const input = $(this).siblings('input');
+        let val = parseInt(input.val()) || 0;
+        if ($(this).hasClass('btn-plus')) val++;
+        else if (val > 0) val--;
+
+        input.val(val).trigger('input');
+        input.data('original', val);
     });
 
+    $(document).on('change', '.detalles-pax-checkbox', function() {
+        $(this).data('original', $(this).prop('checked') ? 1 : 0);
+        actualizarResumen();
+    });
+    
+    $("#input-discount").prop("disabled", true);
+    
     document.querySelector("#modalGeneric .btn-primary").onclick = async () => {
         const nuevosItems = [];
         let total = 0;
-
+        const totalFinal = parseFloat($("#input-total").val()) || 0;
+        const nuevoBalance = parseFloat($("#input-balance").val()) || 0;
+        
         document.querySelectorAll(".detalles-pax-input").forEach(input => {
             const cantidad = parseInt(input.value) || 0;
             const price = parseFloat(input.dataset.price);
@@ -225,10 +378,13 @@ async function openEditarPaxModal() {
             const data = {
                 idpago: modalData.id,
                 items_details: modalData.items_details,
-                total: total.toFixed(2),
+                total: totalFinal.toFixed(2),
+                balance: nuevoBalance.toFixed(2),
+                moneda: currentMoneda,
                 tipo: 'editar_items',
                 module: 'DetalleReservas'
             };
+            console.log(data);
             const response = await fetchAPI('control', 'PUT', { pax: data });
 
             if (response.ok) {
@@ -242,6 +398,7 @@ async function openEditarPaxModal() {
 
                 calcularTotal();
                 closeModal();
+                location.reload();
             } else {
                 const errorData = await response.json();
                 alert("Error al guardar cambios: " + (errorData.message || "Error desconocido"));
@@ -256,89 +413,140 @@ async function openEditarPaxModal() {
     modal.show();
     window.currentModal = modal;
 }
-
 function actualizarResumen() {
     let pax = 0;
-    let total = 0;
+    let totalItems = 0; // solo items principales y addons seleccionados
+    const paxGrouped = {};
     let anyAddonVisible = false;
 
-    // 1. Calcular total de PAX
-    document.querySelectorAll(".detalles-pax-input").forEach(input => {
-        const cantidad = parseInt(input.value) || 0;
-        const price = parseFloat(input.dataset.price);
+    // --- 1. Contar PAX y calcular totalItems ---
+    $(".detalles-pax-input").each(function () {
+        const cantidad = parseInt($(this).val()) || 0;
+        const price = parseFloat($(this).data("price")) || 0;
         if (cantidad > 0) {
             pax += cantidad;
-            total += cantidad * price;
+            totalItems += cantidad * price;
+
+            const name = $(this).data("name") || "PAX";
+            if (!paxGrouped[name]) paxGrouped[name] = 0;
+            paxGrouped[name] += cantidad;
         }
     });
 
-    // 2. Procesar checkboxes (addons)
-    document.querySelectorAll(".detalles-pax-checkbox").forEach(input => {
-        const reference = input.dataset.reference || "";
-        const parentRow = input.closest("tr");
-        const match = reference.toString().match(/(\d+)\s*-\s*(\d+)/); // Detectar rango
+    // --- 2. Contar addons seleccionados ---
+    $(".detalles-pax-checkbox").each(function () {
+        const $input = $(this);
+        const reference = $input.data("reference") || "";
+        const $parentRow = $input.closest("tr");
 
-        if (window.soloAddons) {
-            parentRow.style.display = "";
-            input.disabled = false;
-            if (input.checked) {
-                total += parseFloat(input.dataset.price || 0);
-            }
-            anyAddonVisible = true;
-
-        } else if (match) {
+        // Mostrar/ocultar según rangos o soloAddons
+        const match = reference.toString().match(/(\d+)\s*-\s*(\d+)/);
+        let mostrar = true;
+        if (!window.soloAddons && match) {
             const min = parseInt(match[1], 10);
             const max = parseInt(match[2], 10);
-            const showRow = pax >= min && pax <= max;
+            mostrar = (pax >= min && pax <= max);
+        }
 
-            if (showRow) {
-                parentRow.style.display = "";
-                input.disabled = false;
-                if (input.checked) {
-                    total += parseFloat(input.dataset.price || 0);
-                }
-                anyAddonVisible = true;
-            } else {
-                parentRow.style.display = "none";
-                input.disabled = true;
-                input.checked = false;
-            }
-
-        } else {
-            // Sin rango
-            parentRow.style.display = "";
-            input.disabled = false;
-            if (input.checked) {
-                total += parseFloat(input.dataset.price || 0);
-            }
+        if (mostrar) {
+            $parentRow.show();
+            $input.prop("disabled", false);
+            if ($input.prop("checked")) totalItems += parseFloat($input.data("price")) || 0;
             anyAddonVisible = true;
+        } else {
+            $parentRow.hide();
+            $input.prop("disabled", true).prop("checked", false);
         }
     });
-    // Aplicar descuento
-    const totalConDescuento = descuentoAplicado > 0 ? total * descuentoAplicado : total;
-    const porcentajeDescuento = ((1 - descuentoAplicado) * 100).toFixed(0);
 
-    const totalElem = document.getElementById("pax-total");
-    if (descuentoAplicado > 0) {
-        totalElem.innerHTML = `
-            <span style="text-decoration:line-through; color:#999;">$${total.toFixed(2)}</span>
-            <br><span style="color:green; font-weight:bold;">$${totalConDescuento.toFixed(2)}</span>
-            <br><small style="color:orange;">Descuento: ${porcentajeDescuento}%</small>`;
-    } else {
-        totalElem.textContent = total.toFixed(2);
+    // --- 3. Aplicar descuento ---
+    const $inputTotal = $("#input-total");
+    const $inputDescuento = $("#input-discount");
+    const $subtotal = $("#subtotal");
+    const $rowDescuento = $("#row-descuento");
+
+    const totalConDescuento = descuentoAplicado !== null ? totalItems * descuentoAplicado : totalItems;
+    const montoDescuento = totalItems - totalConDescuento;
+
+    $subtotal.text(totalItems.toFixed(2));
+    $inputTotal.val(totalConDescuento.toFixed(2));
+    $inputDescuento.text(montoDescuento.toFixed(2));
+
+    if (montoDescuento > 0) $rowDescuento.show();
+    else $rowDescuento.hide();
+
+    // --- 4. Actualizar balance dinámico ---
+    const $balanceInput = $("#input-balance");
+    if ($balanceInput.data("initial") === undefined) {
+        // Guardamos el balance real inicial al abrir modal
+        $balanceInput.data("initial", parseFloat($balanceInput.val()) || 0);
+        // Guardamos también el total inicial para calcular diferencia
+        $balanceInput.data("total-inicial", totalItems);
     }
 
-    // 3. Actualizar contadores y total
-    document.getElementById("pax-count").innerText = pax;
-    // document.getElementById("pax-total").innerText = total.toFixed(2);
+    // Solo ajustar balance si el usuario hace cambios (totalItems difiere del inicial)
+    const totalInicial = $balanceInput.data("total-inicial");
+    console.log("ANTERIOR");
+    console.log(totalInicial);
+    console.log("ACTUAL");
+    console.log(totalItems);
+    let diferencia = totalItems - totalInicial;
+    console.log("DIFERENCIA");
+    console.log(diferencia);
+    let ajusteDescuento = 0;
+    if (descuentoAplicado !== null) {
+        ajusteDescuento = diferencia * descuentoAplicado;
+    }
+    console.log("AJUSTE DESCUENTO");
+    console.log(ajusteDescuento);
+    // Balance = inicial + diferencia + ajuste descuento
+    if(ajusteDescuento != 0){
+        $balanceInput.val(($balanceInput.data("initial") + ajusteDescuento ).toFixed(2));
+    }else{
+        $balanceInput.val(($balanceInput.data("initial") + diferencia ).toFixed(2));
+    }
+   
 
-    // 4. Mostrar u ocultar el bloque de addons si no hay ninguno visible
-    const addonsBlock = document.getElementById("addonsBlockModal");
-    if (addonsBlock) {
-        if (anyAddonVisible) {
-            addonsBlock.classList.remove("hidden");
+    // --- 5. Actualizar PAX ---
+    $("#pax-count").text(pax);
+    const detalleHtml = Object.entries(paxGrouped)
+        .map(([name, count]) => `${count} x ${name}`)
+        .join('<br>');
+    $("#pax-detail-list").html(detalleHtml);
+
+    // --- 6. Mostrar/ocultar addons block ---
+    const $addonsBlock = $("#addonsBlockModal");
+    if ($addonsBlock.length) {
+        if (anyAddonVisible) $addonsBlock.removeClass("hidden");
+        else $addonsBlock.addClass("hidden");
+    }
+
+    // --- 7. Resumen addons ---
+    const $addonsSummary = $("#addons-summary");
+    const $addonsRow = $("#addons-summary-row");
+    if ($addonsSummary.length && $addonsRow.length) {
+        const addonsResumen = [];
+        $(".detalles-pax-checkbox:checked").each(function () {
+            const $input = $(this);
+            const name = $input.data("name");
+            const existing = addonsResumen.find(i => i.name === name);
+            if (existing) existing.count++;
+            else addonsResumen.push({ name, count: 1 });
+        });
+        if (addonsResumen.length > 0) {
+            const texto = addonsResumen.map(i => `${i.count} ${i.name}`).join(", ");
+            $addonsSummary.text(texto);
+            $addonsRow.removeClass("d-none");
         } else {
-            addonsBlock.classList.add("hidden");
+            $addonsSummary.text("");
+            $addonsRow.addClass("d-none");
         }
+    }
+
+    // --- 8. Si no hay nada seleccionado, balance = 0 ---
+    if (pax === 0 && $(".detalles-pax-checkbox:checked").length === 0) {
+        $balanceInput.val("0.00");
+        $balanceInput.data("initial", 0);
+        $balanceInput.data("total-inicial", 0);
     }
 }

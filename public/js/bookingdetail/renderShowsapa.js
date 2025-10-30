@@ -12,7 +12,20 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// ✅ Función global que puedes llamar donde sea
+// Agrega clases de estado según el proceso
+function getStatusBadge(proceso) {
+    const estado = proceso.toLowerCase();
+    const map = {
+        activo: 'badge-success',
+        cancelado: 'badge-danger',
+        pendiente: 'badge-warning',
+        finalizado: 'badge-secondary'
+    };
+    const clase = map[estado] || 'badge-light';
+    return `<span class="badge ${clase} text-uppercase">${capitalize(proceso)}</span>`;
+}
+
+// Función global
 window.mostrarSapas = async function (idPago) {
     const container = $('#sapa-container');
     const sapaCard = container.closest('.card');
@@ -20,35 +33,27 @@ window.mostrarSapas = async function (idPago) {
     try {
         const sapas = await search_sapas(idPago);
 
-        // Si no hay SAPAs
         if (!sapas || !sapas.length) {
             sapaCard.hide();
             container.html('<p class="text-muted">No hay SAPAs activas para esta reserva.</p>');
             return;
         }
 
-        // Mostrar la tarjeta
         sapaCard.show();
 
-        // Datos fijos simulados (puedes cambiar por los reales si los tienes)
-        const folio = sapas.folio || "";
-        const fechaSolicitud = "Septiembre 18, 2025 2:34 pm";
-
         let html = `
-        <div class="sapa-box">
-            <table class="table-sapa">
-                <thead>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center">
+                <thead class="table-dark">
                     <tr>
-                        <th>Pick up</th>
-                        <th>Fecha</th>
-                        <th>Partida</th>
-                        <th>Destino</th
-                        <th>Pax</th>
-                        <th>Viaje</th>
-                        <th>Status</th>
-                        <th>Creador</th>
-                        <th>Editar</th>
-                        
+                        <th>🕒 Pick up</th>
+                        <th>📅 Fecha</th>
+                        <th>📍 Origen</th>
+                        <th>🎯 Destino</th>
+                        <th>🚗 Tipo</th>
+                        <th>🔄 Estado</th>
+                        <th>👤 Creador</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,12 +61,16 @@ window.mostrarSapas = async function (idPago) {
 
         sapas.forEach((item) => {
             const hora = item.horario || "00:00:00";
-            const fecha = item.datepicker || "Sin fecha"; // si tienes un campo date real
-            // const pax = item.pax || "-"; // cuando lo manejes
-            const viaje = capitalize(item.type) + " (" + capitalize(item.type_transportation) + ")";
+            const fecha = item.datepicker || "Sin fecha";
+            const viaje = capitalize(
+                item.type_transportation === "redondoI"
+                    ? "Redondo (Ida)"
+                    : item.type_transportation === "redondoV"
+                    ? "Redondo (Vuelta)"
+                    : item.type_transportation
+            );
             const creador = item.name || "API";
 
-        
             html += `
                 <tr>
                     <td>${formatHora(hora)}</td>
@@ -69,13 +78,17 @@ window.mostrarSapas = async function (idPago) {
                     <td>${item.start_point}</td>
                     <td>${item.end_point}</td>
                     <td>${viaje}</td>
-                    <td><span class="sapa-status">${item.proceso}</span></td>
+                    <td>${getStatusBadge(item.proceso)}</td>
                     <td>${creador}</td>
-                    <td><button class="sapa-edit-btn" data-id="${item.id_sapa}">✏️</button></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary sapa-edit-btn" title="Editar SAPA" data-id="${item.id_sapa}">
+                            ✏️
+                        </button>
+                    </td>
                 </tr>
             `;
         });
-        
+
         html += `
                 </tbody>
             </table>
@@ -84,11 +97,11 @@ window.mostrarSapas = async function (idPago) {
 
         container.html(html);
 
-        // Eventos para los botones de editar
+        // Evento editar
         $('.sapa-edit-btn').on('click', function () {
             const idSapa = $(this).data('id');
             alert('Editar SAPA ID: ' + idSapa);
-            // Aquí puedes abrir un modal o redirigir
+            // Aquí puedes usar modal, navegación, etc.
         });
 
     } catch (error) {

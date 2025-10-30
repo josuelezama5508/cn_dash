@@ -1,320 +1,211 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
-require_once __DIR__ . '/../models/Models.php';
+require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
-require_once __DIR__ . '/../models/BookingMessageModel.php';
 
 class BookingMessageController extends API
 {
-    private $model_history;
     private $model_user;
-    private $model_bookingmessage;
-    private $model_control;
+    private $services = [];
 
-    function __construct()
+    public function __construct()
     {
-        $this->model_history = new History();
-        $this->model_user = new UserModel();        
-        $this->model_bookingmessage = new BookingMessage();
-        $this->model_control = new Control();
-    }
-    private function get_params($params = [])
-    {
-        $action = '';
-        $search = '';
-        if (isset($params['getNotesIdPago'])) {
-            $action = 'getNotesIdPago';
-            $search = $params['getNotesIdPago'];
-        } else if (isset($params['getNotesIdPagoUser'])) {
-            $action = 'getNotesIdPagoUser';
-            $search = $params['getNotesIdPagoUser'];
-        }else if (isset($params['getLastNoteIdPago'])) {
-            $action = 'getLastNoteIdPago';
-            $search = $params['getLastNoteIdPago']; // ✅ Este es el fix
+        $this->model_user = new UserModel();
+
+        $serviceList = [
+            'BookingMessageControllerService',
+            'HistoryControllerService',
+            'BookingControllerService'
+        ];
+
+        foreach ($serviceList as $service) {
+            $this->services[$service] = ServiceContainer::get($service);
         }
-
-
-        return [$action, $search];
     }
+
+    private function service($name)
+    {
+        return $this->services[$name] ?? null;
+    }
+
+    private function validateToken()
+    {
+        $headers = getallheaders();
+        $validation = $this->model_user->validateUserByToken($headers);
+    
+        if ($validation['status'] !== 'SUCCESS') {
+            throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
+        }
+    
+        return $validation['data'];
+    }
+    
+
+    private function parseJsonInput()
+    {
+        $input = file_get_contents('php://input');
+        $decoded = json_decode($input, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('JSON inválido', 400);
+        }
+        return $decoded;
+    }
+
+    private function resolveAction(array $params, array $map): array
+    {
+        foreach ($map as $key => $action) {
+            if (isset($params[$key])) {
+                return [$action, $params[$key]];
+            }
+        }
+        return ['', null];
+    }
+
+    // ---------------------------
+    // GET
+    // ---------------------------
     public function get($params = [])
     {
         try {
-            $headers = getallheaders();
-            // Validar token con el modelo user
-            // $validation = $this->model_user->validateUserByToken($headers);
-            // if ($validation['status'] !== 'SUCCESS') {
-            //     return $this->jsonResponse(['message' => $validation['message']], 401);
-            // }
-            // $userData = $validation['data'];
-            [$action, $search] = $this->get_params($params);
-            $response = null;
-            $httpCode = 200;
-            switch ($action) {
-                case 'getNotesIdPago':
-                    $response = $this->model_bookingmessage->searchNotesByIdPago($search);
-                    break;
-                case 'getNotesIdPagoUser':
-                    $decoded = json_decode($search, true);
-                    if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
-                        return $this->jsonResponse(['message' => 'Parámetro getNotesIdPagoUser inválido'], 400);
-                    }
-                    $response = $this->model_bookingmessage->searchNotesByIdPagoUser($decoded['id'], $decoded['user']);
-                    break;
-                case 'getLastNoteIdPago':
-                    $response = $this->model_bookingmessage->searchLastNoteByIdPago($search);
-                    break;
-            }
-    
-            if (empty($response)) {
-                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.', 'action'=> $action, 'search'=> $search], 404);
-            }
-    
-            return $this->jsonResponse(['data' => $response], $httpCode);
+            // $userData = $this->validateToken();
+            [$action, $search] = $this->resolveAction($params, [
+                'getNotesIdPago' => 'getNotesIdPago',
+                'getNotesIdPagoUser' => 'getNotesIdPagoUser',
+                'getLastNoteIdPago' => 'getLastNoteIdPago'
+            ]);
+
+            if (!$action) return $this->jsonResponse(['message' => 'Acción GET inválida'], 400);
+
+            $map = [
+                'getNotesIdPago' => fn() => $this->service('BookingMessageControllerService')->searchNotesByIdPago($search),
+                'getNotesIdPagoUser' => fn() => $this->service('BookingMessageControllerService')
+                    ->searchNotesByIdPagoUser(...array_values(json_decode($search, true) ?? [])),
+                'getLastNoteIdPago' => fn() => $this->service('BookingMessageControllerService')->searchLastNoteByIdPago($search)
+            ];
+
+            $response = $map[$action]();
+
+            if (empty($response)) return $this->jsonResponse(['message' => 'No se encontraron resultados'], 404);
+
+            return $this->jsonResponse(['data' => $response], 200);
+
         } catch (Exception $e) {
-            return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
     }
-    private function get_post_params($params = [])
-    {
-        $action = '';
-        $data = [];
 
-        if (isset($params['create'])) {
-            $action = 'create';
-            $data = $params['create']; // espera un array con 'nombre' y 'origen'
-        }
-        return [$action, $data];
-    }
+    // ---------------------------
+    // POST
+    // ---------------------------
     public function post($params = [])
-{
-    try {
-        $headers = getallheaders();
-
-        // Validar token
-        $validation = $this->model_user->validateUserByToken($headers);
-        if ($validation['status'] !== 'SUCCESS') {
-            return $this->jsonResponse(['message' => $validation['message']], 401);
-        }
-        $userData = $validation['data'];
-
-        $inputJSON = file_get_contents('php://input');
-        $params = json_decode($inputJSON, true);
-
-        [$action, $data] = $this->get_post_params($params);
-
-        $responseMessage = null;
-        $coincidencias = null;
-        $httpCode = 200;
-
-        switch ($action) {
-            case 'create':
-                $idpago   = trim($data['idpago'] ?? '');
-                $mensaje  = trim($data['mensaje'] ?? '');
-                $usuario  = $userData->id;
-                $tipomessage = trim($data['tipomessage'] ?? 'nota');
-            
-                if ($mensaje === '') {
-                    return $this->jsonResponse(['message' => 'El campo mensaje es obligatorio.'], 400);
-                }
-            
-                // Buscar la reserva madre para obtener el nog
-                $controlData = $this->model_control->find($idpago);
-                if (!$controlData) {
-                    return $this->jsonResponse(['message' => 'Reserva no encontrada.'], 404);
-                }
-            
-                // Obtener madre e hijos relacionados
-                $DataCombos = $this->model_control->getLinkedReservations($controlData->nog);
-            
-                $insertados = [];
-                foreach ($DataCombos as $combo) {
-                    $camposMesagge = [
-                        'idpago'      => $combo->id,
-                        'mensaje'     => $mensaje,
-                        'usuario'     => $usuario,
-                        'tipomessage' => $tipomessage,
-                    ];
-            
-                    $responseMessage = $this->model_bookingmessage->insert($camposMesagge);
-            
-                    if ($responseMessage && isset($responseMessage->id)) {
-                        $this->registrarHistorial(
-                            $data['module'],
-                            $responseMessage->id,
-                            'create',
-                            'Se creó mensaje',
-                            $userData->id ?? 0,
-                            null,
-                            $camposMesagge
-                        );
-                        $insertados[] = $responseMessage;
-                    }
-                }
-            
-                if (empty($insertados)) {
-                    return $this->jsonResponse(['message' => 'No se pudo crear ningún mensaje.'], 500);
-                }
-            
-                $httpCode = 201;
-                $response = [
-                    'message' => 'Mensajes creados correctamente',
-                    'registros' => $insertados
-                ];
-                break;
-            
-            default:
-                return $this->jsonResponse(['message' => 'Acción inválida.', 'action' => $action], 400);
-        }
-
-        return $this->jsonResponse(['data' => $responseMessage, 'coincidencias' => $coincidencias], $httpCode);
-
-    } catch (Exception $e) {
-        return $this->jsonResponse([
-            'message' => 'Error al procesar la solicitud.',
-            'error' => $e->getMessage()
-        ], 500);
-    }
-}
-
-    
-    
-    
-    public function delete($params = [])
     {
         try {
-            $headers = getallheaders();
+            $userData = $this->validateToken();
+            $data = $this->parseJsonInput();
+            [$action, $postData] = $this->resolveAction($data, ['create' => 'create']);
 
-            // Validar token
-            $validation = $this->model_user->validateUserByToken($headers);
-            if ($validation['status'] !== 'SUCCESS') {
-                return $this->jsonResponse(['message' => $validation['message']], 401);
-            }
-            $userData = $validation['data'];
+            if ($action !== 'create') throw new Exception('Acción POST inválida', 400);
 
-            $inputJSON = file_get_contents('php://input');
-            $params = json_decode($inputJSON, true);
+            $idpago = trim($postData['idpago'] ?? '');
+            $mensaje = trim($postData['mensaje'] ?? '');
+            $tipomessage = trim($postData['tipomessage'] ?? 'nota');
 
-            if (!isset($params['id'])) {
-                return $this->jsonResponse(['message' => 'ID de mensaje requerido.'], 400);
-            }
+            if (!$mensaje) throw new Exception('El campo mensaje es obligatorio', 400);
+            $booking = $this->service('BookingControllerService');
+            $service = $this->service('BookingMessageControllerService');
+            $history = $this->service('HistoryControllerService');
+            $controlData = $booking->find($idpago);
+            if (!$controlData) throw new Exception('Reserva no encontrada', 404);
 
-            $messageID = intval($params['id']);
-            $MessageOld = $this->model_bookingmessage->find($messageID);
+            $mensajePrincipal = $service->insertarMensajeReserva([
+                'idpago' => $idpago,
+                'mensaje' => $mensaje,
+                'usuario' => $userData->id,
+                'tipomessage' => $tipomessage
+            ], $postData['module'], $userData->id,
+            $history);
 
-            if (!$MessageOld || empty($MessageOld->id)) {
-                return $this->jsonResponse(['message' => 'El mensaje no existe.'], 404);
-            }
-
-            $deleted = $this->model_bookingmessage->delete($messageID);
-
-            if (!$deleted) {
-                return $this->jsonResponse(['message' => 'No se pudo eliminar el mensaje.'], 500);
-            }
-
-            // Registrar historial
-            $this->registrarHistorial(
-                $params['module'],
-                $messageID,
-                'delete',
-                'Se eliminó mensaje',
-                $userData->id ?? 0,
-                $MessageOld, // oldData
-                null           // newData
-            );
+            $mensajesCombinados = $service->replicarMensajeEnCombos($controlData->nog, $mensaje, $userData->id, $tipomessage, $postData['module'], $booking, $history);
 
             return $this->jsonResponse([
-                'message' => 'Mensaje eliminado correctamente.',
-                'data' => $MessageOld
-            ], 200);
+                'message' => 'Mensaje creado y replicado correctamente',
+                'principal' => $mensajePrincipal,
+                'combinados' => $mensajesCombinados
+            ], 201);
 
         } catch (Exception $e) {
-            return $this->jsonResponse([
-                'message' => 'Error al procesar la solicitud.',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
     }
 
+    // ---------------------------
+    // PUT
+    // ---------------------------
     public function put($params = [])
     {
         try {
-            $headers = getallheaders();
+            $userData = $this->validateToken();
+            $data = $this->parseJsonInput();
+            [$action, $updateData] = $this->resolveAction($data, ['update' => 'update']);
 
-            // Validar token
-            $validation = $this->model_user->validateUserByToken($headers);
-            if ($validation['status'] !== 'SUCCESS') {
-                return $this->jsonResponse(['message' => $validation['message']], 401);
-            }
-            $userData = $validation['data'];
+            if (!$action || !isset($updateData['id'])) throw new Exception('Acción PUT inválida', 400);
 
-            $inputJSON = file_get_contents('php://input');
-            $params = json_decode($inputJSON, true);
+            $messageID = intval($updateData['id']);
+            $service = $this->service('BookingMessageControllerService');
+            $history = $this->service('HistoryControllerService');
 
-            if (!isset($params['update']['id'])) {
-                return $this->jsonResponse(['message' => 'ID del mensaje requerido.'], 400);
-            }
+            $messageOld = $service->find($messageID);
+            if (!$messageOld || empty($messageOld->id)) throw new Exception('El mensaje no existe', 404);
 
-            $messageID = intval($params['update']['id']);
-            $messageOld = $this->model_bookingmessage->find($messageID);
-            if (!$messageOld || empty($messageOld->id)) {
-                return $this->jsonResponse(['message' => 'El mensaje no existe.'], 404);
-            }
-
-            $data = $params['update'];
-
-            // Mezclamos los datos nuevos con los existentes
             $dataUpdateMessage = [
-                'idpago'            => $data['idpago'] ?? $messageOld->idpago,
-                'mensaje'           => $data['mensaje'] ?? $messageOld->mensaje,
-                'usuario'           => $data['usuario'] ?? $messageOld->usuario,
-                'tipomessage'       => $data['tipomessage'] ?? $messageOld->tipomessage,
+                'idpago' => $updateData['idpago'] ?? $messageOld->idpago,
+                'mensaje' => $updateData['mensaje'] ?? $messageOld->mensaje,
+                'usuario' => $updateData['usuario'] ?? $messageOld->usuario,
+                'tipomessage' => $updateData['tipomessage'] ?? $messageOld->tipomessage,
             ];
 
-            // Validar que la mensaje no quede vacía
-            if (trim($dataUpdateMessage['mensaje']) === '') {
-                return $this->jsonResponse(['message' => 'El campo mensaje es obligatorio.'], 400);
-            }
+            if (trim($dataUpdateMessage['mensaje']) === '') throw new Exception('El campo mensaje es obligatorio', 400);
 
-            // Actualizar camioneta
-            $this->model_bookingmessage->update($messageID, $dataUpdateMessage);
+            $service->update($messageID, $dataUpdateMessage);
 
-            // Obtener datos después de actualizar
-            $messageNew = $this->model_bookingmessage->find($messageID);
+            $messageNew = $service->find($messageID);
+            $history->registrarHistorial($updateData['module'], $messageID, 'update', 'Se actualizó mensaje', $userData->id, $messageOld, $messageNew);
 
-            // Registrar historial
-            $this->registrarHistorial(
-                $data['module'],
-                $messageID,
-                'update',
-                'Se actualizó mensaje',
-                $userData->id ?? 0,
-                $messageOld,
-                $messageNew
-            );
-
-            return $this->jsonResponse([
-                'message' => 'Mensaje actualizado correctamente.',
-                'data' => $messageNew
-            ], 200);
+            return $this->jsonResponse(['message' => 'Mensaje actualizado correctamente', 'data' => $messageNew], 200);
 
         } catch (Exception $e) {
-            return $this->jsonResponse([
-                'message' => 'Error al procesar la solicitud.',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
     }
 
-    private function registrarHistorial($module, $row_id, $action, $details, $user_id, $oldData, $newData)
+    // ---------------------------
+    // DELETE
+    // ---------------------------
+    public function delete($params = [])
     {
-        $this->model_history->insert([
-            "module" => $module,
-            "row_id" => $row_id,
-            "action" => $action,
-            "details" => $details,
-            "user_id" => $user_id,
-            "old_data" => json_encode($oldData),
-            "new_data" => json_encode($newData),
-        ]);
+        try {
+            $userData = $this->validateToken();
+            $data = $this->parseJsonInput();
+            [$action, $deleteData] = $this->resolveAction($data, ['delete' => 'delete']);
+
+            if (!$action || !isset($deleteData['id'])) throw new Exception('ID de mensaje requerido', 400);
+
+            $messageID = intval($deleteData['id']);
+            $service = $this->service('BookingMessageControllerService');
+            $history = $this->service('HistoryControllerService');
+
+            $messageOld = $service->find($messageID);
+            if (!$messageOld || empty($messageOld->id)) throw new Exception('El mensaje no existe', 404);
+
+            $deleted = $service->delete($messageID);
+            if (!$deleted) throw new Exception('No se pudo eliminar el mensaje', 500);
+
+            $history->registrarHistorial($deleteData['module'], $messageID, 'delete', 'Se eliminó mensaje', $userData->id, $messageOld, null);
+
+            return $this->jsonResponse(['message' => 'Mensaje eliminado correctamente', 'data' => $messageOld], 200);
+
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
+        }
     }
 }

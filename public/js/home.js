@@ -204,8 +204,15 @@ function renderizarReservas(reservas) {
                 <td>${(r.cliente_name || '')} ${(r.cliente_lastname || '')}</td>
                 <td><span class="badge bg-secondary text-white" style="background: ${r.procesado == "1" ? "#228B22" : "#DC143C"} !important;">${r.procesado == "1" ? "SI" : "NO"}</span></td>
                 <td><span class="badge custom-nog-color">${r.nog || '-'}</span></td>
-                <td>${formatearMoneda(r.total)}</td>
-                <td>${formatearEstado(r.status, r.statuscolor)}</td>
+                <td>${formatearMoneda(r.total) + " " + r.moneda}</td>
+               <td class="text-center">
+                    <div class="d-flex flex-column align-items-center">
+                        ${formatearEstado(r.status, r.statuscolor)}
+                        ${r.checkin == 1 ? '<span class="badge bg-checkin mt-1">Check-in</span>' : ''}
+                        ${r.noshow == 1 ? '<span class="badge bg-noshow mt-1">No Show</span>' : ''}
+                    </div>
+                </td>
+
                 <td>
                     <button class="btn btn-sm btn-primary ver-detalle" data-nog="${r.nog}">
                         <i class="fas fa-eye"></i>

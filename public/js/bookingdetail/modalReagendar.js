@@ -12,19 +12,19 @@ window.openReagendarModal = async function(modalData) {
     <form id="form_update_reagendar">
         <input type="hidden" id="reserva_id" value="${modalData.id}">
 
-        <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
-             <div class="mb-3">
+        <div class="container p-0" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+             <div class="mb-3 flex-fill">
                 <label class="form-label fw-bold">Cliente</label>
                 <input type="text" id="cliente_name" class="form-control" value="${modalData.cliente_name || ''} ${modalData.cliente_lastname || ''}" placeholder="Nombre del cliente" required>
             </div>
 
 
-            <div class="mb-3">
+            <div class="mb-3 flex-fill ">
                 <label class="form-label fw-bold">Correo</label>
                 <input type="email" id="cliente_email" class="form-control" value="${modalData.email || ''}">
             </div>
         </div>
-        <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+        <div class="container p-0" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
             <div class="mb-3" style="flex: 1;">
                 <label class="form-label fw-bold">Enviar notificación</label>
                 <select id="enviar_notificacion" class="form-select">
@@ -41,7 +41,7 @@ window.openReagendarModal = async function(modalData) {
                 </select>
             </div>
         </div>
-        <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+        <div class="container p-0" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
             <div class="mb-3" style="flex: 1;">
                 <label class="form-label fw-bold">Nueva Fecha</label>
                 <input type="text" id="datepicker" class="form-control" required value="${modalData.datepicker}">
@@ -182,6 +182,7 @@ window.confirmReagendar = async function() {
             idioma: document.getElementById('idioma').value,
             descripcion: document.getElementById('descripcion').value,
             tipo: 'reagendacion',
+            actioner: 'reagendar',
             module: 'DetalleReservas'
         }
     };

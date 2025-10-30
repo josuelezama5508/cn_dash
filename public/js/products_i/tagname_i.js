@@ -48,12 +48,11 @@ async function updateTag(action, tagitem, value) {
 }
 
 async function updateTagPositions(positions) {
-    let formData = new FormData();
-    positions.forEach(p => formData.append("tagitem[]", JSON.stringify(p)));
-
-    return fetchAPI(`itemproduct?action=position`, 'PUT', formData)
-        .then(res => res.json());
-}
+    const body = { tagitem: positions };
+    return fetchAPI(`itemproduct?action=position`, 'PUT', body)
+      .then(res => res.json());
+  }
+  
 
 async function deleteTag(tagid) {
     return fetchAPI(`itemproduct?id=${tagid}`, 'DELETE')
@@ -64,6 +63,9 @@ async function deleteTag(tagid) {
 // ========== RENDER LAYER ==========
 function renderTagsTable(data) {
     $("#RTags").empty();
+    console.log("RENDER DE LOS TAGS");
+    console.log(data);
+    console.log("FIN RENDERTAGS");
     data.forEach((element, i) => {
         let tagname = '';
         Object.entries(element.tagname).forEach(([key, value]) => {
@@ -93,7 +95,7 @@ function renderTagsTable(data) {
                     </div>
                 </td>
                 <td>
-                    <div class="form-group delete-product-tag" data-id="${element.tagid}">
+                    <div class="form-group delete-product-tag" data-id="${element.id}">
                         <i class="material-icons" style="color: red; cursor: pointer;">delete</i>
                     </div>
                 </td>

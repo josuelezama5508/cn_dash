@@ -1,31 +1,46 @@
 <?php
 require_once __DIR__ . '/../../app/core/Api.php';
-require_once __DIR__ . '/../models/Models.php';
+require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
 
 class IdiomasController extends API
 {
-    private $model_language;
     private $model_user;
+    private $services = [];
     function __construct()
     {
-        $this->model_language = new Idioma();
         $this->model_user = new UserModel();
+        $serviceList = [
+           'LanguageCodesControllerService'
+       ];
+
+       foreach ($serviceList as $service) {
+           $this->services[$service] = ServiceContainer::get($service);
+       }
+    }
+    private function service($name)
+    {
+        return $this->services[$name] ?? null;
     }
 
+    private function validateToken()
+    {
+        $headers = getallheaders();
+        $validation = $this->model_user->validateUserByToken($headers);
     
+        if ($validation['status'] !== 'SUCCESS') {
+            throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
+        }
+    
+        return $validation['data'];
+    }
+    
+
     public function get($params = [])
     {
-        // Validar usuario
-        $headers = getallheaders();
+        $userData = $this->validateToken();
 
-        // Validar token con el modelo user
-        $validation = $this->model_user->validateUserByToken($headers);
-        if ($validation['status'] !== 'SUCCESS') {
-            return $this->jsonResponse(['message' => $validation['message']], 401);
-        }
-
-        $langs = $this->model_language->where("active = '1'", array(), ["code AS langcode", "language"]);
+        $langs = $this->service("LanguageCodesControllerService")->getLangsActives();
         
 
         return $this->jsonResponse(["data" => $langs], 200);

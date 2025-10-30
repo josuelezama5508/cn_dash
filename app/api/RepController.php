@@ -51,6 +51,11 @@ class RepController extends API
 
                 return $this->jsonResponse(["data" => $response], 200);
                 break;
+            case 'getExistingNameByIdChannel':
+                $dataFBI = json_decode($search, true);
+                $rep = $this->model_rep->getExistingRep($dataFBI['namerep'], $dataFBI['channelId']);
+                return $this->jsonResponse(["data" => $rep], 200);
+                break;
         }
     }
 
@@ -67,6 +72,9 @@ class RepController extends API
         } else if (isset($params['repid'])) {
             $action = 'repid';
             $search = $params['repid'];
+        }else if(isset($params['getExistingNameByIdChannel'])){
+            $action = 'getExistingNameByIdChannel';
+            $search = $params['getExistingNameByIdChannel'];
         }
 
         return [$action, $search];
@@ -105,7 +113,7 @@ class RepController extends API
         $ids = [];
         for ($i = 0; $i < count($rep_nameArray); $i++) {
             $rep_name       = validate_repname(safe_array_index($rep_nameArray, $i, null));
-            $rep_phone      = validate_phone(safe_array_index($rep_phoneArray, $i, null));
+            $rep_phone      = validate_phone_rep(safe_array_index($rep_phoneArray, $i, null));
             $rep_email      = validate_email(safe_array_index($rep_emailArray, $i, null));
             $rep_commission = validate_int(safe_array_index($rep_commissionArray, $i, null));
     
@@ -160,7 +168,7 @@ class RepController extends API
         $nombre   = validate_repname(
             safe_array_get($data, 'repname', safe_array_get($data, 'name', null))
         );
-        $telefono = validate_phone(
+        $telefono = validate_phone_rep(
             safe_array_get($data, 'repphone', safe_array_get($data, 'phone', null))
         );
         $email    = validate_email(
@@ -206,37 +214,4 @@ class RepController extends API
             return $this->jsonResponse(["message" => "No se pudo eliminar el representante."], 400);
         }
     }
-    
-    /*
-    private function history($id, $user_id, $action, $old_data, $timestamp = null)
-    {
-        $details = '';
-        switch ($action) {
-            case 'create':
-                $details = 'Nuevo representante creado.';
-                break;
-            case 'update':
-                $details = 'Datos del representante actualizado';
-                break;
-            case 'delete':
-                $details = 'Representante eliminado.';
-                break;
-        }
-
-        $data = array(
-            "module" => $this->model_rep->getTableName(),
-            "row_id" => $id,
-            "action" => $action,
-            "details" => $details,
-            "user_id" => $user_id,
-            "old_data" => json_encode($old_data),
-            "new_data" => json_encode($this->model_rep->find($id)),
-        );
-        if ($timestamp) $data['timestamp'] = $timestamp;
-
-        $history = $this->model_history->insert($data);
-
-        return $history ? true : false;
-    }
-     */
 }

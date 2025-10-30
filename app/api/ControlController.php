@@ -1,986 +1,319 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
+require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/Models.php';
 require_once __DIR__ . '/../models/UserModel.php';
-require_once __DIR__ . '/../models/HistoryModel.php';
-require_once __DIR__ . '/../models/HistoryMailModel.php';
-require_once __DIR__ . '/../models/BookingMessageModel.php';
-
+require_once __DIR__ . '/../models/TemplatesMailModel.php';
 
 class ControlController extends API
 {
-    private $model_control;
-    private $model_user;
-    private $model_detail;
-    private $model_dispo;
-    private $model_history;
-    private $model_historymail;
-    private $model_product;
-    private $model_combo;
-    private $model_tag;
-    private $model_bookingmessage;
-    private $model_empresa;
+    private $userModel;
+    private $mailTemplate;
+    private $notificationMail;
+    private $services = [];
+
     public function __construct()
     {
-        $this->model_control = new Control();
-        $this->model_bookingDetails = new BookingDetails();
-        $this->model_user = new UserModel();
-        $this->model_dispo = new Disponibilidad();
-        $this->model_history = new HistoryModel();
-        $this->model_historymail = new HistoryMailModel();
-        $this->model_product = new Productos();
-        $this->model_combo = new Combo();
-        $this->model_tag = new Tag();
-        $this->model_bookingmessage = new BookingMessage();
-        $this->model_empresa = new Empresa();
+        $this->userModel = new UserModel();
+        $this->mailTemplate = new TemplatesMailModel();
+        $this->notificationMail = new NotificationMail();
+
+        $serviceList = [
+            'BookingControllerService',
+            'TagsControllerService',
+            'BookingDetailsControllerService',
+            'CompanyControllerService',
+            'ProductControllerService',
+            'NotificationMailControllerService',
+            'HistoryMailControllerService',
+            'HistoryControllerService',
+            'BookingMessageControllerService',
+            'NotificationServiceControllerService',
+            'CanalControllerService',
+            'RepControllerService',
+            'DisponibilidadControllerService',
+            'CancellationTypesControllerService',
+            'CancellationCategoriesControllerServices',
+            'ComboControllerService',
+            'LocationPortsControllerService',
+            'EmpresaInfoControllerService'
+        ];
+
+        foreach ($serviceList as $service) {
+            $this->services[$service] = ServiceContainer::get($service);
+        }
+    }
+    private function service($name)
+    {
+        return $this->services[$name] ?? null;
     }
 
-    private function get_params($params = [])
+    private function validateToken()
     {
-        if (isset($params['create'])) {
-            return ['create', $params['create']];
-        }if (isset($params['update'])) {
-            return ['update', $params['update']];
-        }if (isset($params['deleteRegister'])) {
-            return ['deleteRegister', $params['deleteRegister']];
-        }if (isset($params['getByDate'])) {
-            return ['getByDate', $params['getByDate']];
-        }if (isset($params['searchReservation'])) {
-            return ['searchReservation', $params['searchReservation']];
-        }if (isset($params['getByDatePickup'])) {
-            return ['getByDatePickup', $params['getByDatePickup']];
-        }if (isset($params['nog'])) {
-            return ['nog', $params['nog']];
-        }if (isset($params['getByDispo'])) {
-            return ['getByDispo', $params['getByDispo']];
-        }if (isset($params['getByDispo2'])) {
-            return ['getByDispo2', $params['getByDispo2']];
-        }if (isset($params['reagendar'])) {
-            return ['reagendar', $params['reagendar']];
-        }if (isset($params['procesado'])) {
-            return ['procesado', $params['procesado']];
-        }if (isset($params['voucher'])) {
-            return ['voucher', $params['voucher']];
-        }if (isset($params['recibo'])) {
-            return ['recibo', $params['recibo']];
-        }if (isset($params['pickup'])) {
-            return ['pickup', $params['pickup']];
-        }if (isset($params['cancelar'])) {
-            return ['cancelar', $params['cancelar']];
-        }if (isset($params['vinculados'])) {
-            return ['vinculados', $params['vinculados']];
-        }if (isset($params['canal'])) {
-            return ['canal', $params['canal']];
-        }if (isset($params['typeservice'])) {
-            return ['typeservice', $params['typeservice']];
-        }if (isset($params['client'])) {
-            return ['client', $params['client']];
-        }if (isset($params['pax'])) {
-            return ['pax', $params['pax']];
-        }if (isset($params['getTagId'])) {
-            return ['getTagId', $params['getTagId']];
+        $headers = getallheaders();
+        $validation = $this->userModel->validateUserByToken($headers);
+    
+        if ($validation['status'] !== 'SUCCESS') {
+            throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
         }
-        
+    
+        return $validation['data'];
+    }
+    
+    private function resolveAction(array $params, array $map): array
+    {
+        foreach ($map as $key => $action) {
+            if (isset($params[$key])) {
+                return [$action, $params[$key]];
+            }
+        }
         return ['', null];
     }
+
+    private function validateRequest(): array
+    {
+        $headers = getallheaders();
+        $validation = $this->validateToken();
+        $body = json_decode(file_get_contents("php://input"), true);
+        if (!$body) {
+            throw new Exception('Body JSON inválido', 400);
+        }
+        return [$validation, $body];
+    }
+
+    // --------------------------------------------------------
+    // GET
+    // --------------------------------------------------------
     public function get($params = [])
     {
         try {
-            // Validar usuario
-            $headers = getallheaders();
-            // $token = $headers['Authorization'] ?? null;
-            // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+            [$action, $data] = $this->resolveAction($params, [
+                'nog' => 'getByNog',
+                'getByDispo' => 'getByDispo',
+                'getByDispo2' => 'getByDispo2',
+                'vinculados' => 'getLinked',
+                'vinculadosByNog' => 'getCombosByNog',
+                'getByDatePickup' => 'getByDatePickup',
+                'searchReservation' => 'searchReservation',
+                'getTagId' => 'getTagId',
+                'idlocation' => 'idlocation'
+                // 'getAllRep' => 'getAllRep'
+            ]);
 
-            // $user_id = Token::validateToken($token);
-            // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-            [$action, $search] = $this->get_params($params);
-            $dataControl = null;
-            $dataControlDispo = null;
-            $httpCode = 200;
-            switch ($action) {
-                case 'nog':
-                    $dataControl = $this->model_control->getByNog($search);
-                    // Respuesta exitosa con ambos IDs y datos
-                    
-                    break; 
-                case 'getByDispo':
-                    // 1. Si se pasa fecha específica, traer reservas de esa fecha
-                    $fecha = $search['fecha'] ?? null;
-                    $empresa = $search['empresa'] ?? null;
-                    $producto = $search['producto'] ?? null;
-                    // Traer todas las reservas de la fecha (o todas si no hay fecha)
-                    $dispoControl = $this->model_control->getByDispo($fecha); // [{hora, ocupado}]
-                    $dataDispo = $this->model_dispo->getDisponibilityByEnterprise($empresa); 
-                    
-                    $dataControl = [];
-                    // Guardar disponibilidad total por fecha
-                    $dispoPorFecha = [];
-                    foreach ($dataDispo as $dispo) {
-                        $horaDispo = $dispo->horario;
-                        $cupoTotal = (int)$dispo->cupo;
-                        // Convertir hora de disponibilidad a timestamp
-                        $timeDispo = strtotime($horaDispo);
-                        // Buscar si hay reservas para esa hora
-                        $ocupado = 0;
-                        foreach ($dispoControl as $reserva) {
-                            $timeReserva = strtotime($reserva['hora']);
-                            if ($timeReserva === $timeDispo) {
-                                $ocupado = (int)$reserva['ocupado'];
-                                break;
-                            }
-                        }
-                        $disponibilidad = $cupoTotal - $ocupado;
-                        // Fecha asociada a la reserva, si tu API tiene varias fechas, ajusta esto
-                        $fechaClave = $fecha ?? date('Y-m-d');
-                        if (!isset($dispoPorFecha[$fechaClave])) $dispoPorFecha[$fechaClave] = 0;
-                        $dispoPorFecha[$fechaClave] += $disponibilidad;
-                        $dataControl[] = [
-                            'fecha' => $fechaClave,
-                            'hora' => date('g:i A', $timeDispo), // formato consistente
-                            'cupo' => $cupoTotal,
-                            'ocupado' => $ocupado,
-                            'disponibilidad' => $disponibilidad
-                        ];
-                    }
-                    // Devolver también la disponibilidad total por fecha
-                    return $this->jsonResponse([
-                        'data' => $dataControl,
-                        'total_disponibilidad' => $dispoPorFecha
-                    ], 200);
-                
-                    break;
-                case 'getByDispo2':
-                    $fecha = $search['fecha'] ?? null;
-                    $empresaParam = $search['empresa'] ?? null;
-                    $producto = $search['producto'] ?? null;
-                
-                    $dispoControl = $this->model_control->getByDispo($fecha); // [{hora, ocupado}]
-                    $dataproduct = $this->model_product->find($producto);
-                    $dataenterprise = $this->model_empresa->getAllCompaniesDispo();
-                    if (!$dataproduct || !isset($dataproduct->product_code)) {
-                        return $this->jsonResponse([
-                            'error' => 'Producto no encontrado o sin código'
-                        ], 400);
-                    }
-                    
-                    $productCode = isset($dataproduct->product_code) ? $dataproduct->product_code : "";
+            if (!$action) return $this->jsonResponse(['message' => 'Acción no reconocida'], 400);
 
-                    $dataDispo = [];
-                    $empresasRelacionadas = [];
-                    $disponibilidadPorEmpresa = [];
-                
-                    // 🔹 Buscar empresas relacionadas al producto
-                    foreach ($dataenterprise as $ent) {
-                        $productosJson = $ent->productos;
-                        $productos = json_decode($productosJson, true);
-                
-                        if (json_last_error() === JSON_ERROR_NONE && is_array($productos)) {
-                            foreach ($productos as $p) {
-                                if (isset($p['codigoproducto']) && $p['codigoproducto'] === $productCode) {
-                                    $empresasRelacionadas[] = $ent;
-                
-                                    $result = $this->model_dispo->getDisponibilityByEnterprise($ent->company_code);
-                                    if (!empty($result)) {
-                                        $disponibilidadPorEmpresa[] = [
-                                            'empresa' => $ent->company_code,
-                                            'disponibilidad' => $result
-                                        ];
-                                        $dataDispo = array_merge($dataDispo, $result);
-                                    }
-                
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                
-                    // 🔹 Si no se encontró disponibilidad por relaciones, usar la empresa directamente (último recurso)
-                    if (empty($dataDispo) && !empty($empresaParam)) {
-                        $fallbackDispo = $this->model_dispo->getDisponibilityByEnterprise($empresaParam);
-                        if (!empty($fallbackDispo)) {
-                            $dataDispo = $fallbackDispo;
-                            $disponibilidadPorEmpresa[] = [
-                                'empresa' => $empresaParam,
-                                'disponibilidad' => $fallbackDispo
-                            ];
-                        }
-                    }
-                
-                    // 🔹 Procesar horarios
-                    $dataControl = [];
-                    $dispoPorFecha = [];
-                
-                    foreach ($dataDispo as $dispo) {
-                        $horaDispo = $dispo->horario;
-                        $cupoTotal = (int)$dispo->cupo;
-                        $timeDispo = strtotime($horaDispo);
-                
-                        $ocupado = 0;
-                        foreach ($dispoControl as $reserva) {
-                            $timeReserva = strtotime($reserva['hora']);
-                            if ($timeReserva === $timeDispo) {
-                                $ocupado = (int)$reserva['ocupado'];
-                                break;
-                            }
-                        }
-                
-                        $disponibilidad = $cupoTotal - $ocupado;
-                        $fechaClave = $fecha ?? date('Y-m-d');
-                
-                        if (!isset($dispoPorFecha[$fechaClave])) {
-                            $dispoPorFecha[$fechaClave] = 0;
-                        }
-                
-                        $dispoPorFecha[$fechaClave] += $disponibilidad;
-                
-                        $dataControl[] = [
-                            'fecha' => $fechaClave,
-                            'hora' => date('g:i A', $timeDispo),
-                            'cupo' => $cupoTotal,
-                            'ocupado' => $ocupado,
-                            'disponibilidad' => $disponibilidad
-                        ];
-                    }
-                
-                    // 🔹 Devolver datos
-                    return $this->jsonResponse([
-                        'data' => $dataControl,
-                        'total_disponibilidad' => $dispoPorFecha,
-                        'dataproduct' => $dataproduct,
-                        'dataenterprise' => $dataenterprise,
-                        'relations' => $empresasRelacionadas,
-                        'dispoenterprise' => $disponibilidadPorEmpresa
-                    ], 200);
-                    break;
-                    case 'vinculados':
-                        $dataControl =  $this->model_control->getLinkedReservations($search);
-                        break;
-                    case 'getByDatePickup':
-                        $dataControl = $this->model_control->getByDatePickup($search['startdate'], $search['enddate']);
-                        break;
-                    case 'searchReservation':
-                        $dataControl = $this->model_control->searchReservation($search);
-                        break;
-                    case 'getTagId':
-                        $dataControl = $this->model_tag->find($search);
-                        break;
-                       
-            }
-            if (empty($dataControl)) {
-                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.', "DATA"=> $dataControl], 404);
-            }
-            return $this->jsonResponse(['data' => $dataControl], $httpCode);
+            $booking = $this->service('BookingControllerService');
+            $tag = $this->service('TagsControllerService');
+
+            $map = [
+                'getByNog' => fn() => $booking->getByNog($data),
+                'getByDispo' => fn() => $booking->getByDispoBuildService($data),
+                'getByDispo2' => fn() => $booking->getByDispoBuildService2($data, $this->service('ProductControllerService'), $this->service('CompanyControllerService'), $this->service('DisponibilidadControllerService')),
+                'getLinked' => fn() => $booking->getLinkedReservationsService($data),
+                'getCombosByNog' => fn() => $booking->getCombosByNog($data),
+                'getByDatePickup' => fn() => $booking->getByDatePickupService($this->service('CanalControllerService'), $this->service('RepControllerService'), $data['startdate'], $data['enddate']),
+                'searchReservation' => fn() => $booking->searchReservationService($data),
+                'getTagId' => fn() => $tag->find($data),
+                'idlocation' => fn()=> $this->service('LocationPortsControllerService')->find("8"),
+                // 'getAllRep' => fn() => $this->service('CanalControllerService')->getAll()
+            ];
+
+            $result = $map[$action]();
+            if (empty($result)) return $this->jsonResponse(['message' => 'No se encontró el recurso ' . json_encode($result)], 404);
+            $resultadata = ($action === 'getByDispo2') ? $result : ['data' => $result];
+            return $this->jsonResponse($resultadata, 200);
+
         } catch (Exception $e) {
-            return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
     }
 
+    // --------------------------------------------------------
+    // POST
+    // --------------------------------------------------------
     public function post($params = [])
     {
         try {
-            $headers = getallheaders();
+            [$user, $body] = $this->validateRequest();
+            [$action, $data] = $this->resolveAction($body, [
+                'create' => 'create',
+                'getByDate' => 'getByDate',
+                'getByDatePickup' => 'getByDatePickup',
+                'nog' => 'getByNog'
+            ]);
 
-            // Validar token con el modelo user
-            $validation = $this->model_user->validateUserByToken($headers);
-            if ($validation['status'] !== 'SUCCESS') {
-                return $this->jsonResponse(['message' => $validation['message']], 401);
-            }
-            $userData = $validation['data'];
-            $body = json_decode(file_get_contents("php://input"), true);
-            if (!$body) {
-                return $this->jsonResponse(['message' => 'Body JSON inválido'], 400);
-            }
-            [$action, $data] = $this->get_params($body);
-
+            $booking = $this->services['BookingControllerService'];
+           
             switch ($action) {
                 case 'create':
-                    // --- Preparar y crear reserva principal ---
-                    $dataControl = [
-                        'actividad' => $data['actividad'] ?? null,
-                        'product_id' => $data['product_id'] ?? null,
-                        'datepicker' => $data['datepicker'] ?? null,
-                        'horario' => $data['horario'] ?? null,
-                        'cliente_name' => $data['cliente_name'] ?? null,
-                        'statusCliente' => $data['statusCliente'] ?? null,
-                        'cliente_lastname' => $data['cliente_lastname'] ?? null,
-                        'nog' => $this->model_control->getReference(),
-                        'telefono' => $data['telefono'] ?? null,
-                        'hotel' => $data['hotel'] ?? null,
-                        'habitacion' => $data['habitacion'] ?? null,
-                        'referencia' => $data['referencia'] ?? null,
-                        'total' => $data['total'] ?? null,
-                        'status' => $data['status'] ?? null,
-                        'procesado' => $data['procesado'] ?? 0,
-                        'checkin' => $data['checkin'] ?? 0, 
-                        'accion' => $data['accion'] ?? null,
-                        'canal' => $data['canal'],
-                        'tipo' => $data['tipo'],
-                        'balance' => $data['balance'] ?? null,
-                        'moneda' => $data['moneda'] ?? null,
-                        'email' => $data['email'] ?? null,
-                        'codepromo' => $data['codepromo'] ?? null,
-                        'code_company' => $data['code_company'] ?? null,
-                        'nota' => $data['nota'] ?? null,
-                    ];
-                
-                    $controlInsert = $this->model_control->insert($dataControl);
-                    if (!$controlInsert || empty($controlInsert->id)) {
-                        return $this->jsonResponse(['message' => 'Error al crear reserva (Control)'], 500);
-                    }
-                
-                    // --- Crear BookingDetails principal ---
-                    $dataDetails = [
-                        'items_details' => $data['items_details'] ?? null,
-                        'idpago' => $controlInsert->id,
-                        'fecha_details' => $data['fecha_details'] ?? null,
-                        'total' => $data['total_details'] ?? null,
-                        'tipo' => $data['service'] ?? null,
-                        'usuario' => $userData->id ?? null,
-                        'proceso' => $data['proceso'] ?? null,
-                    ];
-                
-                    $bookingDetailsInsert = $this->model_bookingDetails->insert($dataDetails);
-                    if (!$bookingDetailsInsert || empty($bookingDetailsInsert->id)) {
-                        $this->model_control->delete($controlInsert->id);
-                        return $this->jsonResponse(['message' => 'Error al crear detalles de reserva (BookingDetails)'], 500);
-                    }
-                    if(!empty($data['nota'])){
-                        $camposMesagge = [
-                            'idpago'   => $controlInsert->id,
-                            'mensaje'  => $data['nota'] ?? null,
-                            'usuario'   =>  $userData->id,
-                            'tipomessage'       => 'nota',
-                        ];
-                        $responseMessage = $this->model_bookingmessage->insert($camposMesagge);
+                    $control = $booking->crearReservaPrincipalService($data);
+                    if (!$control) throw new Exception('Error al crear reserva', 500);
+                    $details = $this->service('BookingDetailsControllerService');
+                    $history = $this->service('HistoryControllerService');
+                    $historyMail = $this->service('HistoryMailControllerService');
+                    $notification = $this->service('NotificationServiceControllerService');
+                    $tag = $this->service('TagsControllerService');
+                    $product = $this->service('ProductControllerService');
+                    $company = $this->service('CompanyControllerService');
+                    $empresainfo = $this->service('EmpresaInfoControllerService');
+                    $notificationmail = $this->service('NotificationMailControllerService');
+                    $bookingmessage = $this->service('BookingMessageControllerService');
+                    $combo = $this->service('ComboControllerService');
+                    $detailsInsert = $booking->validateCreateBookingDetails($details->crearBookingDetailsService($data, $control, $user));
+                    $locationports = $this->service('LocationPortsControllerService');
+                    $bodyMail = $booking->getByBookingDataService($control->id, $details, $product, $company, $empresainfo, $locationports);
+                    $mailResults = $booking->gestionarNotificacionCorreoService($control, $data, $user, $bodyMail, $this->mailTemplate, $historyMail, $notificationmail);
 
-                        if ($responseMessage && isset($responseMessage->id)) {
-                            $this->registrarHistorial(
-                                'Reservas',
-                                $responseMessage->id,
-                                'create',
-                                'Se creó mensaje hijo',
-                                $userData->id ?? 0,
-                                null,
-                                $camposMesagge
-                            );
-                        }
-                    }
-                    $this->registrarHistorial(
-                        'Reservas',
-                        $controlInsert->id,
-                        'create',
-                        'Nueva reserva principal creada.',
-                        $userData->id,
-                        [],
-                        [
-                            $this->model_control->getTableName() => $this->model_control->find($controlInsert->id),
-                            $this->model_bookingDetails->getTableName() => $this->model_bookingDetails->find($bookingDetailsInsert->id),
-                        ]
-                    );
-                
-                    $controlPrincipalNog = $controlInsert->nog;
-                
-                    // --- Crear reservas hijas (combos) ---
-                    $productoPrincipal = $this->model_product->getByIdPlatform(
-                        $controlInsert->product_id,
-                    );
-                    
-                    $combosArray = [];
-                    $productosHijos = [];
-                    $productoHijoLang = [];
-                    $itemsTags = [];
-                    $data_langId= ($data['lang'] == 'en') ?  1 : 2 ;
-                    $combosData = $this->model_combo->getByClave($productoPrincipal[0]->product_code ?? '');
-                    if (!empty($combosData[0]->combos)) {
-                        $combosArray = json_decode($combosData[0]->combos, true);
-                        if (is_array($combosArray)) {
-                            foreach ($combosArray as $comboItem) {
-                                $clave = $comboItem['productcode'] ?? null;
-                                if (!$clave) continue;
-                            
-                                $productoHijo = $this->model_product->getByClavePlatformLang(
-                                    $clave,
-                                    $data_langId
-                                );
-                                $productoHijoLang[] = $productoHijo;
-                                $dataControlHijo = (array) $controlInsert;
-                                unset($dataControlHijo['id']); // por si acaso viene heredado
-                            
-                                $dataControlHijo['actividad'] = $productoHijo[0]->product_name ?? null;
-                                $dataControlHijo['product_id'] = $productoHijo[0]->id ?? null;
-                                $dataControlHijo['nog'] = $this->model_control->getReference();
-                                $dataControlHijo['referencia'] = $controlPrincipalNog;
-                            
-                                $controlHijo = $this->model_control->insert($dataControlHijo);
-                                $productosHijos[] = $controlHijo;
-                                if (!$controlHijo || empty($controlHijo->id)) continue;
-                            
-                                // 🔹 Filtrar items_details según linked_tags
-                                $itemsOriginales = json_decode($data['items_details'], true);
-                                $itemsFiltrados = [];
+                    $booking->enviarNotificacionService($control, $data, $notification,$company);
+                    $booking->crearMensajeNotaService($control, $data, $user, $bookingmessage, $history);
+                    $history->registrarHistorial('Reservas', $control->id, 'create', 'Reserva creada', $user->id, [], [$booking->getTableName() => $control, $details->getTableNameBookingDetail() => $detailsInsert] );
 
-                                foreach ($itemsOriginales as $item) {
-                                    if (isset($item['item']) && $item['item'] > 0) {
-                                        $tag = $this->model_tag->find((int)$item['idreference']); // buscar por ID
+                    list($combosArray, $productosHijos, $productoHijoLang, $itemsTags) = $booking->crearReservasHijasService($data, $control, $detailsInsert, $user, $tag, $details, $product, $bookingmessage, $history, $combo);
 
-                                        if (!empty($tag) && !empty($tag->linked_tags)) {
-                                            $linkedTags = json_decode($tag->linked_tags, true);
-
-                                            foreach ($linkedTags as $linked) {
-                                                if (($linked['product_code'] ?? null) === $clave) {
-                                                    foreach ($linked['tags'] as $linkedTag) {
-                                                        if (isset($linkedTag['idreference'])) {
-                                                            $linkedTagObj = $this->model_tag->find((int)$linkedTag['idreference']);
-
-                                                            if (!empty($linkedTagObj)) {
-                                                                $reference = $linkedTagObj->tag_index;
-                                                                $tagName = json_decode($linkedTagObj->tag_name, true);
-                                                                $name = $tagName[$data['lang']] ?? $item['name'];
-
-                                                                // ✅ Verificamos si ya existe este reference en el array
-                                                                $index = array_search($reference, array_column($itemsFiltrados, 'reference'));
-
-                                                                if ($index !== false) {
-                                                                    // Ya existe → sumamos el item
-                                                                    $itemsFiltrados[$index]['item'] += $item['item'];
-                                                                } else {
-                                                                    // No existe → lo agregamos
-                                                                    $itemsFiltrados[] = [
-                                                                        'item' => $item['item'],
-                                                                        'name' => $name,
-                                                                        'reference' => $reference,
-                                                                        'price' => "0.00",
-                                                                        'tipo' => $item['tipo']
-                                                                    ];
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    break; // solo tomamos la primera coincidencia por combo
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                
-                                
-                            
-                                $dataDetailsHijo = (array)$dataDetails;
-                                $dataDetailsHijo['idpago'] = $controlHijo->id;
-                                $dataDetailsHijo['items_details'] = json_encode($itemsFiltrados); // reemplazamos items_details
-                                unset($dataDetailsHijo['id']); // quitar id si viene heredado
-                            
-                                $bookingHijo = $this->model_bookingDetails->insert($dataDetailsHijo);
-                                if (!empty($dataControlHijo['nota'])) {
-                                    $camposMesaggeHijo = [
-                                        'idpago' => $controlHijo->id,
-                                        'mensaje'  => $dataControlHijo['nota'] ?? null,
-                                        'usuario'   =>  $userData->id,
-                                        'tipomessage'       => 'nota',
-                                    ];
-                                    $responseMessageHijo = $this->model_bookingmessage->insert($camposMesaggeHijo);
-            
-                                    if ($responseMessageHijo && isset($responseMessageHijo->id)) {
-                                        $this->registrarHistorial(
-                                            'Reservas',
-                                            $responseMessageHijo->id,
-                                            'create',
-                                            'Se creó mensaje hijo',
-                                            $userData->id ?? 0,
-                                            null,
-                                            $camposMesaggeHijo
-                                        );
-                                    }
-                                }
-                                if ($bookingHijo && !empty($bookingHijo->id)) {
-                                    $this->registrarHistorial(
-                                        'Reservas',
-                                        $controlHijo->id,
-                                        'create',
-                                        'Nueva reserva hija creada (combo).',
-                                        $userData->id,
-                                        [],
-                                        [
-                                            $this->model_control->getTableName() => $this->model_control->find($controlHijo->id),
-                                            $this->model_bookingDetails->getTableName() => $this->model_bookingDetails->find($bookingHijo->id),
-                                        ]
-                                    );
-                                }
-                            }
-                            
-                        }
-                    }
-                
                     return $this->jsonResponse([
                         'message' => 'Reserva creada exitosamente',
-                        'control' => $controlInsert,
-                        'booking_details' => $bookingDetailsInsert,
+                        'control' => $control,
+                        'bodymail' => $bodyMail,
+                        'correo' => $mailResults['resultadoCorreo'] ?? null,
                         'combosArray' => $combosArray,
                         'productosHijos' => $productosHijos,
-                        'pructoHijosLang' => $productoHijoLang,
-                        'itemtags' => $itemsTags
-                    ], 201);
-                    break;
-                
+                        'productoHijoLang' => $productoHijoLang,
+                        'itemsTags' => $itemsTags
+                    ], 200);
+
                 case 'getByDate':
-                    $dataControl = $this->model_control->getByDate($data);
-                    // Respuesta exitosa con ambos IDs y datos
-                    return $this->jsonResponse(['data' => $dataControl,], 200);
-            
-                    break;
+                    return $this->jsonResponse(['data' => $booking->getByDateService($data)], 200);
+
                 case 'getByDatePickup':
-                    $dataControl = $this->model_control->getByDatePickup($data);
-                    // Respuesta exitosa con ambos IDs y datos
-                    return $this->jsonResponse(['data' => $dataControl,], 200);
-            
-                    break;  
-                case 'nog':
-                    $dataControl = $this->model_control->getByNog($data);
-                    // Respuesta exitosa con ambos IDs y datos
-                    return $this->jsonResponse(['data' => $dataControl,], 200);
-            
-                    break;  
-                case 'getByDispo':
-                    $dataControl = $this->model_control->getBydispo('2025-08-06');
-                    return $this->jsonResponse(['data' => $dataControl,], 200);
-                    break;
-                case 'bookingMail':
-                    $dataControl = $this->model_control->getBydispo('2025-08-06');
-                    return $this->jsonResponse(['data' => $dataControl,], 200);
-                    break;          
+                    return $this->jsonResponse(['data' => $booking->getByDatePickupService($data)], 200);
+
+                case 'getByNog':
+                    return $this->jsonResponse(['data' => $booking->getByNog($data)], 200);
+
+                default:
+                    throw new Exception('Acción POST no reconocida', 400);
             }
         } catch (Exception $e) {
-            return $this->jsonResponse(['message' => 'Error en el servidor: ' . $e->getMessage() ], 500);
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
     }
-    public function getBookingData(){
 
-    }
+    // --------------------------------------------------------
+    // PUT COMPLETO
+    // --------------------------------------------------------
     public function put($params = [])
     {
         try {
-            $headers = getallheaders();
-            // Validar token con el modelo user
-            $validation = $this->model_user->validateUserByToken($headers);
-            if ($validation['status'] !== 'SUCCESS') {
-                return $this->jsonResponse(['message' => $validation['message']], 401);
-            }
-            $userData = $validation['data'];
-            $body = json_decode(file_get_contents("php://input"), true);
-            if (!$body) {
-                return $this->jsonResponse(['message' => 'Body JSON inválido'], 400);
-            }
-            [$action, $data] = $this->get_params($body);
+            [$user, $body] = $this->validateRequest();
+            [$action, $data] = $this->resolveAction($body, [
+                'reagendar' => 'reagendar',
+                'cancelar' => 'cancelar',
+                'typeservice' => 'typeservice',
+                'canal' => 'canal',
+                'client' => 'client',
+                'pax' => 'pax',
+                'noshow' => 'noshow',
+                'checkin' => 'checkin',
+                'transporte' => 'transporte',
+                'sin_transporte' => 'sin_transporte',
+                'sin_email' => 'sin_email',
+                'paymentmetod' => 'paymentmetod'
+            ]);
+            $booking = $this->service('BookingControllerService');
+            $historyMail = $this->service('HistoryMailControllerService');
+            $notificationMail = $this->service('NotificationMailControllerService');
+            $messageService = $this->service('BookingMessageControllerService');
+            $history = $this->service('HistoryControllerService');
+            $details = $this->service('BookingDetailsControllerService');
+            $product = $this->service('ProductControllerService');
+            $company = $this->service('CompanyControllerService');
+            $empresainfo = $this->service('EmpresaInfoControllerService');
+            $locationports = $this->service('LocationPortsControllerService');
+            if (!$action) return $this->jsonResponse(['message' => 'Acción PUT no reconocida'], 400);
             switch ($action) {
-                case 'reagendar':                
-                case 'cancelar':
-                case 'procesado':
-                    $accionMadre = $data['tipo'] == 'reagendar' 
-                        ? 'Reserva madre reagendada' 
-                        : ($data['tipo'] == 'cancelar' 
-                            ? 'Reserva madre cancelada' 
-                            : 'Reserva madre procesada');
-                
-                    $accionHijo = $data['tipo'] == 'reagendar' 
-                        ? 'Reserva hijo reagendada' 
-                        : ($data['tipo'] == 'cancelar' 
-                            ? 'Reserva hijo cancelado' 
-                            : 'Reserva hijo procesado');
-                
-                    $resultado = $this->actualizarReservaConHijos(
-                        $data['idpago'],
-                        $data,
-                        $userData,
-                        $data['tipo'] ?? 'update',
-                        $accionMadre,
-                        $accionHijo
-                    );
-                
-                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
-                
-                    return $this->jsonResponse([
-                        'message' => $accionMadre . ' e hijos correctamente',
-                        'data'    => $resultado,
-                        'correo'  => $resultadoCorreo
-                    ], 200);
-                break;
-                case 'typeservice':
-                    $accionMadre = 'Tipo de servicio update';
-                
-                    $accionHijo = 'Tipo de servicio update Hijos';
-                
-                    $resultado = $this->actualizarReservaConHijos(
-                        $data['idpago'],
-                        $data,
-                        $userData,
-                        'update',
-                        $accionMadre,
-                        $accionHijo
-                    );
-                
-                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
-                
-                    return $this->jsonResponse([
-                        'message' => $accionMadre . ' e hijos correctamente',
-                        'data'    => $resultado,
-                        'correo'  => $resultadoCorreo
-                    ], 200);
-                break;
-                case 'canal':
-                    $accionMadre = 'Canal update';
-                
-                    $accionHijo = 'Canal Hijos';
-                
-                    $resultado = $this->actualizarReservaConHijos(
-                        $data['idpago'],
-                        $data,
-                        $userData,
-                        'update',
-                        $accionMadre,
-                        $accionHijo
-                    );
-                
-                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
-                
-                    return $this->jsonResponse([
-                        'message' => $accionMadre . ' e hijos correctamente',
-                        'data'    => $resultado,
-                        'correo'  => $resultadoCorreo
-                    ], 200);
-                break;
-                case 'client':
-                    $accionMadre = 'Cliente update';
-                
-                    $accionHijo = 'Cliente Hijos';
-                
-                    $resultado = $this->actualizarReservaConHijos(
-                        $data['idpago'],
-                        $data,
-                        $userData,
-                        'update',
-                        $accionMadre,
-                        $accionHijo
-                    );
-                
-                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
-                
-                    return $this->jsonResponse([
-                        'message' => $accionMadre . ' e hijos correctamente',
-                        'data'    => $resultado,
-                        'correo'  => $resultadoCorreo
-                    ], 200);
-                break;
-                
-                
-                case 'voucher':
-                case 'recibo':
-                case 'pickup':
-                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
-                    return $this->jsonResponse($resultadoCorreo, 200);
-                    break;
-                case 'pax':
+                case 'reagendar':
+                case 'cancelar':                    
+                    $tipo = $action === 'reagendar' ? 'Booking Reagendation' : 'Booking Cancellation';
+                    $resultado = $booking->actualizarReservaConHijosService($data['idpago'], $data, $user, $tipo, "Reserva madre $action", "Reserva hijo $action", $details, $messageService, $history);
+                    $bodyMail = $booking->getByBookingDataService($data['idpago'], $details, $product, $company, $empresainfo, $locationports);
+                    $bodyMail['dataMail'] = $data;
+                    $mailInsert = $notificationMail->insert(['nog' => $bodyMail['nog'], 'accion' => $tipo]);
+
+                    if (!empty($mailInsert->id)) {
+                        if ($tipo === "Booking Reagendation") {
+                            $dataMail = $this->mailTemplate->mailReproIngFromBooking($bodyMail);
+                        } else {
+                            $dataCancelation = $booking->getByCancellationDataService($data['motivo_cancelacion_id'], $data['categoriaId'], $this->service('CancellationTypesControllerService'),$this->service('CancellationCategoriesControllerService'));
+                            $bodyMail['dataCancellation'] = $dataCancelation;
+                            $dataMail = $this->mailTemplate->mailCancelacionFromBooking($bodyMail);
+                        }
+                        $historyMail->registrarOActualizarHistorialCorreoService($data, $user, $dataMail);
+                    }
+                    if (!empty($data['descripcion'])) {
+                        $msg = [
+                            'idpago' => $data['idpago'],
+                            'mensaje' => $data['descripcion'],
+                            'usuario' => $user->id,
+                            'tipomessage' => $action,
+                        ];
+                        $insertMsg = $messageService->insert($msg);
+                        if ($insertMsg && isset($insertMsg->id)) {
+                            $history->registrarHistorial('Reservas', $insertMsg->id, 'create', 'Mensaje agregado', $user->id, null, $msg);
+                        }
+                    }
+                    return $this->jsonResponse(['message' => "Reserva $action e hijos actualizados", 'data' => $resultado], 200);
+                    case 'transporte':
+                    case 'sin_transporte':
+                    case 'sin_email':
+                        $tipo = ($action === 'transporte') 
+                            ? 'Pick Up' 
+                            : ($action === 'sin_transporte' ? 'Booking Notification' : 'SIN EMAIL');
+                        $data['tipo'] = $tipo;
+                        // Obtener datos del booking
+                        $bodyMail = $booking->getByBookingDataService($data['idpago'], $details, $product, $company, $empresainfo, $locationports);
+                        $bodyMail['dataMail'] = $data;
+                        // error_log("bodyMail: " . print_r($bodyMail, true));
                     
-                    $accionMadre = 'Tipo de pax update';
-                
-                    $accionHijo = 'Tipo de pax update Hijos';
-                
-                    $resultado = $this->actualizarReservaConHijos(
-                        $data['idpago'],
-                        $data,
-                        $userData,
-                        'update',
-                        $accionMadre,
-                        $accionHijo
-                    );
-                
-                    $resultadoCorreo = $this->registrarOActualizarHistorialCorreo($data, $userData);
-                
-                    return $this->jsonResponse([
-                        'message' => $accionMadre . ' e hijos correctamente',
-                        'data'    => $resultado,
-                        'correo'  => $resultadoCorreo
-                    ], 200);
-                    break;
-                
+                        // Insertar notificación de mail
+                        $mailInsert = $notificationMail->insert([
+                            'nog' => $bodyMail['nog'] ?? null,
+                            'accion' => $tipo
+                        ]);
+                        $data['idMail'] = $mailInsert->id ?? null;
+                        // error_log("mailInsert: " . print_r($mailInsert, true));
+                    
+                        // Procesar email si aplica
+                        if (!empty($mailInsert->id) && $tipo !== "SIN EMAIL") {
+                            
+                            $dataMail = $this->mailTemplate->procesarReserva($bodyMail);
+                            $datahistorymail = $historyMail->registrarOActualizarHistorialCorreoService($data, $user, $dataMail);
+                        }
+                    
+                        // Actualizar reserva y sus hijos
+                        $resultado = $booking->actualizarReservaConHijosService($data['idpago'], $data, $user, $tipo, "Reserva madre $action", "Reserva hijo $action", $details, $messageService, $history);
+                        return $this->jsonResponse([
+                            'message' => "Reserva $action actualizada",
+                            'data' => $resultado
+                        ], 200);
+                        break;
+                        
+                case 'pax':
+                case 'canal':
+                case 'client':
+                case 'typeservice':
+                case 'noshow':
+                case 'checkin':
+                case 'paymentmetod':
+                    $resultado = $booking->actualizarReservaConHijosService($data['idpago'], $data, $user, 'update', ucfirst($action) . ' madre', ucfirst($action) . ' hijo', $details, $messageService, $history);
+                    $correo = $historyMail->registrarOActualizarHistorialCorreoService($data, $user);
+                    return $this->jsonResponse(['message' => "$action actualizado correctamente", 'data' => $resultado, 'correo' => $correo], 200);
+
                 default:
-                    return $this->jsonResponse(['message' => 'Acción no reconocida: ' . $action], 400);
-                
-               
+                    return $this->jsonResponse(['message' => 'Acción PUT no reconocida'], 400);
             }
+
         } catch (Exception $e) {
-            return $this->jsonResponse(['message' => 'Error en el servidor: ' . $e->getMessage() ], 500);
+            return $this->jsonResponse(['error' => $e->getMessage()], $e->getCode() ?: 500);
         }
     }
-    private function actualizarReservaConHijos($id, $data, $userData, $tipoAccion, $mensajeMadre, $mensajeHijo, $extraUpdatesControl = [], $extraUpdatesDetails = [])
-    {
-        // Obtener datos actuales de la madre
-        $controlOld = $this->model_control->find($id);
-
-        // Obtener todos los linked reservations (madre + hijos)
-        $DataCombos = $this->model_control->getLinkedReservations($controlOld->nog);
-
-        // Separar hijos
-        $combosHijos = array_filter($DataCombos, fn($r) => $r->id != $controlOld->id);
-
-        // Detalles antiguos madre
-        $detailsOld = $this->model_bookingDetails->where('idpago = :idpago', ['idpago' => $controlOld->id]);
-
-        // --- Actualizar madre
-        $dataUpdateControl = array_merge($extraUpdatesControl, [
-            'datepicker' => $data['datepicker'] ?? $controlOld->datepicker,
-            'horario'    => $data['horario'] ?? $controlOld->horario,
-            'status'     => $data['status'] ?? $controlOld->status,
-            'procesado'  => $data['procesado'] ?? $controlOld->procesado,
-            'canal'      => isset($data['canal']) ? json_encode($data['canal']) : $controlOld->canal,
-            'tipo'       => $data['typeservice'] ?? $controlOld->tipo,
-            'email'      =>  $data['email'] ?? $controlOld->email,
-            'hotel'      =>  $data['hotel'] ?? $controlOld->hotel,
-            'habitacion' =>  $data['habitacion'] ?? $controlOld->habitacion,
-            'telefono'   =>  $data['telefono'] ?? $controlOld->telefono,
-            'cliente_name'   =>  $data['cliente_name'] ?? $controlOld->cliente_name,
-            'cliente_lastname'   =>  $data['cliente_lastname'] ?? $controlOld->cliente_lastname,
-            'total'   =>  $data['total'] ?? $controlOld->total,
-        ]);
-
-        $this->model_control->update($controlOld->id, $dataUpdateControl);
-        // Verificar si 'items_details' está presente en los datos entrantes
-        // Antes de usar $detailsOld, obtenemos el primer detalle para usar como "valor antiguo"
-        $oldItemsDetails = null;
-        $oldTotal = null;
-        if (!empty($detailsOld)) {
-            // Tomamos el primer elemento
-            $first = $detailsOld[0];
-            if (is_object($first)) {
-                // Si es objeto
-                if (isset($first->items_details)) {
-                    $oldItemsDetails = $first->items_details;
-                }
-                if (isset($first->total)) {
-                    $oldTotal = $first->total;
-                }
-            } elseif (is_array($first)) {
-                // Si es array
-                if (array_key_exists('items_details', $first)) {
-                    $oldItemsDetails = $first['items_details'];
-                }
-                if (array_key_exists('total', $first)) {
-                    $oldTotal = $first['total'];
-                }
-            }
-        }
-
-        // Validar items_details
-        if (isset($data['items_details'])) {
-            $newItemsDetails = is_string($data['items_details'])
-                ? $data['items_details']
-                : json_encode($data['items_details'], JSON_UNESCAPED_UNICODE);
-        } else {
-            // Si no viene, usar valor antiguo si existe, sino null o string vacío
-            $newItemsDetails = $oldItemsDetails !== null ? $oldItemsDetails : '';  
-        }
-
-        // Validar total
-        if (isset($data['total'])) {
-            $newTotal = $data['total'];
-        } else {
-            $newTotal = $oldTotal !== null ? $oldTotal : 0;  // Puedes usar 0 o algún otro valor por defecto
-        }
-
-        // Preparar el array para actualizar detalles
-        $dataUpdateDetails = array_merge($extraUpdatesDetails, [
-            'items_details' => $newItemsDetails,
-            'total' => $newTotal,
-        ]);
-
-        // Actualizar todos los detalles de la madre
-        foreach ($detailsOld as $detail) {
-            $this->model_bookingDetails->update($detail->id, $dataUpdateDetails);
-}
-
-
-        // foreach ($detailsOld as $detail) {
-        //     $this->model_bookingDetails->update($detail->id, $extraUpdatesDetails);
-        // }
-
-        // Historial madre
-        $controlNew = $this->model_control->find($controlOld->id);
-        $detailsNew = $this->model_bookingDetails->where('idpago = :idpago', ['idpago' => $controlOld->id]);
-
-        $this->registrarHistorial(
-            $data['module'] ?? 'Reservas',
-            $controlOld->id,
-            $tipoAccion,
-            $mensajeMadre,
-            $userData->id,
-            [$this->model_control->getTableName() => $controlOld, $this->model_bookingDetails->getTableName() => $detailsOld],
-            [$this->model_control->getTableName() => $controlNew, $this->model_bookingDetails->getTableName() => $detailsNew]
-        );
-
-        // --- Actualizar hijos
-        foreach ($combosHijos as $combo) {
-            $detailsComboOld = $this->model_bookingDetails->where('idpago = :idpago', ['idpago' => $combo->id]);
-
-            $dataUpdateControlCombo = array_merge($extraUpdatesControl, [
-                'datepicker' => $data['datepicker'] ?? $combo->datepicker,
-                'horario'    => $data['horario'] ?? $combo->horario,
-                'status'     => $data['status'] ?? $combo->status,
-                'procesado'  => $data['procesado'] ?? $combo->procesado,
-                'canal'      => isset($data['canal']) ? json_encode($data['canal']) : $combo->canal,
-                'tipo'      => $data['typeservice'] ?? $combo->tipo,
-                'email'      =>  $data['email'] ?? $combo->email,
-                'hotel'      =>  $data['hotel'] ?? $combo->hotel,
-                'habitacion' =>  $data['habitacion'] ?? $combo->habitacion,
-                'telefono'   =>  $data['telefono'] ?? $combo->telefono,
-                'cliente_name'   =>  $data['cliente_name'] ?? $combo->cliente_name,
-                'cliente_lastname'   =>  $data['cliente_lastname'] ?? $combo->cliente_lastname,
-            ]);
-
-            $this->model_control->update($combo->id, $dataUpdateControlCombo);
-
-           // Verificar si 'items_details' está presente en los datos entrantes
-            if (isset($data['items_details'])) {
-                // Si 'items_details' es un string, usarlo directamente
-                // Si no es un string, convertirlo a JSON
-                $newItemsDetails = is_string($data['items_details'])
-                    ? $data['items_details']
-                    : json_encode($data['items_details'], JSON_UNESCAPED_UNICODE);
-            } else {
-                // Si 'items_details' no está presente, usar el valor antiguo
-                // Verificar si $detailsComboOld es un arreglo o un objeto
-                if (is_array($detailsComboOld) && array_key_exists('items_details', $detailsComboOld)) {
-                    $newItemsDetails = $detailsComboOld['items_details'];
-                } elseif (is_object($detailsComboOld) && isset($detailsComboOld->items_details)) {
-                    $newItemsDetails = $detailsComboOld->items_details;
-                } else {
-                    // Si no existe, asignar un valor por defecto o manejar el error
-                    $newItemsDetails = null; // O el valor que consideres apropiado
-                }
-            }
-
-            // Verificar si 'total' está presente en los datos entrantes
-            if (isset($data['total'])) {
-                // Si 'total' está presente, usarlo
-                $newTotal = $data['total'];
-            } else {
-                // Si 'total' no está presente, usar el valor antiguo
-                // Verificar si $detailsComboOld es un arreglo o un objeto
-                if (is_array($detailsComboOld) && array_key_exists('total', $detailsComboOld)) {
-                    $newTotal = $detailsComboOld['total'];
-                } elseif (is_object($detailsComboOld) && isset($detailsComboOld->total)) {
-                    $newTotal = $detailsComboOld->total;
-                } else {
-                    // Si no existe, asignar un valor por defecto o manejar el error
-                    $newTotal = null; // O el valor que consideres apropiado
-                }
-            }
-
-            // Preparar los datos para la actualización
-            $dataUpdateDetailsCombo = array_merge($extraUpdatesDetails, [
-                'items_details' => $newItemsDetails,
-                'total' => $newTotal,
-            ]);
-
-            // Actualizar los detalles del combo
-            foreach ($detailsComboOld as $detail) {
-                $this->model_bookingDetails->update($detail->id, $dataUpdateDetailsCombo);
-            }
-
-
-            // Historial hijo
-            $comboNew = $this->model_control->find($combo->id);
-            $detailsComboNew = $this->model_bookingDetails->where('idpago = :idpago', ['idpago' => $combo->id]);
-
-            $this->registrarHistorial(
-                $data['module'] ?? 'Reservas',
-                $combo->id,
-                $tipoAccion,
-                $mensajeHijo,
-                $userData->id,
-                [$this->model_control->getTableName() => $combo, $this->model_bookingDetails->getTableName() => $detailsComboOld],
-                [$this->model_control->getTableName() => $comboNew, $this->model_bookingDetails->getTableName() => $detailsComboNew]
-            );
-        }
-
-        return [
-            'control' => $controlNew,
-            'details' => $detailsNew
-        ];
-    }
-
-    private function registrarHistorial($module, $row_id, $action, $details, $user_id, $oldData, $newData)
-    {
-        $this->model_history->insert([
-            "module" => $module,
-            "row_id" => $row_id,
-            "action" => $action,
-            "details" => $details,
-            "user_id" => $user_id,
-            "old_data" => json_encode($oldData),
-            "new_data" => json_encode($newData),
-        ]);
-    }
-    private function registrarHistorialCorreo($module, $row_id, $action, $details, $user_id, $oldData, $newData)
-    {
-        $this->model_historymail->insert([
-            "module" => $module,
-            "row_id" => $row_id,
-            "action" => $action,
-            "details" => $details,
-            "user_id" => $user_id,
-            "old_data" => json_encode($oldData),
-            "new_data" => json_encode($newData),
-        ]);
-    }
-    private function registrarOActualizarHistorialCorreo($data, $userData, $bodyHTML = '')
-    {
-        $tipo = $data['tipo'] ?? $data['function'] ?? 'tipo-desconocido';
-        $correo = $data['correo'] ?? 'desconocido';
-        $destinatario = $data['destinatario'] ?? 'usuario';
-        $newLog = [
-            'fecha' => time(),
-            'correoMail' => '',
-            'destino' => '',
-            'destinatario' => '',
-            'body' => "<p>Simulación de correo para tipo <strong>{$data['tipo']}</strong></p>",
-            'user' => $userData->id,
-            'title' => '',
-        ];
-        $oldDataDecoded = [];  // <-- inicializar aquí
-        $historialExistente = $this->model_historymail->getHistoryByIdRowAndModuleAndType($data['idpago'], $data['module'], $data['tipo']);
-        if (count($historialExistente)) {
-            $historial = $historialExistente[0];
-            $historialId = $historial->id ?? null;
-
-            $oldDataDecoded = json_decode($historial->old_data ?? '[]', true);
-            $prevNewDataDecoded = json_decode($historial->new_data ?? '{}', true);
-
-            if (!empty($prevNewDataDecoded)) {
-                $oldDataDecoded[] = $prevNewDataDecoded;
-            }
-
-            $this->model_historymail->update($historialId, [
-                'old_data' => json_encode($oldDataDecoded),
-                'new_data' => json_encode($newLog)
-            ]);
-        } else {
-            $this->registrarHistorialCorreo(
-                $data['module'] ?? null,
-                $data['idpago'] ?? null,
-                $data['tipo'] ?? null,
-                "Envipo de '{$tipo}'",
-                $userData->id,
-                [],
-                $newLog
-            );
-        }
-        return [
-            'message' => "Correo Enviado",
-            'oldData' => $oldDataDecoded ?? [],
-            'newData' => $newLog
-        ];
-    }
-
-
-    
 }

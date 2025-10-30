@@ -173,14 +173,14 @@ footer {
 }
 #reserva_tipo,
 #reserva_canal,
-#reserva_rep {
+#reserva_metodo_pago {
     cursor: pointer; /* Cambia el cursor al pasar sobre */
     transition: background-color 0.1s;
 }
 
-#reserva_tipo,
+#reserva_tipo:hover,
 #reserva_canal:hover,
-#reserva_rep:hover {
+#reserva_metodo_pago:hover{
     opacity: 0.8; /* opcional: un leve efecto visual */
 }
 .hidden {

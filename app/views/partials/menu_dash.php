@@ -15,6 +15,7 @@
                         <li><a class="row-content-center" href="<?= route('productos') ?>">Productos</a></li>
                         <li><a class="row-content-center" href="<?= route('dispo_test') ?>">Horarios</a></li>
                         <li><a class="row-content-center" href="<?= route('transportation') ?>">Hoteles</a></li>
+                        <li><a class="row-content-center" href="<?= route('mailer') ?>">Mailer</a></li>
                     </ul>
                     <ul class="right" style="align-self: center;">
                         <li id="button-collapse">

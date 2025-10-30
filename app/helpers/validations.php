@@ -81,7 +81,7 @@ function validate_date($value) {
 }
 
 function validate_channelname($value) {
-    $regex = "/^[A-Za-zÀ-ÖØ-öø-ÿÁÉÍÓÚÜÑáéíóúüñÇç0-9\s\-\+\_\(\)\.,:'’\/]+$/";
+    $regex = "/^[A-Za-zÀ-ÖØ-öø-ÿÁÉÍÓÚÜÑáéíóúüñÇç0-9\s\-\+\_\(\)\.,:'’\/&]+$/";
     return (preg_match($regex, $value ?? '') ? $value : '');
 }
 
@@ -94,6 +94,12 @@ function validate_phone($value) {
     $regex = "/^\+?[0-9]{1,4}[\s.-]?[0-9]{1,14}([\s.-]?[0-9]{1,4})?$/";
     return (preg_match($regex, $value ?? '') ? $value : '');
 }
+
+function validate_phone_rep($value) {
+    $regex = '/^(\+?\d{1,4}(?:\s*\(\d+\))?(?:[\s.\-]*\d{1,4}){1,6})(?:\s*\|\s*\+?\d{1,4}(?:\s*\(\d+\))?(?:[\s.\-]*\d{1,4}){1,6})*$/';
+    return (preg_match($regex, $value ?? '') ? $value : '');
+}
+
 
 function validate_repname($value) {
     $regex = "/^[A-Za-zÀ-ÖØ-öø-ÿÁÉÍÓÚÜÑáéíóúüñÇç0-9\s\-\+\_\(\)\.,:'’\/]+$/";

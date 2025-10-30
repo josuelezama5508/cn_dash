@@ -1,42 +1,70 @@
-// 🔹 Construye el objeto de datos de la reserva
 function build_reservationData(estatus, voucherCode = "", platform = "dash") {
     const data = { create: {} };
     const create = data.create;
 
-    create.actividad      = $("#PrintProductname").text().trim();
-    create.code_company   = $("#companySelect").val();
-    create.product_id     = $("#productSelect option:selected").data("product-id");
-    create.datepicker     = $("#datepicker")[0]?._flatpickr?.selectedDates[0]?.toISOString().slice(0,10) || null;
-    create.horario        = $('#horariosDisponibles .horario-card.seleccionado').data('hora') || null;
+    Object.assign(create, getSelectedProductData());
+    Object.assign(create, getCustomerInfo());
 
-    create.cliente_name   = $('input[placeholder="Nombre"]').val() || null;
-    create.cliente_lastname = $('input[placeholder="Apellidos"]').val() || null;
-    create.telefono       = $('input[placeholder="Telefono Cliente"]').val() || null;
-    create.hotel = $("#hotelSelect").val() || 'PENDIENTE'; 
-    create.habitacion     = $('input[placeholder="Numero Hotel"]').val() || null;
-    create.nota           = $("textarea.ds-input").val() || null;
+    create.codepromo = check ? $('#promoCode').val() : null;
+    create.total = $('#totalPaxPrice').val() || null;
+    create.statusCliente = null;
+    create.accion = null;
+    create.canal = getChannelInfo();
+    create.balance = $('#RBalanced').val() || null;
+    create.moneda = 'USD';
+    create.items_details = getItemsDetails();
+    create.fecha_details = getLocalDateTimeString();
+    create.total_details = create.total;
+    create.tipo = $('#tourtype').val() || null;
+    create.service = 'reserva';
+    create.usuario = 0;
+    create.lang = $("#language").val();
+    create.tipoMail = ($("#metodopago").val() === "paymentrequest")
+    ? "Payment Request"
+    : ($("#metodopago").val() === "balance")
+    ? "Booking Confirm"
+    : ($("#metodopago").val() === "voucher")
+    ? "Voucher Notification"
+    : "Booking Confirm";
+    Object.assign(create, getPaymentInfo(estatus, voucherCode, platform));
+    create.module = "NuevaReserva";
+    return data;
+}
 
-    create.codepromo      = check ? $('#promoCode').val() : null;
-    create.total          = $('#totalPaxPrice').val() || null;
-    create.statusCliente  = null;
-    create.accion         = null;
-
-    create.canal = JSON.stringify([{
+function getSelectedProductData() {
+    return {
+        actividad: $("#PrintProductname").text().trim(),
+        code_company: $("#companySelect").val(),
+        product_id: $("#productSelect option:selected").data("product-id"),
+        datepicker: $("#datepicker")[0]?._flatpickr?.selectedDates[0]?.toISOString().slice(0,10) || null,
+        horario: $('#horariosDisponibles .horario-card.seleccionado').data('hora') || null,
+    };
+}
+function getCustomerInfo() {
+    return {
+        cliente_name: $('input[placeholder="Nombre"]').val() || null,
+        cliente_lastname: $('input[placeholder="Apellidos"]').val() || null,
+        telefono: $('input[placeholder="Telefono Cliente"]').val() || null,
+        hotel: $("#hotelInput").val().trim() || 'PENDIENTE',
+        habitacion: $('input[placeholder="Numero Hotel"]').val() || null,
+        email: $('input[placeholder="Correo Cliente"]').val() || null,
+        nota: $("textarea.ds-input").val() || null
+    };
+}
+function getChannelInfo() {
+    return JSON.stringify([{
         canal: $('#channelSelect').val() || null,
         rep: $('#repSelect').val() || 'N/A',
     }]);
+}
+function getItemsDetails() {
+    const items = [];
 
-    create.balance    = $('#RBalanced').val() || null;
-    create.moneda     = 'USD';
-    create.email      = $('input[placeholder="Correo Cliente"]').val() || null;
-
-    // 🔹 Items
-    const itemsDetails = [];
     $('#productdetailspax tr').each(function () {
         const $input = $(this).find('input[type="text"]');
         const cantidad = parseInt($input.val()) || 0;
         if (cantidad > 0) {
-            itemsDetails.push({
+            items.push({
                 item: cantidad.toString(),
                 name: $input.data('name'),
                 reference: $input.data('reference'),
@@ -50,7 +78,7 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
     $('#productdetailsaddons tr').each(function () {
         const $checkbox = $(this).find('input[type="checkbox"]');
         if ($checkbox.is(':checked')) {
-            itemsDetails.push({
+            items.push({
                 item: "1",
                 name: $checkbox.data('name'),
                 reference: $checkbox.data('reference'),
@@ -61,28 +89,31 @@ function build_reservationData(estatus, voucherCode = "", platform = "dash") {
         }
     });
 
-    create.items_details  = JSON.stringify(itemsDetails);
-    // Obtener la fecha actual
-    let hoy = new Date();
+    return JSON.stringify(items);
+}
+function getPaymentInfo(estatus, voucherCode, platform) {
+    return {
+        proceso: (estatus === 1) ? "pagado" : ((estatus === 3) ? "balance" : "pendiente"),
+        status: estatus,
+        referencia: (estatus === 1 && voucherCode != "") ? voucherCode : null,
+        platform: platform,
+        metodo: $("#metodopago").val() || null,
+        
+    };
+}
 
-    // Normalizar a YYYY-MM-DD
-    let fechaFormateada = hoy.toISOString().split("T")[0];
+// 🔹 Devuelve la fecha y hora local actual en formato YYYY-MM-DD HH:MM:SS
+function getLocalDateTimeString(date = new Date()) {
+    const pad = n => n.toString().padStart(2, '0');
 
-    // Guardar en create.fecha_details
-    create.fecha_details = fechaFormateada;
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
 
-
-    create.total_details  = create.total;
-    create.tipo           = $('#tourtype').val() || null;
-    create.service        = 'reserva';
-    create.usuario        = 0;
-    create.proceso        = (estatus === 1) ? "pagado" : ((estatus === 3) ? "balance" : "pendiente")
-
-    create.status         = estatus;
-    create.referencia     = (estatus === 1 && voucherCode != "") ? voucherCode : null;
-    create.platform       = platform;
-    create.lang           = $("#language").val();
-    return data;
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 // 🔹 Envía la reserva a la API
@@ -92,7 +123,7 @@ async function send_reservation(estatus, voucherCode = "", platform = "dash") {
         console.log(data);
         const response = await fetchAPI("control", "POST", data);
         const result = await response.json();
-
+        console.log(response);
         return { ok: response.ok, result };
     } catch (error) {
         console.error("Error al enviar reserva:", error);
@@ -134,14 +165,22 @@ function render_reservationResponse(buttonId, responseObj) {
 }
 
 // 🔹 Función usada por los botones
-async function enviarReservaConEstatus(buttonId, estatus, voucherCode, platform = "dash", soloAddons = false) {
+async function enviarReservaConEstatus(buttonId, estatus, voucherCode, platform = "dash", soloAddons = false, voucherstatus = false) {
     const $btn = $('#' + buttonId);
     $btn.prop('disabled', true);
     if(estatus === 1){
-        if (!ReservationValidator.validateAllVoucher(soloAddons)) {
-            $btn.prop('disabled', false);
-            return;
+        if(voucherstatus){
+            if (!ReservationValidator.validateAllVoucher(soloAddons)) {
+                $btn.prop('disabled', false);
+                return;
+            }
+        }else{
+            if (!ReservationValidator.validateAll(soloAddons)) {
+                $btn.prop('disabled', false);
+                return;
+            }
         }
+        
     }else{
         if (!ReservationValidator.validateAll(soloAddons)) {
             $btn.prop('disabled', false);
@@ -170,3 +209,4 @@ async function enviarReservaConEstatus(buttonId, estatus, voucherCode, platform 
     
 }
 
+  

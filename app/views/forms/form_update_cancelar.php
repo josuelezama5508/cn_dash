@@ -2,14 +2,21 @@
   <div class="card shadow-sm" style="width: 600px; border-radius: 8px; position: relative;">
 
     <!-- Icono superior -->
-    <div style="position: absolute; top: -24px; left: 24px;">
+    <!-- <div style="position: absolute; top: -24px; left: 24px;">
       <div class="bg-danger text-white rounded" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
         <i class="bi bi-x-circle-fill" style="font-size: 1.5rem;"></i>
       </div>
-    </div>
+    </div> -->
 
     <!-- Contenido -->
     <div class="card-body pt-4">
+      <!-- <label class="form-check-label" for="empresaname">EMPRESA:</label> -->
+      <div class="d-flex align-items-center gap-2 mt-3 mb-3">  
+          <img id="logocompany" 
+              style="width:80px; height:50px; object-fit:contain;" 
+              alt="Logo empresa">
+          <input class="form-control" id="empresaname" disabled>
+      </div>
       <h5 class="card-title mb-4">Cancelar Reserva</h5>
 
       <!-- Categoría en fila aparte -->

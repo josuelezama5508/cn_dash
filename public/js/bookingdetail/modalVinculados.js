@@ -3,15 +3,14 @@ window.renderizarReservasVinculadas = function(reservas, nogActual) {
     const hasData = Array.isArray(reservas) && reservas.length > 0;
 
     const content = hasData
-        ? reservas.map(r => `
+        ? reservas.map((r,i) => `
             <tr>
                 <td>${r?.datepicker ?? '-'}</td>
-                <td>${r?.horario ?? '-'}</td>
-                <td>${(r?.cliente_name ?? '-') + ' ' + (r?.cliente_lastname ?? '-')}</td>
                 <td>${r?.actividad ?? '-'}</td>
+                <td>${(r?.cliente_name) + ' ' + (r?.cliente_lastname ?? '')}</td>
+                
                 <td>${r?.nog ?? '-'}</td>
                 <td>${r?.total ?? 0}</td>
-                <td>${r?.statusname ?? '-'}</td>
                 <td>
                     ${
                         r?.nog == nogActual
@@ -29,8 +28,8 @@ window.renderizarReservasVinculadas = function(reservas, nogActual) {
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Fecha</th><th>Horario</th><th>Cliente</th><th>Actividad</th>
-                    <th>NOG</th><th>Total</th><th>Status</th><th>Acción</th>
+                    <th>Fecha</th><th>Actividad</th><th>Cliente</th>
+                    <th>Booking ID</th><th>Total</th><th>Acción</th>
                 </tr>
             </thead>
             <tbody>${content}</tbody>

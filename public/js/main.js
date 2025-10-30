@@ -5,14 +5,17 @@ const regexLanguageCode = /^[A-Za-z]{2,3}(-[A-Za-z]{2})?$/;
 const regexPrice = /^\d{1,3}(?:,\d{3})*(?:\.\d{2})?$/;
 const regexDenomination = /^[A-Z]{3}$/;
 const regexTextArea = /^[^<>%$={}[\]"|`^~\\]*$/;
+const regexTextMetodoPayment = /^[^<>%$={}[\]"`^~\\]*$/;
 const regexProductType = /^(tour|store|test|season)$/;
 const regexLangCode = /^[A-Za-z]{2,3}(-[A-Za-z]{2})?$/;
 const regexPromoCode = /^[A-Za-z0-9\-\_]+$/;
 const regexDate = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/[0-9]{4}$/;
 const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const regexPhone = /^\+?[0-9]{1,4}[\s.-]?[0-9]{1,14}([\s.-]?[0-9]{1,4})?$/;
+const regexPhoneRep = /^(\+?\d{1,4}(?:\s*\(0?\d+\))?(?:[\s.\-]*\d{1,4}){1,6})(?:\s*\|\s*\+?\d{1,4}(?:\s*\(0?\d+\))?(?:[\s.\-]*\d{1,4}){1,6})*$/;
+
 const regexCommission = /^[0-9]+$/;
-const regexName = /^[A-Za-zÀ-ÖØ-öø-ÿÁÉÍÓÚÜÑáéíóúüñÇç0-9\s\-\+\_\(\)\.,:'’\/]+$/;
+const regexName = /^[A-Za-zÀ-ÖØ-öø-ÿÁÉÍÓÚÜÑáéíóúüñÇç0-9\s\-\+\_\(\)\.,:'’\/&]+$/;
 const regexChannelType = /^(Propio|E-Comerce|Agencia-Convencional|Bahia|Calle|Agencia\/Marina-Hotel|OTRO)$/;
 const regexSubChannel = /^(directa|indirecta)$/;
 const regexHexColor = /^#([A-Fa-f0-9]{6})$/;
@@ -490,47 +493,80 @@ $(document).on("click", ".input-checkbox", function() {
 
 
 function validate_data(text, regex) {
+    // limpieza por si trae tabs, saltos o espacios dobles
+    text = text.trim().replace(/\s+/g, ' ');
+
     let ban, msg;
 
     if (text.length == 0) {
         ban = "vacio";
-        msg = "Campo vacio.";
+        msg = "Campo vacío.";
     } else if (!regex.test(text)) {
         ban = "invalido";
-        msg = "Datos no validos.";
+        msg = "Datos no válidos.";
     } else {
         ban = "correcto";
         msg = "";
     }
+
+    // imprime resultados
+    console.log({
+        texto_original: text,
+        expresion: regex,
+        resultado: ban,
+        mensaje: msg
+    });
+
     return [ban, msg];
 }
 
 
 function result_validate_data(input, field, ban, msg) {
     let targetTag = $(input).parent().find(`span.${field.replace("[]", "")}Error`);
-    
-    if (ban == "invalido") {
-        $(input).css("box-shadow", "0px 0px 8px rgba(255, 0, 0, 0.6)").fadeIn("slow");
-        if (targetTag.length) targetTag.css("color", "rgba(255, 0, 0");
-    }
-    if (ban == "vacio") {
-        $(input).css("box-shadow", "0px 0px 8px rgba(255, 0, 0, 0.6)").fadeIn("slow");
-        if (targetTag.length) targetTag.css("color", "rgba(255, 0, 0");
-    }
-    if (ban == "correcto") {}
 
-    if (targetTag.length) targetTag.text(msg);
-    setTimeout(() => {
-        $(input).css("box-shadow", "none");
-        if (targetTag.length) targetTag.text("");
-    }, 2000);
+    // Cancelar timeouts previos para no acumular
+    if ($(input).data("timeoutId")) {
+        clearTimeout($(input).data("timeoutId"));
+        $(input).removeData("timeoutId");
+    }
 
-    if (ban == "correcto") {
-        return true;
-    } else {
+    if (ban === "invalido" || ban === "vacio") {
+        $(input).css("box-shadow", "0px 0px 8px rgba(255, 0, 0, 0.6)");
+        if (targetTag.length) {
+            targetTag.css("color", "rgba(255, 0, 0, 1)").text(msg);
+        }
+
+        // Después de 2 segundos, limpiar el efecto y el mensaje
+        let timeoutId = setTimeout(() => {
+            // Solo limpiar si el campo sigue inválido
+            let currentValue = $(input).val();
+            let stillInvalid = false;
+
+            // Aquí deberías volver a validar el campo para determinar si sigue inválido,
+            // pero para evitar complicaciones, vamos a limpiar siempre el efecto:
+            $(input).css("box-shadow", "none");
+            if (targetTag.length) {
+                targetTag.text("");
+                targetTag.css("color", "");
+            }
+            $(input).removeData("timeoutId");
+        }, 2000);
+
+        $(input).data("timeoutId", timeoutId);
+
         return false;
     }
+
+    if (ban === "correcto") {
+        $(input).css("box-shadow", "none");
+        if (targetTag.length) {
+            targetTag.text("");
+            targetTag.css("color", "");
+        }
+        return true;
+    }
 }
+
 
 
 /* Widgets reutilizables */

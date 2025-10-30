@@ -1,6 +1,18 @@
 let mensajeEditando = null;
+$('#btnAgregarNota').on('click', function () {
+  const $formulario = $('#formularioNota');
+  const isVisible = $formulario.is(':visible');
 
-$('#btnAgregarNota').on('click', async function() {
+  if (isVisible) {
+      $formulario.slideUp();
+      $('#btnAgregarNota').html('<i class="fas fa-plus-circle"></i> Agregar nota');
+  } else {
+      $formulario.slideDown();
+      $('#btnAgregarNota').html('<i class="fas fa-times-circle"></i> Cancelar nota');
+  }
+});
+
+$('#btnEnviarNota').on('click', async function() {
     const $textarea = $('#nuevaNota');
     const texto = $textarea.val().trim();
     const $inputtype = $('#typenote');
@@ -14,6 +26,7 @@ $('#btnAgregarNota').on('click', async function() {
             tipomessage: tipo,
             module: "DetalleReservas"
         };
+        console.log(data);
         const response = await fetchAPI('message', 'POST', {create: {...data}});
 
         if (!response.ok) throw new Error('Error al guardar la nota');
@@ -44,60 +57,62 @@ $('#btnAgregarNota').on('click', async function() {
 });
 
 // Abrir modal mensajes
-function abrirModalMensajes() {
-  $('#modalMensajes').addClass('show');
-  cargarMensajes(modalData.id); // cargar mensajes para idPago actual
+function abrirModalCorreos() {
+  $('#modalCorreos').addClass('show');
+  cargarCorreos(modalData.nog); // cargar mensajes para idPago actual
   // $('#mensajeEditTexto').val('');
   // $('#btnGuardarMensaje').prop('disabled', true);
 }
 
 // Cerrar modal mensajes
-function cerrarModalMensajes() {
-  $('#modalMensajes').removeClass('show');
+function cerrarModalCorreos() {
+  $('#modalCorreos').removeClass('show');
   mensajeEditando = null;
 }
 
 // Cargar mensajes y mostrar en modal usando search_messages
-async function cargarMensajes(idPago) {
-    try {
-      const mensajes = await search_messages(idPago);
-  
-      const $container = $('#mensajesContainer');
-      $container.empty();
-  
-      if (!mensajes || mensajes.length === 0) {
-        $container.html('<p>No hay mensajes.</p>');
-        return;
-      }
-  
-      mensajes.forEach(mensaje => {
-        const $msgItem = $(`
-          <div class="message-item p-2 border rounded mb-2">
-            <div class="d-flex justify-content-between align-items-center">
-              <small><strong>Tipo:</strong> ${mensaje.tipomessage || 'Nota'}</small>
-              <small>${new Date(mensaje.datestamp).toLocaleString()}</small>
-            </div>
-            <p>${mensaje.mensaje}</p>
-            <small><em>Usuario: ${mensaje.name || 'Desconocido'}</em></small>
-          </div>
-        `);
-  
-        // Al hacer click, cargar mensaje para editar
-        // $msgItem.on('click', () => {
-        //   mensajeEditando = mensaje;
-        //   $('#mensajeEditTexto').val(mensaje.mensaje);
-        //   $('#btnGuardarMensaje').prop('disabled', false);
-        // });
-  
-        $container.append($msgItem);
-      });
-  
-    } catch (error) {
-      console.error(error);
-      $('#mensajesContainer').html('<p class="text-danger">Error cargando mensajes.</p>');
+async function cargarCorreos(nog) {
+  try {
+    const mensajes = await search_notificatios_mail(nog);
+    const $container = $('#mensajesContainer');
+    $container.empty();
+
+    if (!mensajes || mensajes.length === 0) {
+      $container.html('<p class="text-muted text-center">No hay mensajes.</p>');
+      return;
     }
+
+    mensajes.forEach((mensaje) => {
+      const fecha = mensaje.send_date
+        ? new Date(mensaje.send_date).toLocaleString()
+        : '';
+
+      const visto = mensaje.vistoC == 1;
+
+      const cartaHTML = `
+        <div class="card mb-2 border-0 shadow-sm carta-correo ${visto ? 'bg-light' : 'bg-white'}">
+          <div class="card-body d-flex justify-content-between align-items-center px-3 py-2">
+            <div class="d-flex align-items-center">
+              <i class="fas ${visto ? 'fa-envelope-open text-success' : 'fa-envelope text-secondary'} fs-5 me-3"></i>
+              <span class="fw-semibold">${mensaje.accion || 'Sin acción'}</span>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small">${fecha}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      $container.append(cartaHTML);
+    });
+
+  } catch (error) {
+    console.error(error);
+    $('#mensajesContainer').html('<p class="text-danger text-center">Error cargando mensajes.</p>');
   }
-  
+}
+
+
 // Guardar mensaje editado
 $('#btnGuardarMensaje').on('click', async () => {
     if (!mensajeEditando) return alert('Selecciona un mensaje para editar.');
@@ -122,7 +137,7 @@ $('#btnGuardarMensaje').on('click', async () => {
         //   alert('Mensaje actualizado.');
         
         // recargar mensajes usando el idPago (modalData.idPago o como tengas almacenado)
-        cargarMensajes(modalData.id);
+        cargarCorreos(modalData.nog);
 
         // $('#mensajeEditTexto').val('');
         // $('#btnGuardarMensaje').prop('disabled', true);
@@ -203,33 +218,62 @@ async function renderUltimoMensajeContent(idpago) {
       return;
   }
 
-  box.innerHTML = ''; // Limpiar
+  box.innerHTML = ''; // Limpiar contenido
 
   contenedor.style.display = "block";
 
+  // Crear contenedor para las notas adicionales ocultas
+  const extrasContainer = document.createElement('div');
+  extrasContainer.style.display = "none";
+  extrasContainer.id = "mensajesExtraContainer";
+
   mensajes.forEach((mensaje, index) => {
       const imagenPerfil = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
       const { class: badgeClass, icono, texto: etiquetaTexto } = obtenerDatosEtiqueta(mensaje.tipomessage);
       const isPrincipal = index === 0;
 
       const mensajeHTML = `
           <div class="alert alert-secondary border-secondary mensaje-item ${isPrincipal ? 'principal' : 'respuesta'}">
               <div class="d-flex align-items-center mb-2">
-                  <img src="${imagenPerfil}" alt="Perfil" width="${isPrincipal ? '48' : '32'}" height="${isPrincipal ? '48' : '32'}" class="rounded-circle me-2 border">
+                  <i class="fas fa-user-circle me-2 ${isPrincipal ? 'text-white' : 'text-dark'}" style="font-size: 2.5rem;"></i>
+
                   <div>
-                      <strong>${mensaje.name || 'Usuario'} ${mensaje.lastname || ''}</strong><br>
-                      <small class="text-muted">${formatDateTime(mensaje.datestamp)}</small>
+                      <strong class="${isPrincipal ? 'text-white' : 'text-dark'}">${mensaje.name || 'Usuario'} ${mensaje.lastname || ''}</strong><br>
+                      <small class="${isPrincipal ? 'text-white' : 'text-dark'}">${formatDateTime(mensaje.datestamp)}</small>
                       <span class="${badgeClass}" style="padding: 6px;">${icono} ${etiquetaTexto}</span>
                   </div>
               </div>
-
-              <p class="mb-0">${mensaje.mensaje || "(Mensaje vacío)"}</p>
+              <p class="mb-0 ${isPrincipal ? 'text-white' : 'text-dark'}">${mensaje.mensaje || "(Mensaje vacío)"}</p>
           </div>
       `;
 
-      box.innerHTML += mensajeHTML;
+      // Agregar el primero directamente
+      if (isPrincipal) {
+          box.innerHTML += mensajeHTML;
+      } else {
+          extrasContainer.innerHTML += mensajeHTML;
+      }
   });
+
+  if (mensajes.length > 1) {
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = "btn btn-sm btn-outline-light mt-2";
+      toggleBtn.style.backgroundColor = "#709ac2";
+      toggleBtn.style.borderColor = "#7e9cc0";
+      toggleBtn.style.marginBottom = "1rem";
+      toggleBtn.innerHTML = '<i class="fas fa-eye me-2"></i> Mostrar más';
+
+      toggleBtn.onclick = () => {
+          const isHidden = extrasContainer.style.display === "none";
+          extrasContainer.style.display = isHidden ? "block" : "none";
+          toggleBtn.innerHTML = isHidden
+            ? '</i><i class="fas fa-eye-slash me-2"></i> Mostrar menos'
+            : '<i class="fas fa-eye me-2"></i> Mostrar más';
+      };
+
+      box.appendChild(toggleBtn);
+      box.appendChild(extrasContainer);
+  }
 }
 
 // Utilidad para formatear fecha (opcional)

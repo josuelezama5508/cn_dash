@@ -10,7 +10,8 @@ class Control extends ModelTable
             'actividad', 'code_company', 'product_id', 'datepicker', 'horario', 'tipo', 
             'cliente_name', 'statusCliente', 'cliente_lastname', 'nog', 'codepromo', 
             'telefono', 'hotel', 'habitacion', 'referencia', 'total', 'status', 
-            'procesado', 'checkin', 'accion', 'nota', 'canal', 'balance', 'moneda', 'email'
+            'procesado', 'checkin', 'noshow', 'accion', 'nota', 'canal', 'balance', 'moneda', 'email',
+            'metodo'
         ];
     }
     
@@ -40,7 +41,7 @@ class Control extends ModelTable
         
         // Definir campos a seleccionar (usa alias si hay ambigüedad)
         $fields = [
-            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company', 'C.procesado',
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.procesado, C.moneda, C.checkin, C.noshow',
             'B.*',
             'CO.company_name, CO.primary_color',
             'S.name AS status, S.color AS statuscolor'
@@ -50,7 +51,7 @@ class Control extends ModelTable
         INNER JOIN bookingdetails AS B ON C.idpago = B.idpago INNER JOIN estatus AS S ON C.status = S.id_status
             ";
         // Condición: solo los registros con fecha de hoy en `bookingdetails.fecha_details`
-        $condicion = "CO.statusD = '1' ORDER BY C.idpago DESC LIMIT 100";
+        $condicion = "CO.statusD = '1' AND C.status != 2 ORDER BY C.idpago DESC LIMIT 100";
         // Ejecutar la consulta
         return $this->consult($fields, $join, $condicion);
     }
@@ -60,8 +61,7 @@ class Control extends ModelTable
         }
     
         $campos = [
-            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company', 
-            'C.procesado',
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.procesado, C.checkin, C.noshow, C.moneda',
             'B.*',
             'CO.company_name, CO.primary_color, CO.statusD',
             'S.name AS status, S.color AS statuscolor'
@@ -157,8 +157,8 @@ class Control extends ModelTable
                 $qty  = intval($item['item'] ?? 0);
                 // price puede venir como string "75.00"
                 $price = isset($item['price']) ? floatval(str_replace(',', '.', $item['price'])) : 0.0;
-    
-                if ($tipo === 'tour' && $qty > 0 && $price > 0.0) {
+                //if ($tipo === 'tour' && $qty > 0 && $price > 0.0) { //DATO ANTERIOR A ESTE IFF ACTUAL
+                if ($tipo === 'tour') {
                     $ref = $item['reference'] ?? null;
                     $name = $item['name'] ?? 'Unknown';
     
@@ -229,7 +229,7 @@ class Control extends ModelTable
         // Definir campos a seleccionar (usa alias si hay ambigüedad)
         $fields = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.canal, C.email, C.telefono, C.hotel, C.nota, C.habitacion, 
-            C.referencia, C.tipo AS type, C.codepromo, C.procesado, C.checkin, C.balance, C.moneda' ,
+            C.referencia, C.tipo AS type, C.codepromo, C.procesado, C.checkin, C.noshow, C.balance, C.moneda, C.status AS id_estatus, C.metodo, C.accion, C.balance, C.total' ,
             'B.*',
             'CO.company_name, CO.primary_color, CO.company_logo',
             'S.name AS status, S.color AS statuscolor',
@@ -298,8 +298,8 @@ class Control extends ModelTable
         }
     
         $fields = [
-            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, 
-             C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion',
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.total, C.accion, C.moneda, C.balance,
+             C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion, C.checkin, C.noshow, C.metodo',
             'S.name AS statusname'
         ];
     
@@ -316,10 +316,8 @@ class Control extends ModelTable
     
         // Paso 2: identificar madre
         if (empty($reserva->referencia)) {
-            // si no tiene referencia, ella es la madre
             $nogMadre = $reserva->nog;
         } else {
-            // si tiene referencia, esa referencia es la madre
             $nogMadre = $reserva->referencia;
         }
     
@@ -327,8 +325,34 @@ class Control extends ModelTable
         $condicion = "(C.nog = :nogMadre OR C.referencia = :nogMadre)";
         $params = ['nogMadre' => $nogMadre];
     
-        return $this->consult($fields, $join, $condicion, $params);
+        $reservas = $this->consult($fields, $join, $condicion, $params);
+    
+        // Si solo vino la madre (sin hijos), mandar null
+        if (count($reservas) <= 1) {
+            return null;
+        }
+    
+        return $reservas;
     }
+    public function getCombosByNog($nog) {
+        if ($nog === null) {
+            return [];
+        }
+    
+        $fields = [
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.total, C.accion, C.moneda, C.balance,
+             C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion, C.checkin, C.noshow, C.metodo',
+            'S.name AS statusname'
+        ];
+    
+        $join = "C INNER JOIN estatus AS S ON C.status = S.id_status";
+    
+        // Traer hijos (reservas donde referencia sea igual al NOG dado)
+        
+        return  $this->consult($fields, $join, "C.referencia = :nog", ['nog' => $nog]);
+    }
+    
+    
     
     
     public function insertControl(array $data)
@@ -384,7 +408,7 @@ class Empresa extends ModelTable
         if ($bd != '') $this->dbname = $bd;
         parent::__construct();
     }
-    function get_all_companies() {
+    function getAllCompaniesActive() {
         return $this->where("active = '1' ORDER BY company_name ASC");
     }
     function getAllCompanies(){
@@ -556,7 +580,7 @@ class Canal extends ModelTable
         $this->id_table = 'id_channel';
     }
     function getChannelList(){
-        return $this->where('activo = 1');
+        return $this->where('activo = 1 ORDER BY nombre ASC');
     }
     function searchChannels($search = '')
     {
@@ -566,7 +590,7 @@ class Canal extends ModelTable
         }
 
         return $this->where(
-            "$where ORDER BY $this->id_table ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC",
+            "$where ORDER BY nombre ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC",
             [],
             ["nombre AS name", "metodopago", "tipo AS type"]
         );
@@ -576,9 +600,15 @@ class Canal extends ModelTable
         $result = $this->where("id_channel = '$id' AND activo = '1'");
         return count($result) ? $result[0] : null;
     }
+    function getChannelByName($name)
+    {
+        $name = strtoupper($name);
+        $cond = "UPPER(nombre) = :nombre";
+        $params = ['nombre' => $name];
 
-
-
+        $result = $this->where($cond, $params);
+        return count($result) ? $result[0] : null;
+    }
 }
 
 
@@ -609,10 +639,13 @@ class Rep extends ModelTable
         return 0;
     }
     function getRepByIdChannel($id){
-        return $this->where('idcanal = :id', ['id' => $id]);
+        return $this->where('idcanal = :id ORDER BY nombre ASC', ['id' => $id]);
     }
     function getRepById($id){
         return $this->find($id);
+    }
+    function getExistingRep($name, $channelID){
+        return $this->where('nombre = :name AND idcanal = :channelID', ['name'=> $name, 'channelID' => $channelID]);
     }
 
 }
@@ -733,7 +766,7 @@ class TypeService extends ModelTable
         $this->id_table = 'id_nota';
     }
     function getAllData(){
-        return $this->where('1=1');
+        return $this->where('1=1 ORDER BY nombre ASC');
     }
 }
 class CancellationTypes extends ModelTable
@@ -803,6 +836,29 @@ class Transportation extends ModelTable
         $params = [];
         return $this->consult($campos, $join, $cond, $params, false);
     }
+    function getAllDataDefaultHorarios($time){
+        $campos = ["*"];
+        $join = ""; //AMBOS
+        $cond = "mark = 0";
+        $params = [];
+        $time = trim($time);
+        if ($time) {
+            // Aquí asumimos que $time ya viene formateado como H:i:s y válido
+            $params['hora'] = $time;
+    
+            $cond .= " AND mark = 0 AND :hora >= '00:00:00' AND (
+                (tour1 IS NOT NULL AND tour1 <> '00:00:00' AND tour1 < :hora) OR
+                (tour2 IS NOT NULL AND tour2 <> '00:00:00' AND tour2 < :hora) OR
+                (tour3 IS NOT NULL AND tour3 <> '00:00:00' AND tour3 < :hora) OR
+                (tour4 IS NOT NULL AND tour4 <> '00:00:00' AND tour4 < :hora) OR
+                (tour5 IS NOT NULL AND tour5 <> '00:00:00' AND tour5 < :hora) OR
+                (nocturno IS NOT NULL AND nocturno <> '00:00:00' AND nocturno < :hora) OR
+                (tour7 IS NOT NULL AND tour7 <> '00:00:00' AND tour7 < :hora)
+            )";
+        }
+        $cond .= " ORDER BY id_transportacion ASC";
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
     function searchTransportation($search = '')
     {
         if ($search === '') {
@@ -819,6 +875,45 @@ class Transportation extends ModelTable
         $params['search'] = "%$search%";
         return $this->consult($campos, $join, $cond, $params, false);
     }
+    function searchTransportationTours($search = '', $time = '')
+    {
+        if ($search === '' || strtolower($search) === 'pendiente') {
+            return $this->getAllDataDefaultHorarios($time);
+        }
+    
+        $campos = ["*"];
+        $join = "";
+        $cond = "LOWER(hotel) IS NOT NULL AND hotel <> ''";
+        $params = [];
+    
+        $cond .= " AND (LOWER(hotel) LIKE :search OR LOWER(mark) LIKE :search)";
+        $params['search'] = "%$search%";
+    
+        $time = trim($time);
+        if ($time) {
+            // Aquí asumimos que $time ya viene formateado como H:i:s y válido
+            $params['hora'] = $time;
+    
+            $cond .= " AND mark = 0 AND :hora >= '00:00:00' AND (
+                (tour1 IS NOT NULL AND tour1 <> '00:00:00' AND tour1 < :hora) OR
+                (tour2 IS NOT NULL AND tour2 <> '00:00:00' AND tour2 < :hora) OR
+                (tour3 IS NOT NULL AND tour3 <> '00:00:00' AND tour3 < :hora) OR
+                (tour4 IS NOT NULL AND tour4 <> '00:00:00' AND tour4 < :hora) OR
+                (tour5 IS NOT NULL AND tour5 <> '00:00:00' AND tour5 < :hora) OR
+                (nocturno IS NOT NULL AND nocturno <> '00:00:00' AND nocturno < :hora) OR
+                (tour7 IS NOT NULL AND tour7 <> '00:00:00' AND tour7 < :hora)
+            )";
+        } else {
+            $cond .= " AND mark = 0";
+        }
+    
+        $cond .= " ORDER BY id_transportacion ASC";
+    
+        return $this->consult($campos, $join, $cond, $params, false);
+    }
+    
+    
+
     function searchTransportationEnable($search = '')
     {
         if ($search === '') {
@@ -906,5 +1001,81 @@ class Camioneta extends ModelTable
         return $this->consult($campos, $join, $cond, $params, false);
     }
     
+}
+class EmpresaInfo extends ModelTable
+{
+    function __construct()
+    {
+        $this->table = 'empresa_info';
+        $this->id_table = 'id';
+    }
+} 
+class LocationPorts extends ModelTable
+{
+    function __construct()
+    {
+        $this->table = 'location_ports';
+        $this->id_table = 'id';
+    }
+} 
+class NotificationMail extends ModelTable
+{
+    function __construct()
+    {
+        $this->table = 'notification_mail';
+        $this->id_table = 'id';
+    }
+    function searchMails($search)
+    {
+        $campos = ["*"];
+        $join = "";
+    
+        $cond = "UPPER(nog) IS NOT NULL AND nog <> ''";
+        $params = [];
+        $cond .= " AND (UPPER(nog) LIKE :search OR UPPER(accion) LIKE :search) ORDER BY nog ASC, send_date DESC";
+        $params['search'] = "%$search%";
+    
+        $rows = $this->consult($campos, $join, $cond, $params, false);
+    
+        // Agrupar por NOG
+        $grouped = [];
+        foreach ($rows as $row) {
+            $nog = strtoupper($row->nog ?? 'SIN_NOG');
+            if (!isset($grouped[$nog])) {
+                $grouped[$nog] = [
+                    'nog' => $nog,
+                    'mensajes' => [],
+                    'total' => 0,
+                    'activos' => 0,
+                    'vistos' => 0
+                ];
+            }
+    
+            $grouped[$nog]['mensajes'][] = $row;
+            $grouped[$nog]['total']++;
+    
+            if ($row->status == 1) {
+                $grouped[$nog]['activos']++;
+            }
+    
+            if ($row->vistoC == 1 || $row->vistoC === "1") {
+                $grouped[$nog]['vistos']++;
+            }
+        }
+    
+        return array_values($grouped); // Quitar claves para un array limpio
+    }
+    
+    
+} 
+class TravelTypes extends ModelTable
+{
+    function __construct(){
+        $this->table = 'travel_types';
+        $this->id_table = 'id';
+    }
+    function getTypeByName($name){
+        return $this->where("nombre = :name" , ['name' => $name]);
+    }
 }
 ?>

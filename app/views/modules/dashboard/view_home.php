@@ -1,12 +1,6 @@
 <!DOCTYPE html>
-<?php 
 
-$token = $_SESSION['user'];
-?>
-<script>
-  // Exportamos token a JS globalmente
-  const TOKEN = '<?php echo $token; ?>';
-</script>
+
 <html lang="es">
 
 <head>
@@ -153,6 +147,7 @@ $token = $_SESSION['user'];
             <button class="btn btn-danger">Cancelar</button>
         </div>
     </div>
+    
     <script src="<?= asset('/js/routesapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/transportationapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/home/modalSearchT.js') ?>?v=1"></script>

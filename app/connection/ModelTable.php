@@ -166,20 +166,32 @@ class ModelTable
         $campos_insert = '';
         $campos_execute = '';
         try {
+            error_log("[ModelTable::_create] CREANDO EN {$this->table}");
             foreach ($datos as $campos => $valor) {
                 $campos_insert .= $campos . ',';
                 $campos_execute .= ':' . $campos . ',';
             }
             $campos_insert = trim($campos_insert, ',');
+            error_log("[ModelTable::_create] CAMPOS INSERT EN {$this->table}: {$campos_insert}");
             $campos_execute = trim($campos_execute, ',');
+            error_log("[ModelTable::_create] DATOS A INSERTAR: " . print_r($datos, true));
+
+            error_log("[ModelTable::_create] CAMPOS EXECUTE EN {$this->table}: {$campos_execute}");
             $sql = "INSERT INTO $this->table($campos_insert) VALUES($campos_execute)";
+            error_log("[ModelTable::_create] INSER SQL EN  {$this->table}: {$sql}");
             $result = $this->conexion_pdo->prepare($sql);
             $result->execute($datos);
             $return = $this->conexion_pdo->lastInsertId();
+            error_log("[ModelTable::_create] CREADO CON ID {$return} EN {$this->table}");
             $this->sql = $sql;
         } catch (PDOException $e) {
             array_push($this->error, $e);
             array_push($this->error, $sql);
+            array_push($datos);
+            error_log("[ModelTable::_create] ERROR al insertar en {$this->table}");
+            error_log("[ModelTable::_create] Mensaje: " . $e->getMessage());
+            error_log("[ModelTable::_create] SQL: " . $sql);
+            error_log("[ModelTable::_create] Datos: " . json_encode($datos));
             $return = null;
         }
         $this->conexion_pdo = null;

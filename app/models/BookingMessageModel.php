@@ -16,7 +16,8 @@ class BookingMessage extends ModelTable
     function searchNotesByIdPago($id) {
         $fields = ['BM.*', 'U.*'];
         $join = "BM INNER JOIN users AS U ON BM.usuario = U.user_id";
-        $condicion = "BM.idpago = :id ORDER BY BM.id DESC";
+        $condicion = "BM.idpago = :id AND BM.tipomessage NOT IN ('procesar', 'reagendar', 'cancelar') ORDER BY BM.id DESC";
+
     
         return $this->consult($fields, $join, $condicion, ['id' => $id]);
     

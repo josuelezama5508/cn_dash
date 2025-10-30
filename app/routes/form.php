@@ -13,6 +13,7 @@ return [
         "edit_channel" => "form_edit_channel",
         "add_sapa" => "form_add_sapa",
         "add_Mails" => "form_add_mails",
+        "update_sapa" => "form_update_sapa",
         "detalles_rep" => "form_detail_rep",
         "form_add_edit_combos" => "form_add_edit_combos"
     ],

@@ -1,27 +1,33 @@
-// modalCancel.js
+let isCancelMode = false;
+
 window.handleMailCancel = async function(modalData) {
-    const motivoId = document.getElementById('motivo_cancelacion')?.value;
+    const $motivoSelect = $('#motivo_cancelacion');
+    const motivoId = $motivoSelect.val();
     if (!motivoId) return alert("Selecciona un motivo de cancelación.");
 
-    const porcentajeReembolso = parseFloat(document.getElementById('porcentaje_reembolso')?.value) || 0;
-    const descuentoDinero = parseFloat(document.getElementById('descuento_dinero')?.value) || 0;
-    const comentario = document.getElementById('comentario_cancelacion')?.value.trim() || '';
+    const porcentajeReembolso = parseFloat($('#porcentaje_reembolso').val()) || 0;
+    const descuentoDinero = parseFloat($('#descuento_dinero').val()) || 0;
+    const descripcion = $('#comentario_cancelacion').val().trim() || '';
     const idpago = modalData.id;
-    const nombreCliente = document.getElementById('nombre_cliente')?.innerText || '';
-    const correoCliente = document.getElementById('email_cliente')?.innerText || '';
-    const categoriaId = parseInt(document.getElementById('categoria_cancelacion')?.value) || null;
+    const nombreCliente = $('#nombre_cliente').text() || '';
+    const correoCliente = $('#email_cliente').text() || '';
+    const categoriaId = parseInt($('#categoria_cancelacion').val()) || null;
 
-    let totalText = (document.getElementById('total_reserva')?.innerText || "$0.00").replace('$','').replace(/[^\d.,]/g,'').trim();
+    let totalText = $('#total_reserva').text().replace('$', '').replace(/[^\d.,]/g, '').trim();
     const total = parseFloat(totalText.replace(',', '.')) || 0;
-    const moneda = document.getElementById('currency_label')?.innerText || 'USD';
+    const moneda = $('#currency_label').text() || 'USD';
+
+    const idioma = modalData?.lang === 1 ? 'en' : 'es';
+    const accion = $motivoSelect.find(':selected').data('name') || '';
 
     const cancelData = {
         idpago: parseInt(idpago),
         motivo_cancelacion_id: parseInt(motivoId),
+        accion: accion,
         porcentaje_reembolso,
         descuento_porcentaje: 0,
         descuento_dinero,
-        comentario,
+        descripcion,
         nombre_cliente: nombreCliente,
         correo_cliente: correoCliente,
         total,
@@ -29,24 +35,34 @@ window.handleMailCancel = async function(modalData) {
         status: 2,
         categoriaId,
         tipo: 'cancelar',
+        actioner: 'cancelar',
         module: 'DetalleReservas',
-        procesado: null
     };
 
     try {
+        console.log(cancelData);
         const response = await fetchAPI('control', 'PUT', { cancelar: cancelData });
-        if(response.ok){ await response.json(); closeModal(); location.reload(); }
+        if (response.ok) { await response.json(); closeModal(); location.reload(); }
         else { const result = await response.json(); alert("Error: " + (result.message || "desconocido")); }
-    } catch(err){ console.error(err); alert("Error en la conexión."); }
-}
+    } catch (err) {
+        console.error(err);
+        alert("Error en la conexión.");
+    }
+};
+
 window.initModalCancel = function(modalData) {
+    isCancelMode = true; // Activamos el flag
+
+    // Quitamos el estilo de ancho especial
+    $('#modalGeneric .modal-content').removeClass('modal-custom-width');
     const total = Number(modalData?.total) || 0;
     const nombreCliente = `${modalData.cliente_name ?? '-'} ${modalData.cliente_lastname ?? ''}`.trim() || '-';
     const emailCliente = modalData?.email ?? '-';
+    const idioma = modalData?.lang === 1 ? 'en' : 'es';
 
-    document.getElementById('total_reserva').innerText = `$${total.toFixed(2)} USD`;
-    document.getElementById('nombre_cliente').innerText = nombreCliente;
-    document.getElementById('email_cliente').innerText = emailCliente;
+    $('#total_reserva').text(`$${total.toFixed(2)} USD`);
+    $('#nombre_cliente').text(nombreCliente);
+    $('#email_cliente').text(emailCliente);
 
     let monedaActual = 'USD';
     let factorConversion = 20;
@@ -56,26 +72,26 @@ window.initModalCancel = function(modalData) {
     const actualizarMontos = (baseTotal, porcentajeReembolso) => {
         const descuentoDinero = parseFloat($('#descuento_dinero').val()) || 0;
         const totalDescuento = descuentoDinero;
-        const totalConDescuento = baseTotal - totalDescuento;
-        const montoReembolso = totalConDescuento * (porcentajeReembolso / 100);
+        const totalConDescuento = baseTotal;
+        const montoReembolso = (totalConDescuento * (porcentajeReembolso / 100)) - totalDescuento;
         const penalizacion = baseTotal - montoReembolso;
         const label = monedaActual;
 
-        document.getElementById('descuento_aplicado').innerText = `$${totalDescuento.toFixed(2)} ${label}`;
-        document.getElementById('monto_reembolso').innerText = `$${montoReembolso.toFixed(2)} ${label}`;
-        document.getElementById('penalizacion_cancelacion').innerText = `$${penalizacion.toFixed(2)} ${label}`;
+        $('#descuento_aplicado').text(`$${totalDescuento.toFixed(2)} ${label}`);
+        $('#monto_reembolso').text(`$${montoReembolso.toFixed(2)} ${label}`);
+        $('#penalizacion_cancelacion').text(`$${penalizacion.toFixed(2)} ${label}`);
     };
 
     const actualizarMonedaVisual = () => {
         const currencySymbol = '$';
         const currencyLabel = monedaActual;
-        document.getElementById('currency_symbol_dinero').innerText = currencySymbol;
-        document.getElementById('currency_label').innerText = currencyLabel;
-        document.getElementById('total_reserva').innerText = `${currencySymbol}${getTotal().toFixed(2)} ${currencyLabel}`;
+        $('#currency_symbol_dinero').text(currencySymbol);
+        $('#currency_label').text(currencyLabel);
+        $('#total_reserva').text(`${currencySymbol}${getTotal().toFixed(2)} ${currencyLabel}`);
         actualizarMontos(getTotal(), Number($('#porcentaje_reembolso').val()));
     };
 
-    document.getElementById('currency_label')?.addEventListener('click', () => {
+    $('#currency_label').on('click', () => {
         monedaActual = monedaActual === 'USD' ? 'MXN' : 'USD';
         actualizarMonedaVisual();
     });
@@ -91,7 +107,8 @@ window.initModalCancel = function(modalData) {
                 $categoriaSelect.empty();
                 $categoriaSelect.append('<option value="" disabled selected>Selecciona una categoría</option>');
                 json.data.filter(cat => cat.status === 1).forEach(cat => {
-                    $categoriaSelect.append(`<option value="${cat.id}" data-name-es="${cat.name_es}" data-name-en="${cat.name_en}">${cat.name_es}</option>`);
+                    const nombreCategoria = idioma === 'en' ? cat.name_en : cat.name_es;
+                    $categoriaSelect.append(`<option value="${cat.id}">${nombreCategoria}</option>`);
                 });
             }
         }).catch(err => console.error('Error al cargar categorías:', err));
@@ -106,33 +123,59 @@ window.initModalCancel = function(modalData) {
             if (data.data?.length) {
                 $motivoSelect.empty();
                 $motivoSelect.append('<option value="" disabled selected>Selecciona un motivo</option>');
-                const activeTypes = data.data.filter(item => item.status === 1).sort((a,b) => a.sort_order - b.sort_order);
+                const activeTypes = data.data.filter(item => item.status === 1).sort((a, b) => a.sort_order - b.sort_order);
                 activeTypes.forEach(type => {
-                    $motivoSelect.append(`<option value="${type.id}" data-refund="${type.refund_percentage}">${type.name_es}</option>`);
+                    const nombreMotivo = idioma === 'en' ? type.name_en : type.name_es;
+                    $motivoSelect.append(
+                        `<option value="${type.id}" data-refund="${type.refund_percentage}" data-name="${nombreMotivo}">${nombreMotivo}</option>`
+                    );
                 });
                 if (activeTypes.length > 0) {
                     $motivoSelect.val(activeTypes[0].id);
                     $porcentajeInput.val(activeTypes[0].refund_percentage);
                     $porcentajeInput.prop('disabled', activeTypes[0].id !== 9);
-                    actualizarMontos(total, activeTypes[0].refund_percentage);
+                    actualizarMontos(getTotal(), activeTypes[0].refund_percentage);
                 }
             }
         }).catch(err => console.error('Error al cargar motivos:', err));
 
-    $motivoSelect.on('change', function() {
+    $motivoSelect.on('change', function () {
         const selectedId = parseInt($(this).val());
         const refund = $(this).find(':selected').data('refund') ?? 0;
         $porcentajeInput.val(refund);
         $porcentajeInput.prop('disabled', selectedId !== 9);
-        actualizarMontos(total, refund);
+        actualizarMontos(getTotal(), refund);
     });
 
-    $porcentajeInput.on('input', function() {
+    $porcentajeInput.on('input', function () {
         if ($(this).prop('disabled')) return;
         let val = parseFloat($(this).val());
         if (isNaN(val) || val < 0) val = 0;
         else if (val > 100) val = 100;
         $(this).val(val);
-        actualizarMontos(total, val);
+        actualizarMontos(getTotal(), val);
     });
+
+    // ==== Pintar datos de la empresa ====
+    const $logo = $('#logocompany');
+    const $empresaName = $('#empresaname');
+
+    if (modalData?.company_logo) {
+        $logo.attr('src', modalData.company_logo);
+    }
+
+    if (modalData?.company_name) {
+        $empresaName.val(modalData.company_name).prop('disabled', true);
+        // Si prefieres solo lectura: .prop('readonly', true);
+        if (modalData?.primary_color) {
+            $empresaName.css('color', modalData.primary_color);
+        }
+    }
 };
+$('#modalGeneric').on('hidden.bs.modal', function () {
+    if (isCancelMode) {
+        $('#modalGeneric .modal-content').addClass('modal-custom-width');
+        isCancelMode = false;
+    }
+});
+

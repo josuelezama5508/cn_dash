@@ -6,17 +6,20 @@
         height: auto;
         display: flex;
         flex-direction: column;
+        background: white !important;
         transition: transform 0.5s ease-in-out;
     }
 
     .form-edit-rep {
-        background-color: transparent;
+        /* background-color: transparent; */
         transform: translateY(100%);
         z-index: 20;
+
     }
 
     .form-edit-rep.mostrar {
         transform: translateY(0%);
+        height: 200px;
     }
     /* Ocultar FDetailRep por defecto */
     #FDetailRep {
@@ -56,7 +59,7 @@
         <!--  -->
         <div style="display: flex; flex-direction: row; gap: 10px;">
             <button id="FAddRepItem" class="btn-icon" style="z-index: 10; color: #FFF; background: #007bff; border-radius: 3px; border:none;"><i class="material-icons left">add</i>ADD REP</button>
-            <button id="FSaveAllReps" class="btn-icon" style="color: #FFF; background: #28a745; border-radius: 3px; border:none;"><i class="material-icons left">save</i>Guardar Todo</button>
+            <!-- <button id="FSaveAllReps" class="btn-icon" style="color: #FFF; background: #28a745; border-radius: 3px; border:none;"><i class="material-icons left">save</i>Guardar Todo</button> -->
         </div>
     </div>
 </section>
@@ -69,87 +72,112 @@
     $(document).ready(function () {
         registered_reps();
         // Guardar todos los reps nuevos en un solo request
-        $(document).off("click", "#FSaveAllReps").on("click", "#FSaveAllReps", async function () {
-            let allValid = true;
+        // $(document).off("click", "#FSaveAllReps").on("click", "#FSaveAllReps", async function () {
+        //     let allValid = true;
 
-            // Validar todos los inputs antes de enviar
-            $("#FNewReps tr").each(function () {
-                $(this).find(":input").each(function () {
-                    if (!test(this)) allValid = false;
-                });
-            });
+        //     // Validar todos los inputs antes de enviar
+        //     $("#FNewReps tr").each(function () {
+        //         $(this).find(":input").each(function () {
+        //             if (!test(this)) allValid = false;
+        //         });
+        //     });
 
-            if (!allValid) {
-                // alert("Hay reps con datos inválidos, corrígelos antes de guardar.");
-                return;
-            }
+        //     if (!allValid) {
+        //         // alert("Hay reps con datos inválidos, corrígelos antes de guardar.");
+        //         return;
+        //     }
 
-            // Preparar FormData con arrays
-            let formData = new FormData();
-            formData.append("channelid", $("[name='channelid']").val());
+        //     // Preparar FormData con arrays
+        //     let formData = new FormData();
+        //     formData.append("channelid", $("[name='channelid']").val());
 
-            $("#FNewReps tr").each(function () {
-                $(this).find("input[name='repname[]']").each(function () { formData.append("repname[]", $(this).val()); });
-                $(this).find("input[name='repemail[]']").each(function () { formData.append("repemail[]", $(this).val()); });
-                $(this).find("input[name='repphone[]']").each(function () { formData.append("repphone[]", $(this).val()); });
-                $(this).find("input[name='repcommission[]']").each(function () { formData.append("repcommission[]", $(this).val()); });
-            });
+        //     $("#FNewReps tr").each(function () {
+        //         $(this).find("input[name='repname[]']").each(function () { formData.append("repname[]", $(this).val()); });
+        //         $(this).find("input[name='repemail[]']").each(function () { formData.append("repemail[]", $(this).val()); });
+        //         $(this).find("input[name='repphone[]']").each(function () { formData.append("repphone[]", $(this).val()); });
+        //         $(this).find("input[name='repcommission[]']").each(function () { formData.append("repcommission[]", $(this).val()); });
+        //     });
 
-            try {
-                let response = await fetchAPI("rep", "POST", formData);
-                if (response.status === 201) {
-                    // Eliminar todos los rows recién guardados
-                    $("#FNewReps tr").fadeOut(500, function () { $(this).remove(); });
-                    updateView = true;
-                    registered_reps();
-                    // alert("Todos los reps se guardaron correctamente.");
-                } else {
-                    let errorText = await response.text();
-                    console.error("Error guardando reps:", response.status, errorText);
-                    // alert("Ocurrió un error al guardar los reps. Revisa la consola.");
-                }
-            } catch (err) {
-                console.error(err);
-                // alert("Ocurrió un error inesperado al guardar los reps.");
-            }
-        });
+        //     try {
+        //         let response = await fetchAPI("rep", "POST", formData);
+        //         if (response.status === 201) {
+        //             // Eliminar todos los rows recién guardados
+        //             $("#FNewReps tr").fadeOut(500, function () { $(this).remove(); });
+        //             updateView = true;
+        //             registered_reps();
+        //             // alert("Todos los reps se guardaron correctamente.");
+        //         } else {
+        //             let errorText = await response.text();
+        //             console.error("Error guardando reps:", response.status, errorText);
+        //             // alert("Ocurrió un error al guardar los reps. Revisa la consola.");
+        //         }
+        //     } catch (err) {
+        //         console.error(err);
+        //         // alert("Ocurrió un error inesperado al guardar los reps.");
+        //     }
+        // });
 
         // Agregar rep
         $(document).off("click", "#FAddRepItem").on("click", "#FAddRepItem", createRep);
 
         // Delegación para done-btn (se define una vez)
-        $("#FNewReps").on("click", ".done-btn", function () {
-            if (!$(this).hasClass("processed")) {
-                $(this).addClass("processed");
+        $("#FNewReps").off("click", ".done-btn").on("click", ".done-btn", async function() {
+            const $btn = $(this);
+            if ($btn.data("processing")) return;
+            $btn.data("processing", true);
 
-                let className = $(this).closest("tr").attr("class");
-                let isValid = validate_form_add_rep();
-                if (!isValid) return;
-
-                let formData = new FormData();
-                formData.append("channelid", $("[name='channelid']").val());
-                $(`.${className} :input`).each(function () {
-                    let field = $(this).attr("name");
-                    let text = $(this).val();
-                    formData.append(field, text);
-                });
-
-                fetchAPI("rep", "POST", formData)
-                    .then(async (response) => {
-                        const status = response.status;
-                        if (status == 201) {
-                            let elementos = $("tr." + className);
-                            elementos.fadeOut(500);
-                            setTimeout(() => elementos.remove(), 500);
-                            registered_reps();
-                            updateView = true;
-                        }
-                    });
+            let className = $(this).closest("tr").attr("class");
+            let isValid = validate_form_add_rep();
+            if (!isValid) {
+                $btn.data("processing", false);
+                return;
             }
+
+            // Input de nombre
+            let $inputName = $(`.${className} input[name='repname[]']`);
+            let repName = $inputName.val();
+            let channelId = $("[name='channelid']").val();
+
+            // Revisar si ya existe
+            let existingReps = await fetch_reps_existing(repName, channelId);
+            if (existingReps.length > 0) {
+                // Mostrar mensaje sobre el input
+                let $msg = $('<div class="toast-inline text-white bg-danger" style="position:absolute; top:-28px; left:0; padding:3px 8px; border-radius:3px; font-size:12px; z-index:9999;">Ya existe este rep en el canal</div>');
+                $inputName.parent().css('position','relative').append($msg);
+                setTimeout(() => $msg.fadeOut(300, () => $msg.remove()), 2500);
+
+                $btn.data("processing", false);
+                return; // no hace POST
+            }
+
+            // Preparar FormData
+            let formData = new FormData();
+            formData.append("channelid", channelId);
+            $(`.${className} :input`).each(function () {
+                let field = $(this).attr("name");
+                let text = $(this).val();
+                formData.append(field, text);
+            });
+
+            try {
+                const response = await fetchAPI("rep", "POST", formData);
+                if (response.status == 201) {
+                    let elementos = $("tr." + className);
+                    elementos.fadeOut(500);
+                    setTimeout(() => elementos.remove(), 500);
+                    registered_reps();
+                    updateView = true;
+                }
+            } catch (error) {
+                console.error("Error al agregar rep:", error);
+            }
+
+            $btn.data("processing", false);
         });
 
+
         // Delegación para delete-btn (se define una vez)
-        $("#FNewReps").on("click", ".delete-btn", function () {
+        $("#FNewReps").off("click", ".delete-btn").on("click", ".delete-btn", function() {
             let className = $(this).closest("tr").attr("class");
             if (className) {
                 let elementos = $("tr." + className);
@@ -158,39 +186,39 @@
             }
         });
         // Delegación para updateRep (guardar cambios de detalle)
-        $(document).on("click", ".updateRep", function (e) {
+        $(document).off("click", ".updateRep").on("click", ".updateRep", function(e) { 
             e.preventDefault(); // evita submit raro
             updateRep(this);
         });
 
     });
 
-    function fetchAPI(endpoint, method = "GET", formData = null) {
-        let token = localStorage.getItem("__token");
+    // function fetchAPI(endpoint, method = "GET", formData = null) {
+    //     let token = localStorage.getItem("__token");
 
-        let bodyData = DataForAPI(method, formData);
+    //     let bodyData = DataForAPI(method, formData);
 
-        let options = {
-            method,
-            headers: {
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            cache: "default",
-        };
+    //     let options = {
+    //         method,
+    //         headers: {
+    //             'Accept': 'application/json',
+    //             'Authorization': `Bearer ${token}`,
+    //         },
+    //         cache: "default",
+    //     };
 
-        if (method !== "GET") {
-            if (bodyData instanceof FormData) {
-                options.body = bodyData;
-                // No agregues 'Content-Type' — fetch lo hace automáticamente
-            } else {
-                options.body = JSON.stringify(bodyData);
-                options.headers['Content-Type'] = 'application/json';
-            }
-        }
+    //     if (method !== "GET") {
+    //         if (bodyData instanceof FormData) {
+    //             options.body = bodyData;
+    //             // No agregues 'Content-Type' — fetch lo hace automáticamente
+    //         } else {
+    //             options.body = JSON.stringify(bodyData);
+    //             options.headers['Content-Type'] = 'application/json';
+    //         }
+    //     }
 
-        return fetch(`${window.url_web}/api/${endpoint}`, options);
-    }
+    //     return fetch(`${window.url_web}/api/${endpoint}`, options);
+    // }
     var registered_reps = async () => {
         let condition = $("[name='channelid']").val();
         fetchAPI(`rep?channelid=${condition}`, 'GET')
@@ -209,12 +237,14 @@
                     });
                     $("#FReps").html(rows);
 
-                    $("#FReps .detail-rep").on("click", function() {
+                    // Delegación desde el contenedor que siempre existe
+                    $("#FReps").off("click", ".detail-rep").on("click", ".detail-rep", function() {
                         detailRep(this);
                     });
-                    $("#FReps .delete-rep").on("click", function() {
+                    $("#FReps").off("click", ".delete-rep").on("click", ".delete-rep", function() {
                         deleteRep(this);
                     });
+
                 }
             })
             .catch((error) => {});
@@ -246,11 +276,11 @@
                                     <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;">
                                         <div class="row-content-left"><i style="color: #929292;" class="material-icons">email</i> ${data.email || ""}</div>
                                         <div class="row-content-left"><i style="color: #929292;" class="material-icons">call</i> ${data.phone || ""}</div>
-                                        <div class="row-content-left"><i style="color: #929292;" class="material-icons">local_atm</i> ${data.commission || ""}</div>
+                                        <div class="row-content-left"><i style="color: #929292;" class="material-icons">local_atm</i> ${data.commission}</div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="form-edit-rep" style="padding: 6px;"></div>
+                            <div class="form-edit-rep" ></div>
                         </div>
                     </div>
                 `);
@@ -284,12 +314,12 @@
                                     </div>
                                     <div class="form-group" style="display: flex; flex-direction: row; gap: 4px; align-items: center;">
                                         <i class="material-icons">local_atm</i>
-                                        <input type="number" name="repcommission" class="form-control ds-input" value="${data.commission}">
+                                        <input type="number" name="repcommission" class="form-control ds-input" value="${data.commission || 0}">
                                     </div>
                                 </div>
                             </form>
                             <div style="padding: 8px 10px;  width: 100%; display: flex; justify-content: flex-end; align-items: center;">
-                                <button style="margin: 0; padding: 5px 10px;" class="updateRep" id="rep-${data.id}">
+                                <button style="color: #FFF; background: #28a745; border-radius: 3px; border:none; padding: 5px 10px;" class="updateRep" id="rep-${data.id}">
                                     Guardar
                                 </button>
                             </div>
@@ -349,7 +379,7 @@
             <tr class="rep-item-${itemCount}">
                 <td><div class="form-group"><input type="text" name="repname[]" id="rep-name" class="form-control ds-input" placeholder="Nombre"></div></td>
                 <td><div class="form-group"><input type="text" name="repemail[]" id="rep-email" class="form-control ds-input" placeholder="Email"></div></td>
-                <td><div class="form-group"><input type="number" name="repphone[]" id="rep-phone" class="form-control ds-input" placeholder="Teléfono"></div></td>
+                <td><div class="form-group"><input type="text" name="repphone[]" id="rep-phone" class="form-control ds-input" placeholder="Teléfono"></div></td>
                 <td><div class="form-group"><input type="number" name="repcommission[]" id="rep-commission" class="form-control ds-input" placeholder="Comisión"></div></td>
                 <td>
                     <div class="row-content-right" style="gap: 6px;">
@@ -411,7 +441,7 @@
                     ban = "correcto"; // vacío permitido
                     msg = "";
                 } else {
-                    [ban, msg] = validate_data(text, regexPhone);
+                    [ban, msg] = validate_data(text, regexPhoneRep);
                 }
                 break;
 

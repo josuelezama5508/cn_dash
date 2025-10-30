@@ -1,14 +1,14 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
-require_once __DIR__ . '/../models/NotificationServiceModel.php';
+require_once __DIR__ . '/../services/NotificationServiceControllerService.php';
 
 class NotificationServiceController extends API
 {
-    private $notifier;
+    private $notificationService;
 
     public function __construct()
     {
-        $this->notifier = new NotificationServiceModel();
+        $this->notificationService = new NotificationServiceControllerService();
     }
 
     public function POST($params = [])
@@ -18,16 +18,15 @@ class NotificationServiceController extends API
             return $this->sendNotification($params);
         }
 
-        // Si no, guarda la suscripción
+        // Guardar suscripción
         try {
             $rawInput = file_get_contents('php://input');
             $subscription = json_decode($rawInput, true);
-
             if (!$subscription || !isset($subscription['endpoint'])) {
                 return $this->jsonResponse(['message' => 'Suscripción inválida.'], 400);
             }
 
-            $resultado = $this->notifier->guardarSuscripcion($subscription);
+            $resultado = $this->notificationService->guardarSuscripcion($subscription);
 
             return $this->jsonResponse($resultado, $resultado['status']);
         } catch (Exception $e) {
@@ -41,19 +40,7 @@ class NotificationServiceController extends API
     public function sendNotification($params = [])
     {
         try {
-            $rawInput = file_get_contents('php://input');
-            $payload = json_decode($rawInput, true);
-            if (!$payload) {
-                $payload = [
-                    'title' => 'Nueva reserva creada',
-                    'body' => 'Se ha creado una nueva reserva en el sistema.',
-                    'icon' => '/icon.png',
-                    'url' => 'http://localhost/cn_dash/detalles-reserva/view/'
-                ];
-            }
-
-            $result = $this->notifier->enviarNotificacion($payload);
-
+            $result = $this->notificationService->procesarEnvioNotificacion($params);
             return $this->jsonResponse($result, $result['status']);
         } catch (Exception $e) {
             return $this->jsonResponse([

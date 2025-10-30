@@ -5,8 +5,8 @@ let allowAddChannel = false;
 $(document).ready(function() {
     $("#activandomodal").css("display", "block");
     $("#activandomodal").on("click", function() { activandomodalEvent(); });
-    registered_channel('');
-    $("[name='search']").on("input", function() { registered_channel($(this).val()); });
+    registered_channel_main('');
+    $("[name='search']").on("input", function() { registered_channel_main($(this).val()); });
     // Después de inyectar el HTML en #RBuscador
     $("#RBuscador").off("click", ".rep-btn").on("click", ".rep-btn", function() {
         btnRepEvent(this);
@@ -14,16 +14,17 @@ $(document).ready(function() {
     console.log('¿Existe #RBuscador?', $('#RBuscador').length); // Debe ser 1
 
 });
-const registered_channel = async (condition) => {
+const registered_channel_main = async (condition) => {
     fetchAPI(`canales?search=${condition}`, 'GET')
       .then(async (response) => {
         if (response.status === 200) {
             const text = await response.json();
             let rows = "";
 
-            text.data.forEach((element) => {
+            text.data.forEach((element, index) => {
                 rows += `
                     <tr class="channel-row" id="item-channel-${element.id}">
+                        <td>${index + 1}</td>
                         <td class="channel-name">${element.name}</td>
                         <td>
                             <button class="rep-btn" id="rep-${element.id}">
@@ -73,16 +74,42 @@ const registered_channel = async (condition) => {
                 if (!id) return;
                 btnDeleteEvent(id);
             });
-
+            if (!text.data || text.data.length === 0) {
+                $("#RBuscador").html(`
+                    <tr>
+                        <td colspan="6" style="text-align:center; padding:20px; color:#888;">
+                            No hay coincidencias de canales
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            
             if (allowAddChannel) {
                 $("#activandomodal").on("click", function() {
                     activandomodalEvent();
                 });
             }
+        } else {
+            // Si la respuesta no es 200, renderizamos mensaje de "no hay coincidencias"
+            $("#RBuscador").html(`
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:20px; color:#888;">
+                        No hay coincidencias de canales
+                    </td>
+                </tr>
+            `);
         }
       })
       .catch((error) => {
-          console.error("Error fetching canales:", error);
+        // console.error("Error fetching canales:", error);
+        $("#RBuscador").html(`
+            <tr>
+                <td colspan="6" style="text-align:center; padding:20px; color:#888;">
+                    Hubo un error al cargar los canales.
+                </td>
+            </tr>
+        `);
       });
 };
 

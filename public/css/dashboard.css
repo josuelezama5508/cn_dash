@@ -1057,6 +1057,7 @@ button.btn-back:hover i {
 } */
 .custom-header {
     background-color: #345A98 !important;
+    letter-spacing: 0.1rem;
 }
 .custom-header th{
     letter-spacing: 0.5px;
@@ -1206,4 +1207,16 @@ button.btn-back:hover i {
 }
 .select2-container--default .select2-selection--single{
     padding: 0px;
+}
+.bg-noshow {
+    background-color: #474b4e !important; /* morado bootstrap */
+    color: white;
+}
+
+.bg-checkin {
+    background-color: #e91e63 !important; /* naranja bootstrap */
+    color: white;
+}
+.modal-custom-width {
+    width: 48vw !important;
 }

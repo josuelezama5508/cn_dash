@@ -71,14 +71,18 @@ const ReservationValidator = (() => {
     //     $inputs.toggleClass("input-error", !hasTickets);
     //     return hasTickets;
     // };
-
+    function toJQuery(el) {
+        return (el instanceof jQuery) ? el : $(el);
+      }
+      
     const validateChannel = ($el) => {
-        const input = $el || $('#channelSelect');
+        const input = ($el instanceof jQuery) ? $el : $($el || '#channelSelect');
         const valid = !!input.val();
         console.log("Validando Canal:", valid);
         input.toggleClass("input-error", !valid);
         return valid;
     };
+    
 
     const validateLanguage = ($el) => {
         const input = $el || $('#language');

@@ -43,7 +43,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
 
         switch ($category) {
             case 'companies':
-                $companies = $model_company->get_all_companies();
+                $companies = $model_company->getAllCompaniesActive();
                 $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon"]];
                 foreach ($companies as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->company_name, "logo" => $row->company_logo, "alt" => "Logo de $row->company_name"];

@@ -31,6 +31,9 @@ return [
         //Transportaciones
          "transportation" => ["controller" => "TransportationController", "method" => "index"],
          "transportation/details" => ["controller" => "TransportationController", "method" => "read"],
+         //Mailer
+         "mailer" => ["controller" => "MailerController", "method" => "index"],
+         "mailer/details" => ["controller" => "MailerController", "method" => "read"],
          //Camioneta
          "camioneta" => ["controller" => "CamionetaController", "method" => "index"],
         //Detalles Reserva
@@ -39,6 +42,7 @@ return [
         "detalles-reserva/form_mail" => ["controller" => "DetallesReservaController","method" => "formMails"],
         "detalles-reserva/form_cancelar" => ["controller" => "DetallesReservaController","method" => "formCancel"],
         "detalles-reserva/form_payment" => ["controller" => "DetallesReservaController","method" => "formPayment"],
+        "detalles-reserva/form_update_sapa" => ["controller" => "DetallesReservaController","method" => "formUpdateSapa"],
 
     ],
     // Version de desarrollo

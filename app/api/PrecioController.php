@@ -1,33 +1,51 @@
 <?php
 require_once __DIR__ . '/../../app/core/Api.php';
-require_once __DIR__ . '/../models/Models.php';
+require_once __DIR__ . "/../../app/core/ServiceContainer.php";
+require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../helpers/validations.php';
 
 
 class PrecioController extends API
 {
-    private $model_price;
+    private $userModel;
+    private $services = [];
 
     function __construct()
     {
-        $this->model_price = new Precio;
+        $this->userModel = new UserModel();
+
+        $services = [
+            'PricesControllerService',
+        ];
+        foreach ($services as $service) {
+            $this->services[$service] = ServiceContainer::get($service);
+        }
     }
+
+    private function service($name)
+    {
+        return $this->services[$name] ?? null;
+    }
+    private function validateToken()
+    {
+        $headers = getallheaders();
+        $validation = $this->userModel->validateUserByToken($headers);
+    
+        if ($validation['status'] !== 'SUCCESS') {
+            throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
+        }
+    
+        return $validation['data'];
+    }
+    
     
 
     public function get($params = [])
     {
         // Validar usuario
-        // $headers = getallheaders();
-        // $token = $headers['Authorization'] ?? null;
-        // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
 
-        // $user_id = Token::validateToken($token);
-        // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        $prices = $this->model_price->where("active = '1' ORDER BY price ASC ", array(), ["price"]);
-        foreach ($prices as $i => $row) {
-            $prices[$i]->price = convert_to_price($row->price);
-        }
+        $prices = $this->service('PricesControllerService')->getAllActivesV2();
+        
 
         return $this->jsonResponse(["data" => $prices], 200);
     }

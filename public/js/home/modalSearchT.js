@@ -113,7 +113,7 @@ window.initModalSearchT = function(modalData = {}) {
         debounceTimer = setTimeout(async () => {
             let hoteles = [];
             try {
-                const res = await search_transportation_home(query);
+                const res = await search_transportation_home(query, modalData);
                 hoteles = Array.isArray(res) ? res : [];
             } catch (err) { console.error(err); }
             renderSearchT(hoteles);

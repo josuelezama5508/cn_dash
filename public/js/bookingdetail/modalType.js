@@ -15,7 +15,7 @@ window.openTypeReservationModal = async function (modalData) {
 
     const types = await fetch_typeServices();
     const $typeSelect = $("#modalTypeSelect");
-    types.forEach(c => $typeSelect.append(`<option value="${c.nombre}" ${c.nombre == modalData.tipo ? 'selected' : ''}>${c.nombre}</option>`));
+    types.forEach(c => $typeSelect.append(`<option value="${c.nombre}" ${c.nombre == modalData.type ? 'selected' : ''}>${c.nombre}</option>`));
 
     document.querySelector("#modalGeneric .btn-primary").onclick = async () => {
         const typeservice = $typeSelect.val();

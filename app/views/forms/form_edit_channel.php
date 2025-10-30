@@ -49,7 +49,7 @@
                     let data = text.data;
 
                     $("#divType").html(create_channel_type(data.type));
-                    $("[name='channelname']").val(data.name)
+                    $("[name='channelname']").val(data.nombre)
                     $("[name='channelmethodpay']").val(data.metodopago)
                     // $("#divSubchannel").html(create_channel_subchannel(data.subchannel));
                 }

@@ -30,7 +30,7 @@ function renderResumenOperacion(data) {
                     <td style="width: 120px;">${r.horario}</td>
                     <td style="width: 50%;">${r.actividad}</td>
                     <td style="width: 60px;"><strong>${r.tickets}</strong></td>
-                    <td>${itemsStr}</td>
+                    <!-- <td>${itemsStr}</td> -->
                     <td style="width: 90px;">
                         <button class="btn btn-outline-primary btn-sm abrir-detalle" 
                                 data-horario="${r.horario}" 
@@ -46,7 +46,6 @@ function renderResumenOperacion(data) {
         card.innerHTML = `
             <div class="card-header custom-header text-white d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-calendar-event me-2"></i>${fechaLegible}</strong>
-                <span class="badge bg-light text-dark">${dia.reservas.length} reservas</span>
             </div>
             <div class="card-body p-0">
                 <table class="table table-sm table-bordered mb-0">
@@ -55,7 +54,7 @@ function renderResumenOperacion(data) {
                             <th>Horario</th>
                             <th>Actividad</th>
                             <th>Tickets</th>
-                            <th>Conteo</th>
+                            <!-- <th>Conteo</th> -->
                             <th>Detalles</th>
                         </tr>
                     </thead>
@@ -127,7 +126,7 @@ function abrirModalDetalle(detalles, horario) {
                class="btn btn-sm btn-outline-primary d-block text-nowrap mb-1">
                 ${res.nog}
             </a>
-            <div><span class="badge bg-primary">${res.canal_nombre || 'N/A'}</span></div>
+            <div><span class="badge bg-primary">${res.company_name || 'N/A'}</span></div>
         `;
 
         return `
@@ -154,8 +153,8 @@ function abrirModalDetalle(detalles, horario) {
                     <i class="bi bi-camera-fill text-primary"></i>
                 </td>
                 <td>
-                    <div class="fw-bold text-info">${res.username || 'FERNANDA'}</div>
-                    <div class="small text-muted">${res.canal_nombre || ''}</div>
+                    <div class="fw-bold text-info">${res.canal_nombre || 'FERNANDA'}</div>
+                    <div class="small text-muted">${res.rep_nombre || ''}</div>
                 </td>
                 <td>
                     ${statusBadge}

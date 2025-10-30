@@ -11,6 +11,7 @@ class ShowSapaController extends API
     private $model_showsapa;
     private $model_sapadetails;
     private $model_control;
+    private $model_traveltypes;
 
     function __construct()
     {
@@ -19,6 +20,7 @@ class ShowSapaController extends API
         $this->model_showsapa = new ShowSapa();       
         $this->model_sapadetails = new SapaDetails();
         $this->model_control = new Control();
+        $this->model_traveltypes = new TravelTypes();
     }
     private function get_params($params = [])
     {
@@ -116,74 +118,270 @@ class ShowSapaController extends API
                     $datepicker    = trim($data['datepicker'] ?? '');
                     $origen        = trim($data['origen'] ?? '');
                     $destino       = trim($data['destino'] ?? '');
+                    $origenV        = trim($data['origenV'] ?? '');
+                    $destinoV       = trim($data['destinoV'] ?? '');
                     $horario       = trim($data['horario'] ?? '');
                     $nota          = trim($data['nota'] ?? '');
                     $traslado_tipo = trim($data['traslado_tipo'] ?? '');
                     $proceso       = trim($data['proceso'] ?? '');
                     $usuario       = $userData->id;
+                    $dataTypeTravels = $this->model_traveltypes->getTypeByName($traslado_tipo);
+
+                    // Validar que se obtuvo al menos un registro
+                    if (!empty($dataTypeTravels) && is_array($dataTypeTravels)) {
+                        $dataTypeTravels = $dataTypeTravels[0]; // Obtener el primer registro
+
+                        // Decodificar tipos si es string JSON
+                        if (!empty($dataTypeTravels->tipos)) {
+                            $dataTypeTravels->tipos = json_decode($dataTypeTravels->tipos, true);
+                        }
+                    }
+
                 
                     // Validaciones mínimas
                     if ($cliente_name === '' || $datepicker === '' || $origen === '' || $destino === '') {
                         return $this->jsonResponse(['message' => 'Faltan datos obligatorios para crear la reserva.'], 400);
                     }
+                
                     // Buscar la reserva madre para obtener el nog
                     $controlData = $this->model_control->find($idpago);
                     if (!$controlData) {
                         return $this->jsonResponse(['message' => 'Reserva no encontrada.'], 404);
                     }
                 
-                    // Obtener madre e hijos relacionados
-                    $DataCombos = $this->model_control->getLinkedReservations($controlData->nog);
-                
                     $insertados = [];
-                    foreach ($DataCombos as $combo) {
-                        $camposSapa = [
-                            'datepicker'    => $datepicker,
-                            'idpago'        => $combo->id,
-                            'folio'         => "",
-                            'proceso'       => $proceso,
-                            'usuario'       => $usuario,
-                            'type'          => $tipo
-                        ];
-                        
-                        $responseShowSapa = $this->model_showsapa->insert($camposSapa);
-                
-                        if ($responseShowSapa && isset($responseShowSapa->id)) {
-                            
-                            $insertados[] = $responseShowSapa;
-                            $camposSapaDetails = [
-                                'horario'               => $horario,
-                                'start_point'           => $origen,
-                                'end_point'             => $destino,
-                                'cname'                 => $cliente_name,
-                                'type_transportation'   => $traslado_tipo,
-                                'id_sapa'               => $responseShowSapa->id,
-                                'matricula'             => "",
-                                'chofer_id'             => "",
-                                
+
+                    // ⬇️ INSERTAR RESERVA PRINCIPAL (madre)
+                    if (!empty($dataTypeTravels)) {
+                        if (isset($dataTypeTravels->tipos) && is_array($dataTypeTravels->tipos) && count($dataTypeTravels->tipos) > 0) {
+                            // Caso redondo (tiene tipos ida y vuelta)
+                            foreach ($dataTypeTravels->tipos as $tipoViaje) {   
+                                $tipoTransportacion = $tipoViaje;
+                    
+                                if ($traslado_tipo === 'redondo') {
+                                    if ($tipoViaje === 'ida') {
+                                        $tipoTransportacion = 'redondoI';
+                                    } elseif ($tipoViaje === 'vuelta') {
+                                        $tipoTransportacion = 'redondoV';
+                                    }
+                                }
+                    
+                                $camposSapa = [
+                                    'datepicker'    => $datepicker,
+                                    'idpago'        => $controlData->id,
+                                    'folio'         => "",
+                                    'proceso'       => $proceso,
+                                    'usuario'       => $usuario,
+                                    'type'          => $tipo
+                                ];
+                    
+                                $responseShowSapa = $this->model_showsapa->insert($camposSapa);
+                    
+                                if ($responseShowSapa && isset($responseShowSapa->id)) {
+                                    $insertados[] = $responseShowSapa;
+                    
+                                    $camposSapaDetails = [
+                                        'horario'               => $horario,
+                                        'start_point'           => ($tipoTransportacion === "redondoV") ? $origenV : $origen,
+                                        'end_point'             => ($tipoTransportacion === "redondoV") ? $destinoV : $destino,
+                                        'cname'                 => $cliente_name,
+                                        'type_transportation'   => $tipoTransportacion,
+                                        'id_sapa'               => $responseShowSapa->id,
+                                        'matricula'             => "",
+                                        'chofer_id'             => "",
+                                    ];
+                    
+                                    $responseSapaDetails = $this->model_sapadetails->insert($camposSapaDetails);
+                    
+                                    if ($responseSapaDetails && isset($responseSapaDetails->id)) {
+                                        $this->registrarHistorial(
+                                            $data['module'],
+                                            $responseShowSapa->id,
+                                            'create',
+                                            'Se creó sapa (principal)',
+                                            $userData->id ?? 0,
+                                            null,
+                                            [
+                                                $this->model_showsapa->getTableName() => $responseShowSapa,
+                                                $this->model_sapadetails->getTableName() => $responseSapaDetails
+                                            ]
+                                        );
+                                    }
+                                }
+                            }
+                        } else {
+                            // Caso sencillo (tipos vacío): se usa el nombre directamente como tipo_transportation
+                            $tipoTransportacion = $traslado_tipo;
+                    
+                            $camposSapa = [
+                                'datepicker'    => $datepicker,
+                                'idpago'        => $controlData->id,
+                                'folio'         => "",
+                                'proceso'       => $proceso,
+                                'usuario'       => $usuario,
+                                'type'          => $tipo
                             ];
-                            $responseSapaDetails = $this->model_sapadetails->insert($camposSapaDetails);
-                            if ($responseSapaDetails && isset($responseSapaDetails->id)) {
-                                $this->registrarHistorial(
-                                    $data['module'],
-                                    $responseShowSapa->id,
-                                    'create',
-                                    'Se creó sapa',
-                                    $userData->id ?? 0,
-                                    null,
-                                    [$this->model_showsapa->getTableName() => $responseShowSapa, $this->model_sapadetails->getTableName() =>    $responseSapaDetails  ]
-                                );
+                    
+                            $responseShowSapa = $this->model_showsapa->insert($camposSapa);
+                    
+                            if ($responseShowSapa && isset($responseShowSapa->id)) {
+                                $insertados[] = $responseShowSapa;
+                    
+                                $camposSapaDetails = [
+                                    'horario'               => $horario,
+                                    'start_point'           => $origen,
+                                    'end_point'             => $destino,
+                                    'cname'                 => $cliente_name,
+                                    'type_transportation'   => $tipoTransportacion,
+                                    'id_sapa'               => $responseShowSapa->id,
+                                    'matricula'             => "",
+                                    'chofer_id'             => "",
+                                ];
+                    
+                                $responseSapaDetails = $this->model_sapadetails->insert($camposSapaDetails);
+                    
+                                if ($responseSapaDetails && isset($responseSapaDetails->id)) {
+                                    $this->registrarHistorial(
+                                        $data['module'],
+                                        $responseShowSapa->id,
+                                        'create',
+                                        'Se creó sapa (principal)',
+                                        $userData->id ?? 0,
+                                        null,
+                                        [
+                                            $this->model_showsapa->getTableName() => $responseShowSapa,
+                                            $this->model_sapadetails->getTableName() => $responseSapaDetails
+                                        ]
+                                    );
+                                }
                             }
                         }
                     }
+                    
+                    // ⬇️ INSERTAR RESERVAS HIJAS (combos)
+                    $DataCombos = $this->model_control->getLinkedReservations($controlData->nog);
+                    if (!empty($DataCombos)) {
+                        if (!empty($DataCombos)) {
+                            foreach ($DataCombos as $combo) {
+                                if (!empty($dataTypeTravels) && isset($dataTypeTravels->tipos) && is_array($dataTypeTravels->tipos) && count($dataTypeTravels->tipos) > 0) {
+                                    // Caso redondo
+                                    foreach ($dataTypeTravels->tipos as $tipoViaje) {
+                                        $tipoTransportacion = $tipoViaje;
+                        
+                                        if ($tipo === 'redondo') {
+                                            if ($tipoViaje === 'ida') {
+                                                $tipoTransportacion = 'redondoI';
+                                            } elseif ($tipoViaje === 'vuelta') {
+                                                $tipoTransportacion = 'redondoV';
+                                            }
+                                        }
+                        
+                                        $camposSapa = [
+                                            'datepicker'    => $datepicker,
+                                            'idpago'        => $combo->id,
+                                            'folio'         => "",
+                                            'proceso'       => $proceso,
+                                            'usuario'       => $usuario,
+                                            'type'          => $tipo
+                                        ];
+                        
+                                        $responseShowSapa = $this->model_showsapa->insert($camposSapa);
+                        
+                                        if ($responseShowSapa && isset($responseShowSapa->id)) {
+                                            $insertados[] = $responseShowSapa;
+                        
+                                            $camposSapaDetails = [
+                                                'horario'               => $horario,
+                                                'start_point'           => $origen,
+                                                'end_point'             => $destino,
+                                                'cname'                 => $cliente_name,
+                                                'type_transportation'   => $tipoTransportacion,
+                                                'id_sapa'               => $responseShowSapa->id,
+                                                'matricula'             => "",
+                                                'chofer_id'             => "",
+                                            ];
+                        
+                                            $responseSapaDetails = $this->model_sapadetails->insert($camposSapaDetails);
+                        
+                                            if ($responseSapaDetails && isset($responseSapaDetails->id)) {
+                                                $this->registrarHistorial(
+                                                    $data['module'],
+                                                    $responseShowSapa->id,
+                                                    'create',
+                                                    'Se creó sapa (combo)',
+                                                    $userData->id ?? 0,
+                                                    null,
+                                                    [
+                                                        $this->model_showsapa->getTableName() => $responseShowSapa,
+                                                        $this->model_sapadetails->getTableName() => $responseSapaDetails
+                                                    ]
+                                                );
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    // Caso sencillo
+                                    $tipoTransportacion = $traslado_tipo;
+                        
+                                    $camposSapa = [
+                                        'datepicker'    => $datepicker,
+                                        'idpago'        => $combo->id,
+                                        'folio'         => "",
+                                        'proceso'       => $proceso,
+                                        'usuario'       => $usuario,
+                                        'type'          => $tipo
+                                    ];
+                        
+                                    $responseShowSapa = $this->model_showsapa->insert($camposSapa);
+                        
+                                    if ($responseShowSapa && isset($responseShowSapa->id)) {
+                                        $insertados[] = $responseShowSapa;
+                        
+                                        $camposSapaDetails = [
+                                            'horario'               => $horario,
+                                            'start_point'           => $origen,
+                                            'end_point'             => $destino,
+                                            'cname'                 => $cliente_name,
+                                            'type_transportation'   => $tipoTransportacion,
+                                            'id_sapa'               => $responseShowSapa->id,
+                                            'matricula'             => "",
+                                            'chofer_id'             => "",
+                                        ];
+                        
+                                        $responseSapaDetails = $this->model_sapadetails->insert($camposSapaDetails);
+                        
+                                        if ($responseSapaDetails && isset($responseSapaDetails->id)) {
+                                            $this->registrarHistorial(
+                                                $data['module'],
+                                                $responseShowSapa->id,
+                                                'create',
+                                                'Se creó sapa (combo)',
+                                                $userData->id ?? 0,
+                                                null,
+                                                [
+                                                    $this->model_showsapa->getTableName() => $responseShowSapa,
+                                                    $this->model_sapadetails->getTableName() => $responseSapaDetails
+                                                ]
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                    }
                 
                     if (empty($insertados)) {
-                        return $this->jsonResponse(['message' => 'No se pudo crear ninguna sapa.', 'data'=>$data, 'datacombos'=> $DataCombos], 500);
+                        return $this->jsonResponse([
+                            'message' => 'No se pudo crear ninguna sapa.',
+                            'data' => $data,
+                            'datacombos' => $DataCombos
+                        ], 500);
                     }
                 
                     $httpCode = 201;
                     $response = [
-                        'message' => 'Sapas creada correctamente',
+                        'message' => 'Sapas creadas correctamente',
                         'registros' => $insertados
                     ];
                     break;
@@ -192,7 +390,7 @@ class ShowSapaController extends API
                     return $this->jsonResponse(['message' => 'Acción inválida.', 'action' => $action], 400);
             }
 
-            return $this->jsonResponse(['data' => $responseShowSapa, 'coincidencias' => $coincidencias], $httpCode);
+            return $this->jsonResponse(['data' => $responseShowSapa, 'coincidencias' => $coincidencias, 'tipos'=> $dataTypeTravels], $httpCode);
 
         } catch (Exception $e) {
             return $this->jsonResponse([

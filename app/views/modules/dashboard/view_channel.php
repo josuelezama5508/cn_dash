@@ -21,7 +21,8 @@
                         <table class="table table-hover" style="margin: 0;">
                             <thead>
                                 <tr>
-                                    <th scope="col">Canalp</th>
+                                    <th scope="col">N°</th>
+                                    <th scope="col">Canal</th>
                                     <th scope="col" style="width: 80px;">Rep</th>
                                     <th scope="col" style="width: 280px;">Metodo de pago</th>
                                     <th scope="col" style="width: 260px;">Tipo</th>
@@ -37,8 +38,10 @@
             <!--  -->
         </div>
     </main>
-
-    <script src="<?= asset('/js/channel.js?123') ?>?v=1"></script>
+    
+    <script src="<?= asset('/js/canalesapi.js?124') ?>?v=1"></script>
+    <script src="<?= asset('/js/repsapi.js?124') ?>?v=1"></script>
+    <script src="<?= asset('/js/channel.js?124') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>
 </body>
 
