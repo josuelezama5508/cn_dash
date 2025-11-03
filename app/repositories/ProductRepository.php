@@ -31,8 +31,8 @@ class ProductRepository
     
     public function getProductByCodeV2($search)
     {
-        $fields =["P.product_code AS productcode", "P.company_id AS company", "P.product_name AS productname", "UPPER(LC.code) AS language", "P.price_adult AS productprice", "UPPER(CC.denomination) AS denomination", "P.show_dash AS productstatus", "P.show_web AS web", "L.name AS ubicacion, L.addr AS address_location", "P.link_book", "P.location_image"];
-        $join =  "P INNER JOIN language_codes LC ON P.lang_id = LC.lang_id INNER JOIN currency_codes CC ON P.currency_id = CC.currency_id INNER JOIN location_ports L ON P.id_location = L.id";
+        $fields =["P.product_code AS productcode, P.company_id AS company, P.product_name AS productname, P.price_adult AS productprice, P.show_dash AS productstatus, P.show_web AS web, P.location_image, P.link_book", "UPPER(LC.code) AS language", "UPPER(CC.denomination) AS denomination", "L.name AS ubicacion, L.addr AS address_location"];
+        $join =  "P INNER JOIN language_codes LC ON P.lang_id = LC.lang_id INNER JOIN currency_codes CC ON P.currency_id = CC.currency_id LEFT JOIN location_ports L ON P.id_location = L.id";
         $condicion = "P.product_code = :search ";
         return $this->model->consult($fields, $join, $condicion, ['search' => $search]);
     }

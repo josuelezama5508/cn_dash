@@ -38,7 +38,7 @@ class ProductControllerService
     public function getProductByCodeLang($code, $lang){
         return $this->products_repo->getProductByCodeLang($code, $lang);
     }
-    public function getProductByCodeLangV2($code, $lang){
+    public function getProductByCodeLangV2($code, $lang = '1'){
         return $this->products_repo->getProductByCodeLangV2($code, $lang);
     }
     public function getProductByCodeGroup($code){
@@ -116,8 +116,7 @@ class ProductControllerService
         }, $company_products);
         // Convertir en string para SQL
         $where_not_in = count($used_codes) 
-            ? "product_code NOT IN ('" . implode("','", array_map('addslashes', $used_codes)) . "') AND " 
-            : "";
+            ? ("product_code NOT IN ('" . implode("','", array_map('addslashes', $used_codes)) . "') AND ") : "";
         $products = $this->getProductNotExistingInArrayCodes($where_not_in);
         return $products;
     }
@@ -299,90 +298,146 @@ class ProductControllerService
         return $result;
     }
 
-    private function asginationData($data){
+    private function asginationData($data)
+    {
         $company_id = isset($data['company']) ? validate_id($data['company']) : 0;
         $productcode = isset($data['productcode']) ? validate_productcode($data['productcode']) : '';
-        $productlangArray = isset($data['productlang']) ? (array) $data['productlang'] : [];
-        $productnameArray = isset($data['productname']) ? (array) $data['productname'] : [];
-        $productpriceArray = isset($data['productprice']) ? (array) $data['productprice'] : [];
-        $denominationArray = isset($data['denomination']) ? (array) $data['denomination'] : [];
-        $descriptionArray = isset($data['description']) ? (array) $data['description'] : [];
-        $showpanelArray = isset($data['showpanel']) ? (array) $data['showpanel'] : [];
-        $showwebArray = isset($data['showweb']) ? (array) $data['showweb'] : [];
-        return [$company_id, $productcode, $productlangArray, $productnameArray, $productpriceArray, $denominationArray, $descriptionArray, $showpanelArray, $showwebArray];
+    
+        $arrays = [
+            'productlang' => [],
+            'productname' => [],
+            'productprice' => [],
+            'denomination' => [],
+            'description' => [],
+            'showpanel' => [],
+            'showweb' => []
+        ];
+    
+        foreach ($arrays as $key => &$arr) {
+            $arr = isset($data[$key]) ? (array) $data[$key] : [];
+        }
+    
+        return [
+            $company_id,
+            $productcode,
+            $arrays['productlang'],
+            $arrays['productname'],
+            $arrays['productprice'],
+            $arrays['denomination'],
+            $arrays['description'],
+            $arrays['showpanel'],
+            $arrays['showweb']
+        ];
     }
-    private function asignationArrayProduct($productnameArray, $descriptionArray, $productlangArray, $productpriceArray, $denominationArray, $showpanelArray, $showwebArray)
+    
+    private function asignationArrayProduct(
+        $productname,
+        $description,
+        $productlang,
+        $productprice,
+        $denomination,
+        $showpanel,
+        $showweb
+    ) {
+        $prodname        = trim(validate_productname($productname ?? ''));
+        $proddescription = trim(validate_textarea($description ?? ''));
+    
+        $prodlang_id     = validate_id($productlang ?? 1);
+        $prodprice_id    = validate_id($productprice ?? 1);
+        $prodcurrency_id = validate_id($denomination ?? 1);
+    
+        $prodshowdash = (in_array(intval($showpanel ?? 0), [0, 1])) ? intval($showpanel) : 0;
+        $prodshowweb  = (in_array(intval($showweb ?? 0), [0, 1])) ? intval($showweb) : 0;
+    
+        return [
+            $prodname,
+            $proddescription,
+            $prodlang_id,
+            $prodprice_id,
+            $prodcurrency_id,
+            $prodshowdash,
+            $prodshowweb
+        ];
+    }
+    
+    public function postCreate($data, $userData, $company_service, $history_service)
     {
-          // Aplicamos trim a todos los campos de texto/textarea
-          $prodname        = isset($productnameArray) ? trim(validate_productname($productnameArray)) : '';
-          $proddescription = isset($descriptionArray) ? trim(validate_textarea($descriptionArray)) : '';
-          
-          $prodlang_id = isset($productlangArray) ? validate_id($productlangArray) : 1;
-          // $prodname = isset($productnameArray[$i]) ? validate_productname($productnameArray[$i]) : '';
-          $prodprice_id = isset($productpriceArray) ? validate_id($productpriceArray) : 1;
-          $prodcurrency_id = isset($denominationArray) ? validate_id($denominationArray) : 1;
-          // $proddescription = isset($descriptionArray[$i]) ? validate_textarea($descriptionArray[$i]) : '';
-          $prodshowdash = isset($showpanelArray) ? ((in_array(intval($showpanelArray), [0, 1])) ? intval($showpanelArray) : 0) : 0;
-          $prodshowweb = isset($showwebArray) ? ((in_array(intval($showwebArray), [0, 1])) ? intval($showwebArray) : 0) : 0;
-          return [$prodname, $proddescription, $prodlang_id, $prodprice_id, $prodcurrency_id, $prodshowdash, $prodshowweb];
-    }
-    public function postCreate($data, $userData, $company_service, $history_service){
-        [$company_id, $productcode, $productlangArray, $productnameArray, $productpriceArray, $denominationArray, $descriptionArray, $showpanelArray, $showwebArray] = $this->asginationData($data);
+        [$company_id, $productcode, $productlangArray, $productnameArray, $productpriceArray,
+         $denominationArray, $descriptionArray, $showpanelArray, $showwebArray] = $this->asginationData($data);
+    
         $company = $company_service->find($company_id);
         if (!count((array) $company)) {
             return ['error' => 'Empresa a la que se hace referencia no existe. ' . $company_id, 'status' => 409];
         }
     
-        if (intval(count($productnameArray)) == 0) {
+        if (count($productnameArray) === 0) {
             return ['error' => 'No se enviaron nombres de producto válidos.', 'status' => 400];
         }
-        $ids = array();
+    
+        $ids = [];
         $companyProducts = [];
-        for ($i = 0; $i < intval(count($productnameArray)); $i++) {
-            [$prodname, $proddescription, $prodlang_id, $prodprice_id, $prodcurrency_id, $prodshowdash, $prodshowweb] = $this->asignationArrayProduct($productnameArray[$i], $descriptionArray[$i], $productlangArray[$i], $productpriceArray[$i], $denominationArray[$i], $showpanelArray[$i], $showwebArray[$i]);
-
-           // Registro de los productos
-           $product = $this->insert(array(
-               "product_name" => $prodname,
-               "price_wetsuit" => $prodprice_id,
-               "price_adult" => $prodprice_id,
-               "price_child" => $prodprice_id,
-               "price_rider" => $prodprice_id,
-               "price_photo" => $prodprice_id,
-               "product_code" => $productcode,
-               "description" => $proddescription,
-               "currency_id" => $prodcurrency_id,
-               "productdefine" => "tour",
-               "show_dash" => $prodshowdash,
-               "show_web" => $prodshowweb,
-               "lang_id" => $prodlang_id,
-               "company_id" => $company_id
-           ));
-           if ((array) $product) {
-               $companyProducts[] = [
-                   "codigoproducto" => $productcode,
-                   "bd" => "products"
-               ];
-           }
-           if ((array) $product) {
-               // Capturar evento en el historial
-               $history_service->insert(array(
-                   "module" => $this->getTableName(),
-                   "row_id" => $product->id,
-                   "action" => "create",
-                   "details" => "Nuevo producto creado.",
-                   "user_id" => $userData->id,
-                   "old_data" => json_encode([]),
-                   "new_data" => json_encode($this->find($product->id)),
-               ));
-               $ids[] =$product->id;
-           }
-       }
-       if (!empty($companyProducts)) {
-            // Obtener y mezclar productos anteriores
+    
+        for ($i = 0; $i < count($productnameArray); $i++) {
+    
+            // Evita índices vacíos
+            if (
+                !isset($productnameArray[$i]) ||
+                !isset($descriptionArray[$i]) ||
+                !isset($productlangArray[$i])
+            ) continue;
+    
+            [$prodname, $proddescription, $prodlang_id, $prodprice_id, $prodcurrency_id, $prodshowdash, $prodshowweb]
+                = $this->asignationArrayProduct(
+                    $productnameArray[$i],
+                    $descriptionArray[$i],
+                    $productlangArray[$i],
+                    $productpriceArray[$i] ?? 1,
+                    $denominationArray[$i] ?? 1,
+                    $showpanelArray[$i] ?? 0,
+                    $showwebArray[$i] ?? 0
+                );
+    
+            $product = $this->insert([
+                "product_name"   => $prodname,
+                "price_wetsuit"  => $prodprice_id,
+                "price_adult"    => $prodprice_id,
+                "price_child"    => $prodprice_id,
+                "price_rider"    => $prodprice_id,
+                "price_photo"    => $prodprice_id,
+                "product_code"   => $productcode,
+                "description"    => $proddescription,
+                "currency_id"    => $prodcurrency_id,
+                "productdefine"  => "tour",
+                "show_dash"      => $prodshowdash,
+                "show_web"       => $prodshowweb,
+                "lang_id"        => $prodlang_id,
+                "company_id"     => $company_id
+            ]);
+    
+            if ((array)$product) {
+                $companyProducts[] = [
+                    "codigoproducto" => $productcode,
+                    "bd" => "products"
+                ];
+    
+                $history_service->insert([
+                    "module"    => $this->getTableName(),
+                    "row_id"    => $product->id,
+                    "action"    => "create",
+                    "details"   => "Nuevo producto creado.",
+                    "user_id"   => $userData->id,
+                    "old_data"  => json_encode([]),
+                    "new_data"  => json_encode($this->find($product->id))
+                ]);
+    
+                $ids[] = $product->id;
+            }
+        }
+    
+        if (!empty($companyProducts)) {
             $oldProductsCompany = json_decode($company->productos, true) ?? [];
             $newCompanyProducts = $oldProductsCompany;
-        
+    
             foreach ($companyProducts as $newProduct) {
                 $exists = false;
                 foreach ($newCompanyProducts as $existing) {
@@ -398,10 +453,61 @@ class ProductControllerService
                     $newCompanyProducts[] = $newProduct;
                 }
             }
-            $newCompanyProducts= json_encode($newCompanyProducts);
-            $company_service->update($company->id, array("productos" => $newCompanyProducts));
+    
+            $company_service->update(
+                $company->id,
+                ["productos" => json_encode($newCompanyProducts)]
+            );
         }
+    
         return $ids;
+    }
+    public function asginationDataPut($data)
+    {
+        $adultprice_id = isset($data['adultprice']) ? validate_price($data['adultprice']) : 1;
+        $childprice_id = isset($data['childprice']) ? validate_price($data['childprice']) : 1;
+        $photoprice_id = isset($data['photoprice']) ? validate_price($data['photoprice']) : 1;
+        $riderprice_id = isset($data['riderprice']) ? validate_price($data['riderprice']) : 1;
+        $wetsuitprice_id = isset($data['wetsuitprice']) ? validate_price($data['wetsuitprice']) : 1;
+        $denomination_id = isset($data['denomination']) ? validate_id($data['denomination']) : 1;
+        $producttype = isset($data['producttype']) ? validate_producttype($data['producttype']) : 'tour';
+        $showdash = isset($data['showdash']) ? validate_status($data['showdash']) : 0;
+        $showweb = isset($data['showweb']) ? validate_status($data['showweb']) : 0;
+        $description = isset($data['description']) ? $data['description'] : 0;
+        return [$adultprice_id, $childprice_id, $photoprice_id, $riderprice_id, $wetsuitprice_id, $denomination_id, $producttype, $showdash, $showweb, $description];
+    }
+    public function updateproduct($id, $data, $userData)
+    {
+        $product =  $this->find($id);
+        if (!count((array) $product)) return ["error" => "Producto a la que se hacer referencia no existe.", 'status'=> 404];
+        [$adultprice_id, $childprice_id, $photoprice_id, $riderprice_id, $wetsuitprice_id, $denomination_id, $producttype, $showdash, $showweb, $description] = $this->asginationDataPut($data);
+        $products = $this->getActiveProductByCode($product->product_code);
+        foreach ($products as $p) {
+            $product_id = intval($p->id);
+            $data = array(
+                "price_wetsuit" => $wetsuitprice_id,
+                "price_adult" => $adultprice_id,
+                "price_child" => $childprice_id,
+                "price_photo" => $photoprice_id,
+                "price_rider" => $riderprice_id,
+                "currency_id" => $denomination_id,
+            );
+            $this->update($product_id, $data);
+        }
+        // Actualizar producto
+        $data = array(
+            "currency_id" => $denomination_id,
+            "productdefine" => $producttype,
+            "show_dash" => $showdash,
+            "show_web" => $showweb,
+            "description" => $description
+        );
+        $response = $this->update($id, $data);
+        if($response){
+            return $id;
+        }else{
+            return ['error' => 'Error al actualizar el producto', 'status' => 400];
+        }
     }
 }
 

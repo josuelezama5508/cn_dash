@@ -47,7 +47,7 @@
             </div>
         </div>
     </main>
-
+    <script src="<?= asset('/js/promoapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/promocode.js') ?>?v=1"></script>
     <?php include_once(__DIR__ . '/../../partials/footer_dash.php') ?>
 </body>

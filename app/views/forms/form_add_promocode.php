@@ -273,23 +273,18 @@
         products: selectedProducts,
         companies: selectedCompanies // <-- Añadido
     };
-
-
     console.log(data); // <- aquí puedes verificar la salida antes de enviarla
 
-    fetchAPI('promocode', 'POST', data)
-    .then(async (response) => {
+    fetchAPI('promocode', 'POST', data).then(async (response) => {
         const resData = await response.json();
-        if (response.status === 201) {
+        if (response.status === 200) {
             location.reload();
         } else {
             alert("Error al guardar: " + (resData.message || ''));
         }
-    })
-    .catch((error) => {
+    }).catch((error) => {
         console.error("Error:", error);
     });
-
 }
 
 

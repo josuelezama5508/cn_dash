@@ -111,8 +111,7 @@
                 const result = await response.json();
 
                 if (status == 200) {
-                    let data = result.data;
-
+                    let data = result.data?.data ?? result.data;
                     $("#productname").html(data.productname);
                     create_select('producttype', 'producttype', data.producttype, '#divProducttype');
                     $("#language").html(data.language);

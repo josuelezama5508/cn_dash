@@ -14,53 +14,44 @@ $(document).ready(function() {
 const registered_promocode = async (condition) => {
     try {
         // Llamada a tu API para traer códigos promocionales filtrados por búsqueda
-        let response = await fetch(`${window.url_web}/api/promocode?search=${encodeURIComponent(condition)}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
+        let data =  await search_promocode(condition);
+        if(!data || data.length === 0){
+            // No hay resultados
+            $("#RBuscador").html('<tr><td>No se encontraron códigos promocionales.</td></tr>');
+            return;
+        }
+        let rows = "";
+
+        data.forEach((element) => {
+            rows += `
+                <tr>
+                    <td class="item-box">
+                        <div class="item-box-container" style="padding: 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                                <div class="item-code row-content-left">
+                                    <a href="${window.url_web}/codigopromo/details/${element.id}">${element.codePromo || element.promocode}</a>
+                                </div>
+                                <div class="item-name row-content-left" style="grid-column: span 2;">
+                                    ${element.productname || ''}
+                                </div>
+                                <div class="row-content-right">
+                                    ${status_widget(element.active || element.status)} 
+                                </div>
+                                <strong>Desde: ${element.start_date || element.beginingdate}</strong>
+                                <strong>Hasta: ${element.end_date || element.expirationdate}</strong>
+                                <strong>${getExpirationStatus(element.start_date || element.beginingdate, element.end_date || element.expirationdate)}</strong>
+
+                                <strong>Descuento: ${element.descount || element.discount}%</strong>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
 
-        if (response.ok) {
-            let result = await response.json();
-            let data = result.data || [];
-
-            let rows = "";
-
-            data.forEach((element) => {
-                rows += `
-                    <tr>
-                        <td class="item-box">
-                            <div class="item-box-container" style="padding: 20px;">
-                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                                    <div class="item-code row-content-left">
-                                        <a href="${window.url_web}/codigopromo/details/${element.id}">${element.codePromo || element.promocode}</a>
-                                    </div>
-                                    <div class="item-name row-content-left" style="grid-column: span 2;">
-                                        ${element.productname || ''}
-                                    </div>
-                                    <div class="row-content-right">
-                                        ${status_widget(element.active || element.status)} 
-                                    </div>
-                                    <strong>Desde: ${element.start_date || element.beginingdate}</strong>
-                                    <strong>Hasta: ${element.end_date || element.expirationdate}</strong>
-                                    <strong>${getExpirationStatus(element.start_date || element.beginingdate, element.end_date || element.expirationdate)}</strong>
-
-                                    <strong>Descuento: ${element.descount || element.discount}%</strong>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            // Actualiza el contenido del tbody con id RBuscador
-            $("#RBuscador").html(rows);
-        } else {
-            // Manejar error de respuesta
-            console.error("Error cargando códigos promocionales", response.status);
-            $("#RBuscador").html('<tr><td>No se encontraron códigos promocionales.</td></tr>');
-        }
+        // Actualiza el contenido del tbody con id RBuscador
+        $("#RBuscador").html(rows);
+       
     } catch (error) {
         console.error("Error en la petición:", error);
         $("#RBuscador").html('<tr><td>Error al cargar códigos promocionales.</td></tr>');

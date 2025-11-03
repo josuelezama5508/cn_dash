@@ -1,62 +1,94 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
-require_once __DIR__ . "/../models/Models.php";
-
+require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
-
 class RepController extends API
 {
-    private $model_channel;
-    private $model_rep;
-
-    private $model_user;
-
+    private $userModel;
+    private $services = [];
     function __construct()
     {
-        $this->model_channel = new Canal();
-        $this->model_rep = new Rep();
-        $this->model_user = new UserModel();
-    }
+        $this->userModel = new UserModel();
 
+        $services = [
+            'CanalControllerService',
+            'RepControllerService',
+        ];
+        foreach ($services as $service) {
+            $this->services[$service] = ServiceContainer::get($service);
+        }     
+    }
+    private function service($name)
+    {
+        return $this->services[$name] ?? null;
+    }
+    private function validateToken()
+    {
+        $headers = getallheaders();
+        $validation = $this->userModel->validateUserByToken($headers);
+    
+        if ($validation['status'] !== 'SUCCESS') {
+            throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
+        }
+    
+        return $validation['data'];
+    }
+    
+    private function resolveAction($params, array $map): array
+    {
+        if (is_string($params)) {
+            return isset($map[$params]) ? [$map[$params], null] : ['', null];
+        }
+    
+        foreach ($map as $key => $action) {
+            if (isset($params[$key])) {
+                return [$action, $params[$key]];
+            }
+        }
+    
+        return ['', null];
+    }
 
     public function get($params = [])
     {
-        // Validar usuario
-        // $headers = getallheaders();
-        // $token = $headers['Authorization'] ?? null;
-        // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+        [$action, $search] = $this->resolveAction($params, [
+            'channelid' => 'channelid',
+            'repid' => 'repid',
+            'getExistingNameByIdChannel'=> 'getExistingNameByIdChannel',
+        ]);
+        $service = $this->service('RepControllerService'); 
+        $map = [
+            'channelid' => fn() => $service->channelId($search),
+            'repid' => fn() => $service->repIdService($search),
+            'getExistingNameByIdChannel' => fn() => $service->getExistingRepService($params),
+        ];
+        $response = $map[$action]();
+        $hasError = (is_array($response) && isset($response['error']))
+            || (is_object($response) && property_exists($response, 'error'));
 
-        // $user_id = Token::validateToken($token);
-        // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-
-        [$action, $search] = $this->get_params($params);
-        // if (!$action) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-
-        switch ($action) {
-            case 'channelid':
-                $rep_table_id = $this->model_rep->getTableId();
-                $reps = $this->model_rep->where("idcanal = '$search' ORDER BY $rep_table_id ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC, nombre ASC", array(), ["nombre AS name"]);
-                return $this->jsonResponse(["data" => $reps], 200);
-                break;
-            case 'repid':
-                $rep = $this->model_rep->find($search);
-                if (!count((array) $rep)) return $this->jsonResponse(["message" => "El representante al que se hace referencia no existe."], 404);
-
-                $response = array();
-                $response['id'] = $rep->id;
-                $response['name'] = $rep->nombre;
-                $response['phone'] = $rep->telefono;
-                $response['email'] = $rep->email;
-                $response['commission'] = $rep->comision;
-
-                return $this->jsonResponse(["data" => $response], 200);
-                break;
-            case 'getExistingNameByIdChannel':
-                $dataFBI = json_decode($search, true);
-                $rep = $this->model_rep->getExistingRep($dataFBI['namerep'], $dataFBI['channelId']);
-                return $this->jsonResponse(["data" => $rep], 200);
-                break;
+        if ($hasError) {
+            $errorMsg = is_array($response) ? $response['error'] : $response->error;
+            $status = is_array($response) ? ($response['status'] ?? 400) : ($response->status ?? 400);
+            return $this->jsonResponse([
+                'error' => $errorMsg,
+                'action' => $action,
+                'search' => $search
+            ], $status);
         }
+        if (
+            (is_array($response) && empty($response)) ||
+            (is_object($response) && empty((array)$response))
+        ) {
+            return $this->jsonResponse([
+                'message' => 'El recurso no existe en el servidor.',
+                'action' => $action,
+                'search' => $search,
+                'response' => $response
+            ], 404);
+        }
+
+        return $this->jsonResponse(['data' => $response], 200);
+        
     }
 
     private function get_params($params = [])
@@ -83,20 +115,11 @@ class RepController extends API
 
     public function post($params = [])
     {
-        $headers = getallheaders();
-    
-        // Validar token con el modelo user
-        $validation = $this->model_user->validateUserByToken($headers);
-        if ($validation['status'] !== 'SUCCESS') {
-            return $this->jsonResponse(['message' => $validation['message']], 401);
-        }
-    
-        $userData = $validation['data'];
-        $data = json_decode(file_get_contents("php://input"), true);
+        $userData = $this->validateToken();
+        $data = $this->parseJsonInput();
         if (!isset($data)) {
             return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
         }
-    
         // Canal existente
         $idcanal = validate_id(safe_array_get($data, 'channelid', 0));
         $channel = $this->model_channel->where("id_channel = '$idcanal' AND activo = '1'");
@@ -146,24 +169,16 @@ class RepController extends API
     
     public function put($params = [])
     {
-        $headers = getallheaders();
-        $validation = $this->model_user->validateUserByToken($headers);
-        if ($validation['status'] !== 'SUCCESS') {
-            return $this->jsonResponse(['message' => $validation['message']], 401);
+        $userData = $this->validateToken();
+        $data = $this->parseJsonInput();
+        if (!isset($data)) {
+            return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
         }
-        $userData = $validation['data'];
-    
         $idrep = validate_id(safe_array_get($params, 'id', 0));
         $old_data = $this->model_rep->find($idrep);
         if (!count((array)$old_data)) {
             return $this->jsonResponse(["message" => "El representante que intentas modificar no existe."], 404);
         }
-    
-        $data = json_decode(file_get_contents("php://input"), true);
-        if (!isset($data)) {
-            return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-        }
-    
         // --- Acepta ambos nombres ---
         $nombre   = validate_repname(
             safe_array_get($data, 'repname', safe_array_get($data, 'name', null))
@@ -196,13 +211,7 @@ class RepController extends API
     
     public function delete($params = [])
     {
-        $headers = getallheaders();
-        $validation = $this->model_user->validateUserByToken($headers);
-        if ($validation['status'] !== 'SUCCESS') {
-            return $this->jsonResponse(['message' => $validation['message']], 401);
-        }
-        $userData = $validation['data'];
-    
+        $userData = $this->validateToken();
         $idrep = validate_id(safe_array_get($params, 'id', 0));
         $old_data = $this->model_rep->find($idrep);
         if (!count((array)$old_data)) return $this->jsonResponse(["message" => "El representante que intentas eliminar no existe."], 404);

@@ -41,6 +41,28 @@ class RepControllerService
     {    
         return $this->rep_repo->getExistingRep($name, $channelID);
     }
+    public function channelId($search)
+    {
+        return $this->rep_repo->channelId($search);
+    }
+    public function repIdService($search)
+    {
+        $rep = $this->find($search);
+        if (!count((array) $rep)) return ["error" => "El representante al que se hace referencia no existe.", 'status' => 404];
+        $response = array();
+        $response['id'] = $rep->id;
+        $response['name'] = $rep->nombre;
+        $response['phone'] = $rep->telefono;
+        $response['email'] = $rep->email;
+        $response['commission'] = $rep->comision;
+        return $response;
+    }
+    public function getExistingRepService($search)
+    {
+        $dataFBI = json_decode($search, true);
+        $rep = $this->getExistingRep($dataFBI['namerep'], $dataFBI['channelId']);
+        return $rep;
+    }
 }
 
 

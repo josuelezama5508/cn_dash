@@ -47,4 +47,8 @@ class RepRepository
     public function getExistingRep($name, $channelID){
         return $this->model->where('nombre = :name AND idcanal = :channelID', ['name'=> $name, 'channelID' => $channelID]);
     }
+    public function channelId($search)
+    {
+        return $this->model->where("idcanal = :canal ORDER BY idrep ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC, nombre ASC", ['canal' => $search], ["nombre AS name"]);
+    }
 }

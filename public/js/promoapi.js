@@ -16,3 +16,20 @@ async function fetch_promocode(companyCode, promoCode) {
         return null;
     }
 }
+async function search_promocode(search) {
+    try {
+        const endpoint = `promocode?search=${encodeURIComponent(search)}`;
+        const response = await fetchAPI(endpoint, 'GET');
+        const result = await response.json();
+
+        if (response.ok && result.data?.length) {
+            return result.data; // ✅ retorna promo encontrada
+        } else {
+            console.warn("Código promocional no encontrado");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error al buscar código promocional:", error);
+        return null;
+    }
+}

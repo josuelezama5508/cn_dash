@@ -2,30 +2,9 @@
 require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
-// require_once __DIR__ . '/../helpers/validations.php';
-// require_once __DIR__ . '/../models/Models.php';
-// require_once __DIR__ . '/../models/UserModel.php';
 
 class ProductController extends API
 {
-    // private $model_company;
-    // private $model_product;
-    // private $model_language_code;
-    // private $model_currency_code;
-    // private $model_price;
-    // private $model_history;
-    // private $model_user;
-
-    // public function __construct()
-    // {
-    //     $this->model_company = new Empresa();
-    //     $this->model_product = new Productos();
-    //     $this->model_language_code = new Idioma();
-    //     $this->model_currency_code = new Denominacion();
-    //     $this->model_price = new Precio();
-    //     $this->model_history = new History();
-    //     $this->model_user = new UserModel();
-    // }
     private $userModel;
     private $services = [];
 
@@ -101,7 +80,7 @@ class ProductController extends API
                 'langdata'=> 'langdata',
                 'allDataLang' => 'allDataLang',
                 'search' => 'search',
-                            
+                'id' => 'id'           
             ]);
             $service = $this->service('ProductControllerService'); 
 
@@ -116,15 +95,39 @@ class ProductController extends API
                 'langdata' => fn() => $service->getLangData($search),
                 'allDataLang' => fn() => $service->getAllDataLang($search, $this->service('CompanyControllerService')),
                 'search' => fn() => $service->search($search),
+                'id' => fn() => $service->getProductId($search),
             ];
             $response = $map[$action]();
-            if (isset($response['error'])) {
-                return $this->jsonResponse([$response, 'action' => $action, 'search' => $search], $response['status']);
-            }            
-            if (empty($response)) {
-                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.', 'action' => $action, 'search' => $search, 'response' => $response], 404);
+
+            // Validar si tiene 'error', ya sea array o stdClass
+            $hasError = (is_array($response) && isset($response['error']))
+                || (is_object($response) && property_exists($response, 'error'));
+
+            if ($hasError) {
+                $errorMsg = is_array($response) ? $response['error'] : $response->error;
+                $status = is_array($response) ? ($response['status'] ?? 400) : ($response->status ?? 400);
+                return $this->jsonResponse([
+                    'error' => $errorMsg,
+                    'action' => $action,
+                    'search' => $search
+                ], $status);
             }
+
+            // Validar si está vacío (funciona para array u objeto)
+            if (
+                (is_array($response) && empty($response)) ||
+                (is_object($response) && empty((array)$response))
+            ) {
+                return $this->jsonResponse([
+                    'message' => 'El recurso no existe en el servidor.',
+                    'action' => $action,
+                    'search' => $search,
+                    'response' => $response
+                ], 404);
+            }
+
             return $this->jsonResponse(['data' => $response], 200);
+
             // Validar usuario
            
         } catch (Exception $e) {
@@ -153,62 +156,21 @@ class ProductController extends API
     public function put($params = [])
     {
         try {
-            // $httpCode = 403;
-            // $response = array('message' => 'No tienes permisos para acceder al recurso.');
-
-            $headers = getallheaders();
-            $validation = $this->model_user->validateUserByToken($headers);
-            if ($validation['status'] !== 'SUCCESS') {
-                return $this->jsonResponse(['message' => $validation['message']], 401);
-            }
-            $userData = $validation['data'];
+            $userData = $this->validateToken();
             if (!isset($params['id'])) return $this->jsonResponse(["message" => "Producto a la que se hacer referencia no existe."], 404);
 
             $search = validate_id($params['id']);
-            $product = $this->model_product->find($search);
-            if (!count((array) $product)) return $this->jsonResponse(["message" => "Producto a la que se hacer referencia no existe."], 404);
-
-            $data = json_decode(file_get_contents("php://input"), true);
+            
+            $data =$this->parseJsonInput();
             if (!isset($data)) return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-
-            $adultprice_id = isset($data['adultprice']) ? validate_price($data['adultprice']) : 1;
-            $childprice_id = isset($data['childprice']) ? validate_price($data['childprice']) : 1;
-            $photoprice_id = isset($data['photoprice']) ? validate_price($data['photoprice']) : 1;
-            $riderprice_id = isset($data['riderprice']) ? validate_price($data['riderprice']) : 1;
-            $wetsuitprice_id = isset($data['wetsuitprice']) ? validate_price($data['wetsuitprice']) : 1;
-            $denomination_id = isset($data['denomination']) ? validate_id($data['denomination']) : 1;
-            $producttype = isset($data['producttype']) ? validate_producttype($data['producttype']) : 'tour';
-            $showdash = isset($data['showdash']) ? validate_status($data['showdash']) : 0;
-            $showweb = isset($data['showweb']) ? validate_status($data['showweb']) : 0;
-            $description = isset($data['description']) ? $data['description'] : 0;
-            // Actualizar todas los productos por referencia
-            $products = $this->model_product->where("product_code = :product_code AND active = '1'", array("product_code" => $product->product_code));
-            foreach ($products as $row) {
-                $product_id = intval($row->id);
-                $data = array(
-                    "price_wetsuit" => $wetsuitprice_id,
-                    "price_adult" => $adultprice_id,
-                    "price_child" => $childprice_id,
-                    "price_photo" => $photoprice_id,
-                    "price_rider" => $riderprice_id,
-                );
-                $this->model_product->update($product_id, $data);
+            $response = $this->service("ProductControllerService")->updateproduct($search, $data, $userData);
+            if (isset($response['error'])) {
+                return $this->jsonResponse($response, $response['status']);
+            }  
+            if (empty($response)) {
+                return $this->jsonResponse(['message' => 'El recurso no se pudo crear en el servidor.'], 400);
             }
-
-            // Actualizar producto
-            $data = array(
-                "currency_id" => $denomination_id,
-                "productdefine" => $producttype,
-                "show_dash" => $showdash,
-                "show_web" => $showweb,
-                "description" => $description
-            );
-            $this->model_product->update($search, $data);
-
-            $httpCode = 200;
-            $response = array("data" => $product_id);
-
-            return $this->jsonResponse($response, $httpCode);
+            return $this->jsonResponse(['data' => $response], 200);
         } catch (Exception $e) {
             return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
         }
