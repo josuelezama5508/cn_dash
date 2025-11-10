@@ -419,16 +419,16 @@ class ProductControllerService
                     "codigoproducto" => $productcode,
                     "bd" => "products"
                 ];
-    
-                $history_service->insert([
-                    "module"    => $this->getTableName(),
-                    "row_id"    => $product->id,
-                    "action"    => "create",
-                    "details"   => "Nuevo producto creado.",
-                    "user_id"   => $userData->id,
-                    "old_data"  => json_encode([]),
-                    "new_data"  => json_encode($this->find($product->id))
-                ]);
+                $history_service->registrarOActualizar($this->getTableName(), $product->id, 'create', 'Nuevo producto creado.', $userData->id, [], $this->find($product->id));
+                // $history_service->insert([
+                //     "module"    => $this->getTableName(),
+                //     "row_id"    => $product->id,
+                //     "action"    => "create",
+                //     "details"   => "Nuevo producto creado.",
+                //     "user_id"   => $userData->id,
+                //     "old_data"  => json_encode([]),
+                //     "new_data"  => json_encode($this->find($product->id))
+                // ]);
     
                 $ids[] = $product->id;
             }

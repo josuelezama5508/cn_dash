@@ -34,6 +34,10 @@ class ItemProductControllerService
     {
         return $this->itemproduct_repo->ItemsProductsByCodeProducts($productcode);
     }
+    public function getByCodeProduct($code)
+    {
+        return $this->itemproduct_repo->getByCodeProduct($code);
+    }
     public function caseGetProductCode($productcode, $price_service)
     {
         $response = $this->ItemsProductsByCodeProducts($productcode);
@@ -79,17 +83,17 @@ class ItemProductControllerService
                 if (!is_object($ptag) || empty($ptag->id)) {
                     continue; // inserción fallida o inválida
                 }
-        
-                $history_service->insert([
-                    "module" => $this->getTableName(),
-                    "row_id" => $ptag->id,
-                    "action" => "create",
-                    "details" => "Nuevo tag creado.",
-                    "user_id" => $userData->id ?? 0,
-                    "old_data" => json_encode([]),
-                    "new_data" => json_encode($this->find($ptag->id)),
-                ]);
-        
+                $history_service->registrarOActualizar($this->getTableName(), $ptag->id, 'create', 'Nuevo tag creado.', $userData->id, [], $this->find($ptag->id));
+                // $history_service->insert([
+                //     "module" => $this->getTableName(),
+                //     "row_id" => $ptag->id,
+                //     "action" => "create",
+                //     "details" => "Nuevo tag creado.",
+                //     "user_id" => $userData->id ?? 0,
+                //     "old_data" => json_encode([]),
+                //     "new_data" => json_encode($this->find($ptag->id)),
+                // ]);
+                
                 $ids[] = $ptag->id;
             }
             return empty($ids) ? ["error" => "No se crearon registros válidos."] : $ids;
@@ -118,15 +122,16 @@ class ItemProductControllerService
 
             $updated = $this->update($row->tagitem, ['position' => $row->position]);
             if ($updated) {
-                $history_service->insert([
-                    'module' => $this->getTableName(),
-                    'row_id' => $tag->id,
-                    'action' => 'update',
-                    'details' => 'Posición del tag actualizada.',
-                    'user_id' => $userData->id ?? 0,
-                    'old_data' => json_encode($tag),
-                    'new_data' => json_encode($this->find($tag->id)),
-                ]);
+                $history_service->registrarOActualizar($this->getTableName(), $tag->id, 'update', 'Posicion del tag actualizada.', $userData->id, $tag, $this->find($tag->id));
+                // $history_service->insert([
+                //     'module' => $this->getTableName(),
+                //     'row_id' => $tag->id,
+                //     'action' => 'update',
+                //     'details' => 'Posición del tag actualizada.',
+                //     'user_id' => $userData->id ?? 0,
+                //     'old_data' => json_encode($tag),
+                //     'new_data' => json_encode($this->find($tag->id)),
+                // ]);
                 $ids[] = $tag->id;
             }
         }
@@ -152,16 +157,16 @@ class ItemProductControllerService
 
         $updated = $this->update($tagItem->tagitem, ['position' => $tagItem->position]);
         if (!$updated) return ['error' => 'No se pudo actualizar la posición.'];
-
-        $history_service->insert([
-            'module' => $this->getTableName(),
-            'row_id' => $tag->id,
-            'action' => 'update',
-            'details' => 'Posición del tag actualizada.',
-            'user_id' => $userData->id ?? 0,
-            'old_data' => json_encode($tag),
-            'new_data' => json_encode($this->find($tag->id)),
-        ]);
+        $history_service->registrarOActualizar($this->getTableName(), $tag->id, 'update', 'Posicion del tag actualizada.', $userData->id, $tag, $tag->id);
+        // $history_service->insert([
+        //     'module' => $this->getTableName(),
+        //     'row_id' => $tag->id,
+        //     'action' => 'update',
+        //     'details' => 'Posición del tag actualizada.',
+        //     'user_id' => $userData->id ?? 0,
+        //     'old_data' => json_encode($tag),
+        //     'new_data' => json_encode($this->find($tag->id)),
+        // ]);
 
         return [$tag->id];
     }
@@ -180,16 +185,16 @@ class ItemProductControllerService
 
         $updated = $this->update($tagId, [$field => $value]);
         if (!$updated) return ['error' => "No se pudo actualizar {$field}."];
-
-        $history_service->insert([
-            'module' => $this->getTableName(),
-            'row_id' => $tag->id,
-            'action' => 'update',
-            'details' => "Campo {$field} actualizado.",
-            'user_id' => $userData->id ?? 0,
-            'old_data' => json_encode($tag),
-            'new_data' => json_encode($this->find($tag->id)),
-        ]);
+        $history_service->registrarOActualizar($this->getTableName(), $tag->id, 'update', "Campo {$field} actualizado.", $userData->id, $tag, $this->find($tag->id));
+        // $history_service->insert([
+        //     'module' => $this->getTableName(),
+        //     'row_id' => $tag->id,
+        //     'action' => 'update',
+        //     'details' => "Campo {$field} actualizado.",
+        //     'user_id' => $userData->id ?? 0,
+        //     'old_data' => json_encode($tag),
+        //     'new_data' => json_encode($this->find($tag->id)),
+        // ]);
 
         return [$tag->id];
     }
@@ -199,16 +204,17 @@ class ItemProductControllerService
         if (!count((array) $tag)) return ['error' => 'El recurso que intentas eliminar no existe.' . json_encode($tag)];
         
         $_tag = $this->update($id, array("active" => "0"));
-        if ($_tag) {
-            $this->model_history->insert(array(
-                "module" => $this->getTableName(),
-                "row_id" => $tag->id,
-                "action" => "delete",
-                "details" => "Tag eliminado.",
-                "user_id" => $userData->id,
-                "old_data" => json_encode($tag),
-                "new_data" => json_encode($this->find($tag->id)),
-            ));
+        if ($_tag) {        
+            $history_service->registrarOActualizar($this->getTableName(), $tag->id, 'delete', "Tag desactivado.", $userData->id, $tag, $this->find($tag->id));
+            // $this->history_service->insert(array(
+            //     "module" => $this->getTableName(),
+            //     "row_id" => $tag->id,
+            //     "action" => "delete",
+            //     "details" => "Tag eliminado.",
+            //     "user_id" => $userData->id,
+            //     "old_data" => json_encode($tag),
+            //     "new_data" => json_encode($this->find($tag->id)),
+            // ));
             
             return $id;
         }else{

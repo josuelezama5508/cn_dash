@@ -33,4 +33,8 @@ class LanguageCodesControllerService
     {
         return $this->languagecodes_repo->getLanguageCode($search);
     }
+    public function getByCode($lang)
+    {
+        return $this->languagecodes_repo->getByCode($lang);
+    }
 }

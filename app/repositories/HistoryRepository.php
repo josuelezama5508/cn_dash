@@ -27,7 +27,7 @@ class HistoryRepository
     public function update($id, array $data){
         return  $this->model->update($id, $data);
     }
-    function getHistoryByIdRowAndModuleAndType($id, $module){
+    function getHistoryByIdRowAndModuleAndType($id, $module, $action){
         return $this->model->where("row_id = :idpago AND module = :module AND action = :action", ['idpago' => $id, 'module' => $module, 'action' => $action]);
     }
 }

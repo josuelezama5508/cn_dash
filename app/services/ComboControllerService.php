@@ -129,19 +129,20 @@ class ComboControllerService
         $this->update($data['id'], $dataUpdateCombo);
     
         $comboNew = $this->find($data['id']);
-        $history_service->registrarHistorial(
-            'Products',
-            $data['id'],
-            'update',
-            'Actualización de combos',
-            $userData->id,
-            [
-                $this->getTableName() => $comboOld
-            ],
-            [
-                $this->getTableName() => $comboNew,
-            ]
-        );
+        $history_service->registrarOActualizar($this->getTableName(), $data['id'], 'update', 'Actualizacion de combos', $userData->id,[$this->getTableName() => $comboOld],[$this->getTableName() => $comboNew]);
+        // $history_service->registrarHistorial(
+        //     'Products',
+        //     $data['id'],
+        //     'update',
+        //     'Actualización de combos',
+        //     $userData->id,
+        //     [
+        //         $this->getTableName() => $comboOld
+        //     ],
+        //     [
+        //         $this->getTableName() => $comboNew,
+        //     ]
+        // );
     
         return ['message' => 'Reserva reagendada correctamente'];
     }

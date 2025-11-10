@@ -208,23 +208,38 @@ class ModelTable
         $return = false;
         $sentencias  = '';
         try {
-            foreach ($datos as $campos => $value) {
-                $sentencias .= "$campos = :$campos,";
+            foreach ($datos as $campo => $value) {
+                $sentencias .= "$campo = :$campo,";
             }
             $sentencias = trim($sentencias, ',');
-            $sql = "UPDATE $this->table SET $sentencias WHERE $this->id_table = $id";
-            $result = $this->conexion_pdo->prepare($sql);
-            $result->execute($datos);
-            $return = true;
+
+            $sql = "UPDATE $this->table SET $sentencias WHERE $this->id_table = :id";
+            $stmt = $this->conexion_pdo->prepare($sql);
+            $datos['id'] = $id;
+
+            error_log("[ModelTable::_update] SQL: $sql");
+            error_log("[ModelTable::_update] DATA: " . json_encode($datos));
+
+            $ok = $stmt->execute($datos);
+
+            if (!$ok) {
+                $error = $stmt->errorInfo();
+                error_log("[ModelTable::_update] ERROR: " . implode(' | ', $error));
+                $return = false;
+            } else {
+                $return = true;
+            }
+
             $this->sql = $sql;
         } catch (PDOException $e) {
-            array_push($this->error, $e);
-            array_push($this->error, $sql);
+            error_log("[ModelTable::_update] EXCEPCIÓN: " . $e->getMessage());
+            error_log("[ModelTable::_update] SQL: $sql");
             $return = false;
         }
         $this->conexion_pdo = null;
         return $return;
     }
+
 
     /**
      * Funcion delete, Elimina un registro especifico dado por el ID

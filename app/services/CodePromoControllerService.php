@@ -82,17 +82,18 @@ class CodePromoControllerService
             "productsCode"  => isset($data['products']) ? json_encode($data['products']) : null,
         ];
         $_code = $this->insert($insertData);
-        if (count((array) $_code)) {           
-            $history_service->insert(array(
-                "module" => $this->getTableName(),
-                "row_id" => $_code->id,
-                "action" => "create",
-                "details" => "Nuevo codigo promo creado.",
-                "user_id" => $userData->id,
-                'active' => '1',
-                "old_data" => json_encode([]),
-                "new_data" => json_encode($this->find($_code->id)),
-            ));
+        if (count((array) $_code)) {
+            $history_service->registrarOActualizar($this->getTableName(), $_code->id, 'create', 'Nuevo codigo promo creado', $userData->id, [], $this->find($_code->id));           
+            // $history_service->insert(array(
+            //     "module" => $this->getTableName(),
+            //     "row_id" => $_code->id,
+            //     "action" => "create",
+            //     "details" => "Nuevo codigo promo creado.",
+            //     "user_id" => $userData->id,
+            //     'active' => '1',
+            //     "old_data" => json_encode([]),
+            //     "new_data" => json_encode($this->find($_code->id)),
+            // ));
 
             return $_code->id;
         } else {
@@ -146,15 +147,16 @@ class CodePromoControllerService
         }
         $_promocode = $this->update($id, $updateData);
         if ($_promocode) {
-            $history_service->insert([
-                "module"    => $this->getTableName(),
-                "row_id"    => $_code->id,
-                "action"    => "update",
-                "details"   => "Codigo promo actualizado.",
-                "user_id"   => $userData->id,
-                "old_data"  => json_encode($_code),
-                "new_data"  => json_encode($this->find($_code->id)),
-            ]);
+            $history_service->registrarOActualizar($this->getTableName(), $_code->id, 'update', 'Codigo promo actualizado.', $userData->id, $_code, $this->find($_code->id));
+            // $history_service->insert([
+            //     "module"    => $this->getTableName(),
+            //     "row_id"    => $_code->id,
+            //     "action"    => "update",
+            //     "details"   => "Codigo promo actualizado.",
+            //     "user_id"   => $userData->id,
+            //     "old_data"  => json_encode($_code),
+            //     "new_data"  => json_encode($this->find($_code->id)),
+            // ]);
 
             return $_code->id;
         }

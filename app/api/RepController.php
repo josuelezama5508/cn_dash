@@ -13,6 +13,7 @@ class RepController extends API
         $services = [
             'CanalControllerService',
             'RepControllerService',
+            'HistoryControllerService',
         ];
         foreach ($services as $service) {
             $this->services[$service] = ServiceContainer::get($service);
@@ -49,6 +50,15 @@ class RepController extends API
         return ['', null];
     }
 
+    private function parseJsonInput()
+    {
+        $input = file_get_contents('php://input');
+        $decoded = json_decode($input, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('JSON inválido', 400);
+        }
+        return $decoded;
+    }
     public function get($params = [])
     {
         [$action, $search] = $this->resolveAction($params, [
@@ -60,7 +70,7 @@ class RepController extends API
         $map = [
             'channelid' => fn() => $service->channelId($search),
             'repid' => fn() => $service->repIdService($search),
-            'getExistingNameByIdChannel' => fn() => $service->getExistingRepService($params),
+            'getExistingNameByIdChannel' => fn() => $service->getExistingRepService($search),
         ];
         $response = $map[$action]();
         $hasError = (is_array($response) && isset($response['error']))
@@ -72,18 +82,22 @@ class RepController extends API
             return $this->jsonResponse([
                 'error' => $errorMsg,
                 'action' => $action,
-                'search' => $search
+                'search' => $search,
+                'params' => $params
             ], $status);
         }
-        if (
-            (is_array($response) && empty($response)) ||
-            (is_object($response) && empty((array)$response))
-        ) {
+        if ((is_array($response) && empty($response)) || (is_object($response) && empty((array)$response))) 
+        {
+            // si el action es 'getExistingNameByIdChannel' devuelve 200 con data vacía
+            if ($action === 'getExistingNameByIdChannel') {
+                return $this->jsonResponse(['data' => []], 200);
+            }
             return $this->jsonResponse([
                 'message' => 'El recurso no existe en el servidor.',
                 'action' => $action,
-                'search' => $search,
-                'response' => $response
+                'search' => json_decode($search, true),
+                'response' => $response,
+                'params' => $params
             ], 404);
         }
 
@@ -91,79 +105,21 @@ class RepController extends API
         
     }
 
-    private function get_params($params = [])
-    {
-        if (!isset($params)) return ['', ''];
-
-        $action = '';
-        $search = '';
-
-        if (isset($params['channelid'])) {
-            $action = 'channelid';
-            $search = $params['channelid'];
-        } else if (isset($params['repid'])) {
-            $action = 'repid';
-            $search = $params['repid'];
-        }else if(isset($params['getExistingNameByIdChannel'])){
-            $action = 'getExistingNameByIdChannel';
-            $search = $params['getExistingNameByIdChannel'];
-        }
-
-        return [$action, $search];
-    }
-
-
     public function post($params = [])
     {
-        $userData = $this->validateToken();
-        $data = $this->parseJsonInput();
-        if (!isset($data)) {
-            return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
-        }
-        // Canal existente
-        $idcanal = validate_id(safe_array_get($data, 'channelid', 0));
-        $channel = $this->model_channel->where("id_channel = '$idcanal' AND activo = '1'");
-        if (!count($channel)) {
-            return $this->jsonResponse(["message" => "El canal al que se hace referencia no existe."], 404);
-        }
-    
-        // Arrays de reps
-        $rep_nameArray       = (array)safe_array_get($data, 'repname', []);
-        $rep_emailArray      = (array)safe_array_get($data, 'repemail', []);
-        $rep_phoneArray      = (array)safe_array_get($data, 'repphone', []);
-        $rep_commissionArray = (array)safe_array_get($data, 'repcommission', []);
-    
-        $ids = [];
-        for ($i = 0; $i < count($rep_nameArray); $i++) {
-            $rep_name       = validate_repname(safe_array_index($rep_nameArray, $i, null));
-            $rep_phone      = validate_phone_rep(safe_array_index($rep_phoneArray, $i, null));
-            $rep_email      = validate_email(safe_array_index($rep_emailArray, $i, null));
-            $rep_commission = validate_int(safe_array_index($rep_commissionArray, $i, null));
-    
-            // Validación obligatoria
-            if (!empty($rep_name)) {
-                $new_rep = $this->model_rep->insert([
-                    "nombre"   => $rep_name,
-                    "telefono" => $rep_phone ?: null,
-                    "email"    => $rep_email ?: null,
-                    "idcanal"  => $idcanal,
-                    "comision" => $rep_commission,
-                ]);
-    
-                if (count((array)$new_rep)) {
-                    $ids[] = $new_rep->id;
-                }
-            } else {
-                return $this->jsonResponse([
-                    "message" => "Cada rep debe incluir nombre y comisión obligatorios."
-                ], 400);
+        try {
+            $userData = $this->validateToken();
+            $data = $this->parseJsonInput();
+            $response = $this->service('RepControllerService')->postCreate($data, $userData, $this->service('HistoryControllerService'), $this->service('CanalControllerService'));
+            if (isset($response['error'])) {
+                return $this->jsonResponse($response, $response['status']);
+            }  
+            if (empty($response)) {
+                return $this->jsonResponse(['message' => 'El recurso no se pudo crear en el servidor.'], 400);
             }
-        }
-    
-        if (count($ids)) {
-            return $this->jsonResponse(["message" => "El recurso fue creado con éxito."], 201);
-        } else {
-            return $this->jsonResponse(["message" => "No se crearon reps, faltan datos obligatorios."], 400);
+            return $this->jsonResponse(['data' => $response], 200);
+        } catch (Exception $e) {
+            return $this->jsonResponse(['message' => 'No tienes permisos para acceder al recurso.'], 400);
         }
     }
     
@@ -171,56 +127,27 @@ class RepController extends API
     {
         $userData = $this->validateToken();
         $data = $this->parseJsonInput();
-        if (!isset($data)) {
-            return $this->jsonResponse(["message" => "Error en los datos enviados."], 400);
+        $response = $this->service('RepControllerService')->putRep($data, $params, $userData, $this->service('HistoryControllerService'));
+        if (isset($response['error'])) {
+            return $this->jsonResponse($response, $response['status']);
+        }  
+        if (!$response) {
+            return $this->jsonResponse(['message' => 'El recurso no se pudo actualizar en el servidor.'], 400);
         }
-        $idrep = validate_id(safe_array_get($params, 'id', 0));
-        $old_data = $this->model_rep->find($idrep);
-        if (!count((array)$old_data)) {
-            return $this->jsonResponse(["message" => "El representante que intentas modificar no existe."], 404);
-        }
-        // --- Acepta ambos nombres ---
-        $nombre   = validate_repname(
-            safe_array_get($data, 'repname', safe_array_get($data, 'name', null))
-        );
-        $telefono = validate_phone_rep(
-            safe_array_get($data, 'repphone', safe_array_get($data, 'phone', null))
-        );
-        $email    = validate_email(
-            safe_array_get($data, 'repemail', safe_array_get($data, 'email', null))
-        );
-        $comision = validate_int(
-            safe_array_get($data, 'repcommission', safe_array_get($data, 'commission', null))
-        );
-    
-        if (!empty($nombre) && $comision !== null) {
-            $_rep = $this->model_rep->update($idrep, [
-                "nombre"   => $nombre,
-                "telefono" => $telefono ?: null,
-                "email"    => $email ?: null,
-                "comision" => $comision
-            ]);
-            if ($_rep) {
-                return $this->jsonResponse(["message" => "Actualización exitosa del recurso."], 204);
-            }
-        }
-    
-        return $this->jsonResponse(["message" => "Nombre y comisión son obligatorios para actualizar."], 400);
+        return $this->jsonResponse(["message" => "Actualización exitosa del recurso."], 204);//CAMBIAR A 200 PARA VER LA RESPUESTA, OJO: TIENES QUE MODIFCAR EL JS PARA RECIBIR RESPUESTAS 200
     }
-    
-    
+
     public function delete($params = [])
     {
         $userData = $this->validateToken();
-        $idrep = validate_id(safe_array_get($params, 'id', 0));
-        $old_data = $this->model_rep->find($idrep);
-        if (!count((array)$old_data)) return $this->jsonResponse(["message" => "El representante que intentas eliminar no existe."], 404);
-    
-        $_rep = $this->model_rep->delete($idrep);
-        if ($_rep) {
-            return $this->jsonResponse(["message" => "Eliminación exitosa del recurso."], 204);
-        } else {
-            return $this->jsonResponse(["message" => "No se pudo eliminar el representante."], 400);
+        $response = $this->service('RepControllerService')->deleteRep($params, $userData, $this->service('HistoryControllerService'));
+        if (isset($response['error'])) {
+            return $this->jsonResponse($response, $response['status']);
+        }  
+        if (!$response) {
+            return $this->jsonResponse(['message' => 'No se pudo eliminar el representante.'], 400);
         }
+        return $this->jsonResponse(["message" => "Eliminación exitosa del recurso."], 204);
+       
     }
 }

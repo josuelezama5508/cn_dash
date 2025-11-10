@@ -52,15 +52,16 @@ class HotelControllerService {
             }
 
             // Registrar historial
-            $history_service->registrarHistorial(
-                'hoteles',
-                $hotelId,
-                'delete',
-                'Se eliminó un hotel',
-                $userData->id ?? 0,
-                $hotel,
-                null
-            );
+            $history_service->registrarOActualizar($this->getTableName(), $hotelId, 'delete', 'Se eliminó un hotel', $userData->id, $hotel, []);
+            // $history_service->registrarHistorial(
+            //     'hoteles',
+            //     $hotelId,
+            //     'delete',
+            //     'Se eliminó un hotel',
+            //     $userData->id ?? 0,
+            //     $hotel,
+            //     null
+            // );
 
             return [
                 'status' => 200,

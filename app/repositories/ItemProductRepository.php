@@ -22,6 +22,10 @@ class ItemProductRepository{
     public function insert(array $data){
         return $this->model->insert($data);
     }
+    public function getByCodeProduct($code)
+    {
+        return $this->model->where("productcode = :productcode AND active = '1'", ['productcode' => $code]);
+    }
     function getItemByCodeProduct($clave)
     {
         $campos = ["T.*"];

@@ -1,48 +1,68 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
-require_once __DIR__ . '/../models/Models.php';
-
-
+require_once __DIR__ . "/../../app/core/ServiceContainer.php";
+require_once __DIR__ . '/../models/UserModel.php';
 class TypeServiceController extends API
 {
-
+    private $userModel;
+    private $services = [];
     public function __construct()
     {
-        $this->model_typeservice = new TypeService();
+        $this->userModel = new UserModel();
+        $services = [
+            'TypeServiceControllerService',
+        ];
+        foreach ($services as $service) {
+            $this->services[$service] = ServiceContainer::get($service);
+        }     
     }
-
-    private function get_params($params = [])
+    private function service($name)
     {
-        if (isset($params['getAllData'])) {
-            return ['getAllData', $params['getAllData']];
+        return $this->services[$name] ?? null;
+    }
+    private function validateToken()
+    {
+        $headers = getallheaders();
+        $validation = $this->userModel->validateUserByToken($headers);
+    
+        if ($validation['status'] !== 'SUCCESS') {
+            throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
         }
-        
+        return $validation['data'];
+    }
+    
+    private function resolveAction($params, array $map): array
+    {
+        if (is_string($params)) {
+            return isset($map[$params]) ? [$map[$params], null] : ['', null];
+        }
+    
+        foreach ($map as $key => $action) {
+            if (isset($params[$key])) {
+                return [$action, $params[$key]];
+            }
+        }
+    
         return ['', null];
     }
+
     public function get($params = [])
     {
         try {
-            // Validar usuario
-            $headers = getallheaders();
-            // $token = $headers['Authorization'] ?? null;
-            // if (!$token) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+            [$action, $search] = $this->resolveAction($params, [
+                'getAllData' => 'getAllData',
+            ]);
+            $service = $this->service('TypeServiceControllerService'); 
+            $map = [
+                'getAllData' => fn() => $service->getAllData(),
+            ];
+            $response = $map[$action]();
+            if (isset($response['error'])) {
+                return $this->jsonResponse($response, $response['status']);
+            } 
+            if (empty($response)) return $this->jsonResponse(['message' => 'No se encontraron resultados'], 404);
 
-            // $user_id = Token::validateToken($token);
-            // if (!$user_id) return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
-            [$action, $search] = $this->get_params($params);
-            $dataService = null;
-            $httpCode = 200;
-            switch ($action) {
-                case 'getAllData':
-                    $dataService = $this->model_typeservice->getAllData();
-                    // Respuesta exitosa con ambos IDs y datos
-                    
-                    break;    
-            }
-            if (empty($dataService)) {
-                return $this->jsonResponse(['message' => 'El recurso no existe en el servidor.'], 404);
-            }
-            return $this->jsonResponse(['data' => $dataService], $httpCode);
+            return $this->jsonResponse(['data' => $response], 200);
         } catch (Exception $e) {
             return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
         }

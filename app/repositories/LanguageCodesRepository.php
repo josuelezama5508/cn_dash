@@ -37,4 +37,8 @@ class LanguageCodesRepository
     {
         return $this->model->where("code LIKE :search AND active = '1'", ['search' => "%$search%"]);
     }
+    public function getByCode($lang)
+    {
+        return $this->model->where("code = :code AND active = '1'", ['code' => $lang]);
+    }
 }

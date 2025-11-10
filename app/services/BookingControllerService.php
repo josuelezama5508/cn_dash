@@ -595,17 +595,18 @@ class BookingControllerService
             ];
             $responseMessageHijo = $bookingmessage_service->insert($camposMesaggeHijo);
             if ($responseMessageHijo && isset($responseMessageHijo->id)) {
-                $history_service->insert([
-                    "module"    => 'Reservas',
-                    "row_id"    => $dataControlHijo->id,
-                    "action"    => 'create',
-                    "details"   => 'Se creó mensaje hijo',
-                    "user_id"   => $userData->id ?? 0,
-                    "old_data"  => null,
-                    "new_data"  => json_encode($camposMesaggeHijo)
-                ]
+                $history_service->registrarOActualizar('Reservas', $dataControlHijo->id, 'create', 'Se creó mensaje hijo', $userData->id, null, $camposMesaggeHijo);
+                // $history_service->insert([
+                //     "module"    => 'Reservas',
+                //     "row_id"    => $dataControlHijo->id,
+                //     "action"    => 'create',
+                //     "details"   => 'Se creó mensaje hijo',
+                //     "user_id"   => $userData->id ?? 0,
+                //     "old_data"  => null,
+                //     "new_data"  => json_encode($camposMesaggeHijo)
+                // ]
                     
-                );
+                // );
             }
         }
     }
@@ -649,19 +650,23 @@ class BookingControllerService
                     $this->procesarNotaHijo($controlHijo->id, $controlHijo ?? [], $userData, $bookingmessage_service, $history_service);
 
                     if ($bookingHijo && !empty($bookingHijo->id)) {
-                        $historyInsert = [
-                            "module"    => 'Reservas',
-                            "row_id"    => $controlHijo->id,
-                            "action"    => 'create',
-                            "details"   => 'Nueva reserva hija creada (combo).',
-                            "user_id"   => $userData->id,
-                            "old_data"  => null,
-                            "new_data"  => json_encode([
-                                $this->getTableName() => $this->find($controlHijo->id),
-                                $bookingDetails_service->getTableNameBookingDetail() => $bookingDetails_service->find($bookingHijo->id),
-                            ])
-                        ];
-                        $history_service->insert($historyInsert);
+                        $history_service->registrarOActualizar('Reservas', $controlHijo->id, 'create', 'Nueva reserva hija creada (combo)', $userData->id, [],[
+                            $this->getTableName() => $this->find($controlHijo->id),
+                            $bookingDetails_service->getTableNameBookingDetail() => $bookingDetails_service->find($bookingHijo->id),
+                        ] );
+                        // $historyInsert = [
+                        //     "module"    => 'Reservas',
+                        //     "row_id"    => $controlHijo->id,
+                        //     "action"    => 'create',
+                        //     "details"   => 'Nueva reserva hija creada (combo).',
+                        //     "user_id"   => $userData->id,
+                        //     "old_data"  => null,
+                        //     "new_data"  => json_encode([
+                        //         $this->getTableName() => $this->find($controlHijo->id),
+                        //         $bookingDetails_service->getTableNameBookingDetail() => $bookingDetails_service->find($bookingHijo->id),
+                        //     ])
+                        // ];
+                        // $history_service->insert($historyInsert);
                     }
                 }
             }
@@ -736,18 +741,19 @@ class BookingControllerService
         // Historial madre
         $controlNew = $this->find($controlOld->id);
         $detailsNew = $bookingDetails_service->findByIdPago($controlOld->id);
-
-        $history_service->insert(
-            [
-                "module"    => $data['module'] ?? 'Reservas',
-                "row_id"    => $controlOld->id,
-                "action"    => $tipoAccion,
-                "details"   => $mensajeMadre,
-                "user_id"   => $userData->id,
-                "old_data"  => json_encode([$this->getTableName() => $controlOld, $bookingDetails_service->getTableNameBookingDetail() => $detailsOld]),
-                "new_data"  => json_encode([$this->getTableName() => $controlNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsNew]),
-            ]
-        );
+        
+        $history_service->registrarOActualizar($data['module'], $controlOld->id, $tipoAccion, $mensajeMadre, $userData->id, [$this->getTableName() => $controlOld, $bookingDetails_service->getTableNameBookingDetail() => $detailsOld] , [$this->getTableName() => $controlNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsNew]);
+        // $history_service->insert(
+        //     [
+        //         "module"    => $data['module'] ?? 'Reservas',
+        //         "row_id"    => $controlOld->id,
+        //         "action"    => $tipoAccion,
+        //         "details"   => $mensajeMadre,
+        //         "user_id"   => $userData->id,
+        //         "old_data"  => json_encode([$this->getTableName() => $controlOld, $bookingDetails_service->getTableNameBookingDetail() => $detailsOld]),
+        //         "new_data"  => json_encode([$this->getTableName() => $controlNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsNew]),
+        //     ]
+        // );
 
         // --- Actualizar hijos
         foreach ($combosHijos as $combo) {
@@ -786,17 +792,18 @@ class BookingControllerService
                 $responseMessageCombo = $bookingmessage_service->insert($camposMesaggeCombo);
     
                 if ($responseMessageCombo && isset($responseMessageCombo->id)) {
-                    $history_service->insert(
-                        [
-                            "module"    => 'Reservas',
-                            "row_id"    => $responseMessageCombo->id,
-                            "action"    => 'create',
-                            "details"   => 'Se creó mensaje hijo',
-                            "user_id"   => $userData->id ?? 0,
-                            "old_data"  => null,
-                            "new_data"  => json_encode($responseMessageCombo)
-                        ]
-                    );
+                    $history_service->registrarOActualizar($bookingmessage_service->getTableName(), $responseMessageCombo->id, 'create', 'Se creó mensaje hijo', $userData->id, [], $bookingmessage_service->find($responseMessageCombo->id));
+                    // $history_service->insert(
+                    //     [
+                    //         "module"    => 'Reservas',
+                    //         "row_id"    => $responseMessageCombo->id,
+                    //         "action"    => 'create',
+                    //         "details"   => 'Se creó mensaje hijo',
+                    //         "user_id"   => $userData->id ?? 0,
+                    //         "old_data"  => null,
+                    //         "new_data"  => json_encode($responseMessageCombo)
+                    //     ]
+                    // );
                 }
             }
             [$oldItemsDetails, $oldTotal] = $this->obtenerValoresAntiguosDetalles($detailsComboOld);
@@ -823,16 +830,16 @@ class BookingControllerService
             // Historial hijo
             $comboNew = $this->find($combo->id);
             $detailsComboNew = $bookingDetails_service->findByIdPago($combo->id);
-
-            $history_service->insert([
-                    "module"    => $data['module'] ?? 'Reservas',
-                    "row_id"    => $combo->id,
-                    "action"    => $tipoAccion,
-                    "details"   => $mensajeHijo,
-                    "user_id"   => $userData->id,
-                    "old_data"  => json_encode([$this->getTableName() => $combo, $bookingDetails_service->getTableNameBookingDetail() => $detailsComboOld]),
-                    "new_data"  => json_encode([$this->getTableName() => $comboNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsComboNew])
-                ]);
+            $history_service->registrarOActualizar($data['module'] ?? 'Reservas', $combo->id, $tipoAccion, $mensajeHijo, $userData->id, [$this->getTableName() => $combo, $bookingDetails_service->getTableNameBookingDetail() => $detailsComboOld], [$this->getTableName() => $comboNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsComboNew]);
+            // $history_service->insert([
+            //         "module"    => $data['module'] ?? 'Reservas',
+            //         "row_id"    => $combo->id,
+            //         "action"    => $tipoAccion,
+            //         "details"   => $mensajeHijo,
+            //         "user_id"   => $userData->id,
+            //         "old_data"  => json_encode([$this->getTableName() => $combo, $bookingDetails_service->getTableNameBookingDetail() => $detailsComboOld]),
+            //         "new_data"  => json_encode([$this->getTableName() => $comboNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsComboNew])
+            //     ]);
         }
 
         return [
@@ -870,15 +877,16 @@ class BookingControllerService
             ];
             $responseMessage = $bookingmessage_service->insert($camposMesagge);
             if ($responseMessage && isset($responseMessage->id)) {
-                $history_service->insert([
-                    "module"    => 'Reservas',
-                    "row_id"    => $responseMessage->id,
-                    "action"    => 'create',
-                    "details"   => 'Se creó mensaje',
-                    "user_id"   => $userData->id ?? 0,
-                    "old_data"  => null,
-                    "new_data"  => json_encode($camposMesagge)
-                ]);
+                $history_service->registrarOActualizar($bookingmessage_service->getTableName(), $responseMessage->id, 'create', 'Se creó mensaje', $userData->id, [], $bookingmessage_service->find($responseMessage->id));
+                // $history_service->insert([
+                //     "module"    => 'Reservas',
+                //     "row_id"    => $responseMessage->id,
+                //     "action"    => 'create',
+                //     "details"   => 'Se creó mensaje',
+                //     "user_id"   => $userData->id ?? 0,
+                //     "old_data"  => null,
+                //     "new_data"  => json_encode($camposMesagge)
+                // ]);
             }
         }
     }

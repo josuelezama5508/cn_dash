@@ -315,7 +315,7 @@ function save_item_tag() {
             if (status == 200) {
                 setTimeout(() => {
                     uploadScreen.close();
-                    // location.reload();
+                    location.reload();
                 }, 900);
             }
           })

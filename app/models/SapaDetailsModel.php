@@ -2,7 +2,7 @@
 require_once(__DIR__ . '/../connection/ModelTable.php');
 
 
-class SapaDetails extends ModelTable
+class SapaDetailsModel extends ModelTable
 {
     function __construct()
     {

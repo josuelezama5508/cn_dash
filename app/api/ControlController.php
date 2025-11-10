@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../../app/core/ServiceContainer.php";
-require_once __DIR__ . '/../models/Models.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/TemplatesMailModel.php';
 
@@ -9,14 +8,12 @@ class ControlController extends API
 {
     private $userModel;
     private $mailTemplate;
-    private $notificationMail;
     private $services = [];
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->mailTemplate = new TemplatesMailModel();
-        $this->notificationMail = new NotificationMail();
 
         $serviceList = [
             'BookingControllerService',

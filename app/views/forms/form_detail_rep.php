@@ -161,7 +161,7 @@
 
             try {
                 const response = await fetchAPI("rep", "POST", formData);
-                if (response.status == 201) {
+                if (response.status == 200) {
                     let elementos = $("tr." + className);
                     elementos.fadeOut(500);
                     setTimeout(() => elementos.remove(), 500);

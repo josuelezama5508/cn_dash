@@ -13,10 +13,18 @@ class UserController extends API
     {
         $this->model_user = new UserModel();
     }
-
+    private function parseJsonInput()
+    {
+        $input = file_get_contents('php://input');
+        $decoded = json_decode($input, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('JSON inválido', 400);
+        }
+        return $decoded;
+    }
     public function post($params = [])
     {
-        $data = json_decode(file_get_contents("php://input"), true);
+        $data = $this->parseJsonInput();
         if (!isset($data)) return $this->jsonResponse(["message" => "Error en las credenciales enviadas."], 400);
 
         $username = isset($data['username']) ? validate_username($data['username']) : '';
