@@ -28,7 +28,8 @@ class CanalRepository
     public function getAll(){
         return $this->model->where("1 = 1");
     }
-    public function getChannelList(){
+    public function getChannelList()
+    {
         return $this->model->where('activo = 1 ORDER BY nombre ASC');
     }
     public function getByDateDispo($date = null) {

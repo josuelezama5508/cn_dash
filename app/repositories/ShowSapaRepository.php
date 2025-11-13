@@ -26,15 +26,15 @@ class ShowSapaRepository
     {
         return $this->model->insert($data);
     }
-    function searchSapaByIdPago($id) {
-        $fields = ['SS.*', 'U.*', 'SD.*'];
-        $join = "SS INNER JOIN users AS U ON SS.usuario = U.user_id INNER JOIN sapa_details AS SD ON SS.id = SD.id_sapa";
-        $condicion = "SS.idpago = :id ORDER BY SS.id DESC";
+    public function searchSapaByIdPago($id) {
+        $fields = ['SS.*', 'U.*', 'SD.*', 'ES.nombre AS proceso'];
+        $join = "SS INNER JOIN users AS U ON SS.usuario = U.user_id INNER JOIN sapa_details AS SD ON SS.id = SD.id_sapa INNER JOIN estatus_sapa AS ES ON SS.id_estatus_sapa = ES.id ";
+        $condicion = "SS.idpago = :id AND id_estatus_sapa != 2 ORDER BY SS.id DESC";
     
         return $this->model->consult($fields, $join, $condicion, ['id' => $id]);
     
     }
-    function searchLastSapaByIdPago($id) {
+    public function searchLastSapaByIdPago($id) {
         $fields = ['SS.*', 'U.*'];
         $join = "SS INNER JOIN users AS U ON SS.usuario = U.user_id";
         $condicion = "SS.idpago = :id ORDER BY SS.id DESC LIMIT 1";
@@ -42,7 +42,11 @@ class ShowSapaRepository
         return $this->model->consult($fields, $join, $condicion, ['id' => $id]);
     }
     
-    function searchSapaByIdPagoUser($id, $user){
+    public function searchSapaByIdPagoUser($id, $user){
         return $this->model->where("idpago = :id AND usuario = :user", ['id' => $id, 'user'=> $user]);
+    }
+    public function getFamilySapas($id)
+    {
+        return $this->model->where("id = :id OR id_sapa_vinculada = :id", ['id' => $id]);
     }
 }

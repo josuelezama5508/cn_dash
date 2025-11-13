@@ -37,4 +37,12 @@ class LanguageCodesControllerService
     {
         return $this->languagecodes_repo->getByCode($lang);
     }
+    public function getById($id)
+    {
+        return $this->languagecodes_repo->getById($id);
+    }
+    public function getLangsActivesV2()
+    {
+        return $this->languagecodes_repo->getLangsActivesV2();
+    }
 }

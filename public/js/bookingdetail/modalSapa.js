@@ -37,7 +37,7 @@ window.confirmSapa = async function () {
         horario: document.getElementById("hora")?.value.trim(),
         nota: document.getElementById("comentario")?.value.trim(),
         traslado_tipo: document.querySelector('input[name="traslado_tipo"]:checked')?.value,
-        proceso: "activo",
+        estatus_sapa: 1,
         module: "DetalleReserva"
       }
     };
@@ -47,10 +47,12 @@ window.confirmSapa = async function () {
       const result = await res.json();
   
       if (res.ok) {
+        if (result.message) showErrorModal(result);
         mostrarSapas(modalData.id);
         closeModal();
       } else {
-        mostrarToastOnObject("Error: " + result.message, $("#cliente_nombre"), "danger");
+        showErrorModal(result);
+        // mostrarToastOnObject("Error: " + result.message, $("#cliente_nombre"), "danger");
       }
     } catch (err) {
       console.error(err);
@@ -326,17 +328,6 @@ window.initModalSapa = function(modalData) {
         }
     });
 
-    // // Preselección si existe
-    // if (modalData.hotel) {
-    //     $input.val(modalData.hotel);
-    // }
-
-    // Carga inicial
-    // search_transportation_tours("", modalData.horario).then(hoteles => {
-    //     renderTransportation($input, $list, hoteles);
-    //     $list.hide();
-    //     // positionList();
-    // });
     // === Mostrar 3 sugerencias al abrir ===
     (async function () {
         let keyword = "";

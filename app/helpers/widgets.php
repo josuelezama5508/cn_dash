@@ -1,20 +1,19 @@
 <?php
+
+require_once(__DIR__ . "/../core/ServiceContainer.php");
 $html = '';
 
 if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
     require_once('helpers.php');
-    require_once('validations.php');
-    require_once(__DIR__ . '/../models/Models.php');
-
-    $model_company = new Empresa();
-    $model_language = new Idioma();
-    $model_price = new Precio();
-    $model_currency = new Denominacion();
-    $model_product = new Productos();
-    $model_channel = new Canal();
-    $model_rep = new Rep();
-
-
+    require_once('validations.php');    
+    $company_service        = ServiceContainer::get('CompanyControllerService');
+    $languagecodes_service  = ServiceContainer::get('LanguageCodesControllerService');
+    $prices_service         = ServiceContainer::get('PricesControllerService');
+    $currencycodes_service  = ServiceContainer::get('CurrencyCodesControllerService');
+    $product_service        = ServiceContainer::get('ProductControllerService');
+    $canal_service          = ServiceContainer::get('CanalControllerService'); 
+    $rep_service            = ServiceContainer::get('RepControllerService'); 
+    $estatussapa_service    = ServiceContainer::get('EstatusSapaControllerService');
     function get_request_param($key, $default = null) {
         return $_REQUEST[$key] ?? $default;
     }
@@ -39,11 +38,10 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
     }
 
     function get_category_data($category, $search, $selected_id) {
-        global $model_company, $model_language, $model_price, $model_currency, $model_product, $model_channel, $model_rep;
-
+        global $company_service, $languagecodes_service, $prices_service, $currencycodes_service, $product_service, $canal_service, $rep_service, $estatussapa_service;
         switch ($category) {
             case 'companies':
-                $companies = $model_company->getAllCompaniesActive();
+                $companies = $company_service->getAllCompaniesActive();
                 $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon"]];
                 foreach ($companies as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->company_name, "logo" => $row->company_logo, "alt" => "Logo de $row->company_name"];
@@ -51,7 +49,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$default, fn($item) => $item->name];
 
             case 'products':
-                $products = $model_product->where("company_id = '$search' AND active = '1' AND (show_dash = '1' OR lang_id = '1')");
+                $products = $company_service->getProductCompanyByDashOrLang($search);
                 $default = [["id" => 0, "name" => "Seleccione un producto"]];
                 foreach ($products as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->product_name];
@@ -59,7 +57,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$default, fn($item) => $item->name];
 
             case 'language':
-                $result = $model_language->where("active = '1'");
+                $result = $languagecodes_service->getLangsActivesV2();
                 $items = array_map(function ($r) {
                     return ["id" => $r->id, "name" => strtoupper($r->code)];
                 }, $result);
@@ -68,7 +66,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
             case 'product_language':
                 $items = [];
                 foreach ($search as $pid => $lid) {
-                    $lang = $model_language->where("lang_id = $lid AND active = '1'");
+                    $lang = $languagecodes_service->getById($lid);
                     if (!count($lang)) continue;
 
                     $items[] = ["id" => $lang[0]->id, "name" => $lang[0]->language, "product" => $pid];
@@ -76,19 +74,19 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$items, fn($item) => $item->name];
 
             case 'prices':
-                $result = $model_price->where("active = '1' ORDER BY price ASC");
+                $result = $prices_service->getAllActives();
                 $items = array_map(function ($r) {
                     return ["id" => convert_to_price($r->price), "name" => convert_to_price($r->price)];
                 }, $result);
                 return [$items, fn($item) => $item->name];
             case 'pricesNormal':
-                $result = $model_price->where("active = '1' ORDER BY price ASC");
+                $result = $prices_service->getAllActives();
                 $items = array_map(function ($r) {
                     return ["id" => $r->id, "name" => convert_to_price($r->price)];
                 }, $result);
                 return [$items, fn($item) => $item->name];
             case 'denomination':
-                $result = $model_currency->where("active = '1'");
+                $result = $currencycodes_service->getAllActives();
                 $items = array_map(function ($r) {
                     return ["id" => $r->id, "name" => strtoupper($r->denomination)];
                 }, $result);
@@ -102,7 +100,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$items, fn($item) => $item->name];
 
             case 'products_codepromo':
-                $products = $model_product->where("active = '1'");
+                $products = $company_service->getAllActives();
                 $default = [["id" => 9999, "name" => "Todos los productos"], /*["id" => 8888, "name" => "Todos los productos"]*/];
                 foreach ($products as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->product_name];
@@ -139,7 +137,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$items, fn($item) => $item->name];
 
             case 'channel':
-                $channels = $model_channel->where("active = '1'");
+                $channels = $canal_service->getChannelList();
                 $default = [["id" => 0, "name" => "Selecciona un Canal"]];
                 foreach ($channels as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->channel_name];
@@ -147,13 +145,20 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$default, fn($item) => $item->name];
 
             case 'rep':
-                $rep = $model_rep->where("active = '1' AND channel_id = '$search'");
+                $rep = $rep_service->getByIdActive($search);
                 $default = [["id" => 0, "name" => "Selecciona el Rep"]];
                 foreach ($rep as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->rep_name];
                 }
                 return [$default, fn($item) => $item->name];
-
+                case 'statussapa':
+                    $statusSapa = $estatussapa_service->getAllActive();
+                    $default = [["id" => 0, "name" => "Selecciona Estado"]];
+                    foreach ($statusSapa as $row) {
+                        $default[] = ['id' => $row->id, 'name' => $row->nombre];
+                    }
+                    return [$default, fn($item) => $item->name];
+                
             default:
                 return [[], fn($item) => $item->name];
         }

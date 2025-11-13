@@ -71,12 +71,16 @@ class ShowSapaController extends API
                 'getSapaIdPago' => 'getSapaIdPago',
                 'getSapaIdPagoUser' => 'getSapaIdPagoUser',
                 'getLastSapaIdPago' => 'getLastSapaIdPago',
+                'id' => 'id',
+                'family' => 'family'
             ]);
             $service = $this->service('ShowSapaControllerService'); 
             $map = [
                 'getSapaIdPago' => fn() => $service->searchSapaByIdPago($search),
                 'getSapaIdPagoUser' => fn() => $service->searchSapaByIdPagoUserService($search),
                 'getLastSapaIdPago' => fn() => $service->searchLastSapaByIdPago($search),
+                'id'=> fn() => $service->find($search),
+                'family' => fn() => $service->getFamilySapas($search),
             ];
             $response = $map[$action]();
             if (empty($response)) return $this->jsonResponse(['message' => 'No se encontraron resultados', 'search' => $search, 'action' => $action], 404);
@@ -119,75 +123,18 @@ class ShowSapaController extends API
         try {
             $userData   = $this->validateToken();
             $params     = $this->parseJsonInput();
-            [$action, $data] = $this->resolveAction($params, [
-                'update' => 'update',
-                'cancel' => 'cancel',
-            ]);
-            if (!isset($params['update']['id'])) {
-                return ['error' => 'ID del mensaje requerido.', 'status' => 400];
+            $response = $this->service('ShowSapaControllerService')->putSapa($params, $userData, $this->service('SapaDetailsControllerService'), $this->service('HistoryControllerService'));
+            if (isset($response['error'])) {
+                return $this->jsonResponse($response, $response['status']);
             }
-
-            $messageID = intval($params['update']['id']);
-            $messageOld = $this->model_bookingmessage->find($messageID);
-            if (!$messageOld || empty($messageOld->id)) {
-                return $this->jsonResponse(['message' => 'El mensaje no existe.'], 404);
-            }
-
-            $data = $params['update'];
-
-            // Mezclamos los datos nuevos con los existentes
-            $dataUpdateMessage = [
-                'idpago'            => $data['idpago'] ?? $messageOld->idpago,
-                'mensaje'           => $data['mensaje'] ?? $messageOld->mensaje,
-                'usuario'           => $data['usuario'] ?? $messageOld->usuario,
-                'tipomessage'       => $data['tipomessage'] ?? $messageOld->tipomessage,
-            ];
-
-            // Validar que la mensaje no quede vacía
-            if (trim($dataUpdateMessage['mensaje']) === '') {
-                return $this->jsonResponse(['message' => 'El campo mensaje es obligatorio.'], 400);
-            }
-
-            // Actualizar camioneta
-            $this->model_bookingmessage->update($messageID, $dataUpdateMessage);
-
-            // Obtener datos después de actualizar
-            $messageNew = $this->model_bookingmessage->find($messageID);
-
-            // Registrar historial
-            $this->registrarHistorial(
-                $data['module'],
-                $messageID,
-                'update',
-                'Se actualizó mensaje',
-                $userData->id ?? 0,
-                $messageOld,
-                $messageNew
-            );
-
-            return $this->jsonResponse([
-                'message' => 'Mensaje actualizado correctamente.',
-                'data' => $messageNew
-            ], 200);
-
+            if (empty($response)) return $this->jsonResponse(['message' => 'No se pudo actualizar la sapa', 'params' => $params], 404);
+            return $this->jsonResponse(['message' => 'Actualizacion éxitosa'], 200);
+           
         } catch (Exception $e) {
             return $this->jsonResponse([
                 'message' => 'Error al procesar la solicitud.',
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
-
-    private function registrarHistorial($module, $row_id, $action, $details, $user_id, $oldData, $newData)
-    {
-        $this->model_history->insert([
-            "module" => $module,
-            "row_id" => $row_id,
-            "action" => $action,
-            "details" => $details,
-            "user_id" => $user_id,
-            "old_data" => json_encode($oldData),
-            "new_data" => json_encode($newData),
-        ]);
     }
 }

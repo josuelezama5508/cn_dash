@@ -57,6 +57,10 @@ class ProductRepository
     public function getAllProductsGroup(){
         return $this->model->where("active = '1' AND show_dash = '1' AND l");
     }
+    public function getAllActives()
+    {
+        return $this->model->where("active = '1'");
+    }
     public function getGroupedByProductCode($productcode)
     {
         $campos = ['*'];
@@ -111,5 +115,9 @@ class ProductRepository
         $condicion = "P.active = '1' $search AND (P.show_dash = '1' OR P.lang_id = '1') GROUP BY P.product_code";
     
         return $this->model->consult($fields, $join, $condicion);
+    }
+    public function getProductCompanyByDashOrLang($idcompany)
+    {
+        return $this->model->where("company_id = :idcompany AND active ='1' AND (show_dash = '1' OR lang_id = 1)", ['idcompany' => $idcompany]);
     }
 }

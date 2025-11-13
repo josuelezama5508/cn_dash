@@ -58,3 +58,26 @@ async function update_sapa(condition) {
 
 
 //-----------FIN UPDATE SHOWSAPA BY ID-------------------------//
+
+
+//-----------SEARCH BY ID-------------------------//
+async function search_id(condition) {
+    try {
+        const response = await fetchAPI(`showsapa?id=${condition}`, "GET");
+        const data = await response.json();
+
+        if (response.status === 200 && data.data) {
+            console.log("RESPUESTA");
+            console.log(data);
+            return data.data; // ✅ devuelve el objeto directamente
+        } else {
+            console.warn(data.message || "No se pudo cargar el registro.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error al obtener el registro:", error);
+        return null;
+    }
+}
+
+//-----------FIN SEARCH BY ID-------------------------//

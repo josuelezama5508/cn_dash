@@ -69,6 +69,7 @@
 
 <!-- 3️⃣ Scripts locales que dependen de jQuery -->
 <script src="<?= asset('/js/main.js') ?>?v=1" defer></script>
+<script src="<?= asset('/js/contentMessages.js') ?>?v=1" defer></script>
 <script src="<?= asset('/js/ctrl-number.js') ?>?v=1" defer></script>
 <script src="<?= asset('/js/widgets.js') ?>?v=1" defer></script>
 

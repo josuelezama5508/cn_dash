@@ -23,4 +23,8 @@ class SapaDetailsRepository
     public function delete($id){
         return $this->model->delete($id);
     }
+    public function getDetailBySapaShow($idsapa)
+    {
+        return $this->model->where("id_sapa = :id", ['id' => $idsapa]);
+    }
 }

@@ -39,6 +39,10 @@ class ShowSapaControllerService
     {
         return $this->showsapa_repo->searchSapaByIdPagoUser($id, $user);
     }
+    public function getFamilySapas($id)
+    {
+        return $this->showsapa_repo->getFamilySapas($id);
+    }
     public function searchSapaByIdPagoUserService($search){
         $data = json_decode($search, true);
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
@@ -60,12 +64,13 @@ class ShowSapaControllerService
         $horario       = trim($data['horario'] ?? '');
         $nota          = trim($data['nota'] ?? '');
         $traslado_tipo = trim($data['traslado_tipo'] ?? '');
-        $proceso       = trim($data['proceso'] ?? '');
-        return [$idpago, $tipo, $cliente_name, $datepicker, $origen, $destino, $origenV, $destinoV, $horario, $nota, $traslado_tipo, $proceso];
+        $estatus_sapa       = trim($data['estatus_sapa'] ?? '');
+        return [$idpago, $tipo, $cliente_name, $datepicker, $origen, $destino, $origenV, $destinoV, $horario, $nota, $traslado_tipo, $estatus_sapa];
     }
-    public function insertRedondoPostCreate($data, $userData, $dataTypeTravels, $datepicker, $controlData, $proceso, $usuario, $tipo, $horario, $origen, $origenV, $destino, $destinoV, $cliente_name, $sapadetails_service, $history_service)
+    public function insertRedondoPostCreate($data, $userData, $dataTypeTravels, $traslado_tipo, $datepicker, $controlData, $estatus_sapa, $usuario, $tipo, $horario, $origen, $origenV, $destino, $destinoV, $cliente_name, $sapadetails_service, $history_service)
     {
         $insertados =[];
+        $idSapaMadre = "";
         foreach ($dataTypeTravels->tipos as $tipoViaje) {   
             $tipoTransportacion = $tipoViaje;
 
@@ -77,14 +82,16 @@ class ShowSapaControllerService
                 }
             }
             $camposSapa = [
-                'datepicker'    => $datepicker,
-                'idpago'        => $controlData->id,
-                'folio'         => "",
-                'proceso'       => $proceso,
-                'usuario'       => $usuario,
-                'type'          => $tipo
+                'id_sapa_vinculada'     => $idSapaMadre,
+                'datepicker'        => $datepicker,
+                'idpago'            => $controlData->id,
+                'folio'             => "",
+                'id_estatus_sapa'   => $estatus_sapa,
+                'usuario'           => $usuario,
+                'type'              => $tipo
             ];
             $responseShowSapa = $this->insert($camposSapa);
+            $idSapaMadre = $responseShowSapa->id;
             if ($responseShowSapa && isset($responseShowSapa->id)) {
                 $insertados[] = $responseShowSapa;
 
@@ -112,7 +119,7 @@ class ShowSapaControllerService
         }
         return $insertados;
     }
-    public function insertSencilloPostCreate($data, $userData, $traslado_tipo, $datepicker, $controlData, $proceso, $usuario, $tipo, $horario, $origen, $destino, $cliente_name, $sapadetails_service, $history_service)
+    public function insertSencilloPostCreate($data, $userData, $traslado_tipo, $datepicker, $controlData, $estatus_sapa, $usuario, $tipo, $horario, $origen, $destino, $cliente_name, $sapadetails_service, $history_service)
     {
         $insertados = [];
         // Caso sencillo (tipos vacío): se usa el nombre directamente como tipo_transportation
@@ -122,7 +129,7 @@ class ShowSapaControllerService
             'datepicker'    => $datepicker,
             'idpago'        => $controlData->id,
             'folio'         => "",
-            'proceso'       => $proceso,
+            'id_estatus_sapa'       => $estatus_sapa,
             'usuario'       => $usuario,
             'type'          => $tipo
         ];
@@ -158,7 +165,7 @@ class ShowSapaControllerService
     public function postCreate($data, $userData, $traveltypes_service, $booking_service, $sapadetails_service, $history_service)
     {
         [$idpago, $tipo, $cliente_name, $datepicker, $origen, $destino, 
-        $origenV, $destinoV, $horario, $nota, $traslado_tipo, $proceso] = $this->asignationDataPost($data);
+        $origenV, $destinoV, $horario, $nota, $traslado_tipo, $estatus_sapa] = $this->asignationDataPost($data);
 
         $usuario = $userData->id;
         $dataTypeTravels = $traveltypes_service->getTypeByName($traslado_tipo);
@@ -176,19 +183,23 @@ class ShowSapaControllerService
         if (!$controlData) {
             return ['error' => 'Reserva no encontrada.', 'status' => 404];
         }
+        $existingsapa = $this->searchSapaByIdPago($idpago);
+        if (!empty($existingsapa)) {
+            return ['error' => 'Ya existen reservas activas en esta reserva', 'status' => 400];
+        }
         $insertados = [];
         // ✅ Crear la reserva madre
         if (!empty($dataTypeTravels)) {
             if (isset($dataTypeTravels->tipos) && count($dataTypeTravels->tipos) > 0) {
                 $insertados[] = $this->insertRedondoPostCreate(
-                    $data, $userData, $dataTypeTravels, $datepicker, $controlData, 
-                    $proceso, $usuario, $tipo, $horario, $origen, $origenV, 
+                    $data, $userData, $dataTypeTravels, $traslado_tipo, $datepicker, $controlData, 
+                    $estatus_sapa, $usuario, $tipo, $horario, $origen, $origenV, 
                     $destino, $destinoV, $cliente_name, $sapadetails_service, $history_service
                 );
             } else {
                 $insertados[] = $this->insertSencilloPostCreate(
                     $data, $userData, $traslado_tipo, $datepicker, $controlData, 
-                    $proceso, $usuario, $tipo, $horario, $origen, $destino, 
+                    $estatus_sapa, $usuario, $tipo, $horario, $origen, $destino, 
                     $cliente_name, $sapadetails_service, $history_service
                 );
             }
@@ -202,14 +213,14 @@ class ShowSapaControllerService
                     // Combos tipo redondo
                     $insertados[] = $this->insertRedondoPostCreate(
                         $data, $userData, $dataTypeTravels, $datepicker, $combo, 
-                        $proceso, $usuario, $tipo, $horario, $origen, $origenV, 
+                        $estatus_sapa, $usuario, $tipo, $horario, $origen, $origenV, 
                         $destino, $destinoV, $cliente_name, $sapadetails_service, $history_service
                     );
                 } else {
                     // Combos tipo sencillo
                     $insertados[] = $this->insertSencilloPostCreate(
                         $data, $userData, $traslado_tipo, $datepicker, $combo, 
-                        $proceso, $usuario, $tipo, $horario, $origen, $destino, 
+                        $estatus_sapa, $usuario, $tipo, $horario, $origen, $destino, 
                         $cliente_name, $sapadetails_service, $history_service
                     );
                 }
@@ -217,6 +228,85 @@ class ShowSapaControllerService
         }
 
         return ['message' => 'Reservas creadas correctamente.', 'registros' => $insertados];
+    }
+    public function asignationDataShowPut($params, $data)
+    {
+        $datepicker = (isset($params['datepicker']) ? $params['datepicker'] : $data->datepicker );
+        $idpago = (isset($params['idpago']) ? $params['idpago'] : $data->idpago);
+        $folio =(isset($params['folio']) ? $params['folio'] : $data->folio);
+        $status = (isset($params['status_sapa']) ? $params['status_sapa'] : $data->id_estatus_sapa);
+        $usuario = (isset($params['usuario']) ? $params['usuario'] : $data->usuario);
+        $type =(isset($params['type']) ? $params['type'] : $data->type);
+        return [$datepicker, $idpago, $folio, $status, $usuario, $type];
+    }
+    public function asignationDataDetailsPut($params, $data)
+    {
+        $horario = (isset($params['horario']) ? $params['horario'] : $data->horario );
+        $start_point = (isset($params['start_point']) ? $params['start_point'] : $data->start_point);
+        $end_point =(isset($params['end_point']) ? $params['end_point'] : $data->end_point);
+        $cname = (isset($params['cname']) ? $params['cname'] : $data->cname);
+        $type_transportation = (isset($params['type_transportation']) ? $params['type_transportation'] : $data->type_transportation);
+        $idsapa =(isset($params['idsapa']) ? $params['idsapa'] : $data->id_sapa);
+        $matricula = (isset($params['matricula']) ? $params['matricula'] : $data->matricula);
+        $chofer_id =  (isset($params['chofer_id']) ? $params['chofer_id'] : $data->chofer_id);
+        return [$horario, $start_point, $end_point, $cname, $type_transportation, $idsapa, $matricula, $chofer_id];
+    }
+    public function putSapa($params, $userData, $sapadetails_service, $history_service)
+    {
+        if (!isset($params['id'])) {
+            return ['error' => 'ID del mensaje requerido.', 'status' => 400];
+        }
+        $dataFamily = $this->getFamilySapas($params['id']);
+        $updator = false;
+        foreach ($dataFamily as $sapashow){
+            $dataShow = $this->find($sapashow->id);
+            [$datepicker, $idpago, $folio, $status, $usuario, $type] = $this->asignationDataShowPut($params, $dataShow);
+            $camposShow = [
+                'datepicker'        => $datepicker,
+                'idpago'            => $idpago,
+                'folio'             => $folio,
+                'id_estatus_sapa'   => $status,
+                'usuario'           => $usuario,
+                'type'              => $type
+            ];
+            $controlShow = $this->update($dataShow->id, $camposShow);
+            $details = $sapadetails_service->getDetailBySapaShow($dataShow->id);
+            if (empty($details)) {
+                return ['error' => 'No se encontraron detalles de la SAPA.', 'status' => 404];
+            }
+            $details = $details[0];
+            [$horario, $start_point, $end_point, $cname, $type_transportation, $idsapa, $matricula, $chofer_id] = $this->asignationDataDetailsPut($params, $details);
+            $camposDetails = [
+                'horario' => $horario,
+                'start_point' => $start_point,
+                'end_point' => $end_point,
+                'cname' => $cname, 
+                'type_transportation' => $type_transportation,
+                'id_sapa' => $idsapa,
+                'matricula' => $matricula,
+                'chofer_id' => $chofer_id,
+            ];
+            if($controlShow){
+                $dataDetails = $sapadetails_service->find($details->id);
+                $controlDetails = $sapadetails_service->update($details->id, $camposDetails);
+                
+                if($controlDetails)
+                {
+                    $history_service->registrarOActualizar($this->getTableName(), $dataShow->id, 'update', $params['action'], $userData->id, 
+                    [
+                        $this->getTableName() => $dataShow,
+                        $sapadetails_service->getTableName() => $details
+                    ], [
+                        $this->getTableName() => $this->find($dataShow->id),
+                        $sapadetails_service->getTableName() => $sapadetails_service->find($details->id)
+                    ]);
+                    $updator = true;
+                }else{
+                    return ['error' => 'No se pudo actualizar los detalles de la sapa', 'idDetails' => $details->id,'camposdetails' => $camposDetails, 'controlshow' => $controlShow, 'controlDetails' => $controlDetails, 'status' => 400];
+                }
+            }
+        }
+        return $updator;
     }
     public function deleteShowSapa($params, $userData)
     {

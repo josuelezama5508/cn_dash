@@ -96,6 +96,14 @@ class ProductControllerService
     {
         return $this->products_repo->getProductActiveById($id);
     }
+    public function getAllActives()
+    {
+        return $this->products_repo->getAllActives();
+    }
+    public function getProductCompanyByDashOrLang($idcompany)
+    {
+        return $this->products_repo->getProductCompanyByDashOrLang($idcompany);
+    }
     public function search($search)
     {
         $where = ($search != "") ? "AND CONCAT(P.product_name,' ',P.product_code,' ',P.productdefine) LIKE '%$search%'" : "";

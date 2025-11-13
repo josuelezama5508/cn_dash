@@ -19,7 +19,8 @@ class LanguageCodesRepository
     {
         return $this->model->delete($id);
     }
-    public function getTableName(){
+    public function getTableName()
+    {
         return  $this->model->getTableName();
     }
     public function update($id, $data){
@@ -40,5 +41,13 @@ class LanguageCodesRepository
     public function getByCode($lang)
     {
         return $this->model->where("code = :code AND active = '1'", ['code' => $lang]);
+    }
+    public function getById($id)
+    {
+        return $this->model->where("lang_id = :id AND active = '1'",['id' => $id]);
+    }
+    public function getLangsActivesV2()
+    {
+        return $this->model->where("active = '1'");
     }
 }

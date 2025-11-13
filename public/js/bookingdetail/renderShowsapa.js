@@ -100,7 +100,8 @@ window.mostrarSapas = async function (idPago) {
         // Evento editar
         $('.sapa-edit-btn').on('click', function () {
             const idSapa = $(this).data('id');
-            alert('Editar SAPA ID: ' + idSapa);
+            console.log('Editar SAPA ID: ' + idSapa);
+            openEditSapaModal(idSapa);
             // Aquí puedes usar modal, navegación, etc.
         });
 

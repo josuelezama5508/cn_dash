@@ -45,7 +45,10 @@ class RepControllerService
     {
         return $this->rep_repo->channelId($search);
     }
-
+    public function getByIdActive($id)
+    {
+        return $this->rep_repo->getByIdActive($id);
+    }
     public function repIdService($search)
     {
         $rep = $this->find($search);
@@ -172,6 +175,7 @@ class RepControllerService
         }
         return $_rep;
     }
+    
 }
 
 

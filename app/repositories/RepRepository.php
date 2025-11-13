@@ -51,4 +51,8 @@ class RepRepository
     {
         return $this->model->where("idcanal = :canal ORDER BY idrep ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC, nombre ASC", ['canal' => $search], ["nombre AS name"]);
     }
+    public function getByIdActive($id)
+    {
+        return $this->model->where("active = '1' AND channel_id = :id", ['id' => $id]);
+    }
 }

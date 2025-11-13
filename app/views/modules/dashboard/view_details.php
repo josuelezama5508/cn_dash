@@ -321,6 +321,8 @@
         <script src="<?= asset('/js/bookingdetail/modalType.js') ?>?v=12"></script>
         <script src="<?= asset('/js/bookingdetail/modalVinculados.js') ?>?v=12"></script>
         <script src="<?= asset('/js/bookingdetail/modalPaymentMetod.js') ?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalEditSapa.js')?>?v=12"></script>
+        <script src="<?= asset('/js/bookingdetail/modalEditStatusSapa.js')?>?v=12"></script>
         
         
         <!-- <script src="<?= asset('/js/bookingdetail/modalTypes.js') ?>?v=1"></script> -->

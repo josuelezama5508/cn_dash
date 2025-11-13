@@ -23,4 +23,9 @@ class SapaDetailsControllerService
     public function delete($id){
         return $this->sapadetails_repo->delete($id);
     }
+    public function getDetailBySapaShow($idsapa)
+    {
+        return $this->sapadetails_repo->getDetailBySapaShow($idsapa);
+    }
+    
 }
