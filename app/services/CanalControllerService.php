@@ -94,6 +94,7 @@ class CanalControllerService
         $nombre = isset($data['channelname']) ? validate_channelname($data['channelname']) : '';
         $tipo = isset($data['channeltype']) ? validate_channeltype($data['channeltype']) : '';
         $metodopago = $data['channelmethodpay'] ?? '';
+        $comision = $data['channelcomision'] ?? '';
 
         if (!$nombre || !$tipo) {
             return ['status' => 400, 'body' => ['message' => 'Error en los datos enviados.']];
@@ -102,7 +103,8 @@ class CanalControllerService
         $_channel = $this->insert([
             "nombre" => $nombre,
             "tipo" => $tipo,
-            "metodopago" => $metodopago
+            "metodopago" => $metodopago,
+            'comision' => $comision
         ]);
 
         if (!$_channel || !isset($_channel->id)) {
@@ -190,7 +192,7 @@ class CanalControllerService
         $metodopago = $data['channelmethodpay'] ?? '';
         $tipo = $data['channeltype'] ?? '';
         $subCanal = $data['subchannel'] ?? '';
-
+        $comision = $data['channelcomision'] ?? 0;
         if (!$nombre || !$tipo) {
             return ['status' => 400, 'body' => ['message' => 'Datos incorrectos enviados en la actualización.']];
         }
@@ -200,6 +202,7 @@ class CanalControllerService
             "metodopago" => $metodopago,
             "tipo" => $tipo,
             "subCanal" => $subCanal,
+            "comision" => $comision
         ]);
 
         if ($_channel) {

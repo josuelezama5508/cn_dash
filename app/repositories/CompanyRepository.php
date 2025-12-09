@@ -10,7 +10,7 @@ class CompanyRepository
         $this->model = new CompaniesModel();
     }
     public function getAllCompaniesActive() {
-        return $this->model->where("active = '1' ORDER BY company_name ASC");
+        return $this->model->where("active = '1' AND statusD= '1' ORDER BY company_name ASC");
     }
     public function getAllCompanies(){
         return $this->model->where("1=1");
@@ -58,7 +58,7 @@ class CompanyRepository
         return $this->model->where("clave_empresa = :id AND statusD = '1'", ['id' => $id], ["nombre AS companyname", "primario AS primarycolor", "clave_empresa AS companycode", "productos AS products", "dias_dispo", "imagen AS image", "id AS companyid"]);
     }
     public function getCompanyByUserDisponibility($where){
-        return $this->model->where("company_code IN (" . $where . ") AND active = '1' ORDER BY company_name ASC", []);
+        return $this->model->where("company_code IN (" . $where . ") AND active = '1' AND statusD ='1' ORDER BY company_name ASC", []);
     }
     public function getCompaniesByCodes($where){
         return $this->model->where($where . " ORDER BY company_name ASC", []);

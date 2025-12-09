@@ -25,7 +25,7 @@
             </div>
             <div class="form-group">
                 <label style="font-weight: 700;">Comision del Canal/Agencia (%)</label> <span style="color: red;">*</span>
-                <input type="number" name="comision" class="form-control ds-input">
+                <input type="number" name="channelcomision" class="form-control ds-input">
             </div>
             <!--  -->
         </form>
@@ -53,8 +53,9 @@
                     let data = text.data;
 
                     $("#divType").html(create_channel_type(data.type));
-                    $("[name='channelname']").val(data.nombre)
-                    $("[name='channelmethodpay']").val(data.metodopago)
+                    $("[name='channelname']").val(data.nombre);
+                    $("[name='channelmethodpay']").val(data.metodopago);
+                    $("[name='channelcomision']").val(data.comision);
                     // $("#divSubchannel").html(create_channel_subchannel(data.subchannel));
                 }
             })
@@ -102,7 +103,7 @@
                 case 'subchannel':
                     [ban, msg] = validate_data(texto, regexSubChannel);
                     break;
-                case 'comision':
+                case 'channelcomision':
                     [ban, msg] = validate_data(texto, regexInt);
                     break;
             }

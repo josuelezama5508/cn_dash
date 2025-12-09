@@ -44,14 +44,14 @@ class CanalRepository
         return $this->model->consult($fields, $join, $condicion, ['fecha' => $date]);
     }
     public function searchActives(){
-        $fields = ["nombre AS name", "metodopago", "tipo AS type"];
+        $fields = ["nombre AS name", "metodopago", "tipo AS type", "comision"];
         $join = "";
         $condicion = "activo = '1' ORDER BY nombre ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC";
         return $this->model->consult($fields, $join, $condicion, []);
     }
 
     public function searchActivesConcat($search){
-        $fields = ["nombre AS name", "metodopago", "tipo AS type"];
+        $fields = ["nombre AS name", "metodopago", "tipo AS type", "comision"];
         $join = "";
         $condicion = "activo = '1' AND CONCAT(nombre, ' ', tipo, ' ', metodopago, ' ', subCanal) LIKE :search ORDER BY nombre ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC";
         return $this->model->consult($fields, $join, $condicion, ['search' => "%$search%"]);

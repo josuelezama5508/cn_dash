@@ -90,6 +90,7 @@ class ControlController extends API
                 'vinculadosByNog' => 'getCombosByNog',
                 'getByDatePickup' => 'getByDatePickup',
                 'searchReservation' => 'searchReservation',
+                'searchReservationProcess' => 'searchReservationProcess',
                 'getTagId' => 'getTagId',
                 'idlocation' => 'idlocation'
                 // 'getAllRep' => 'getAllRep'
@@ -108,6 +109,7 @@ class ControlController extends API
                 'getCombosByNog' => fn() => $booking->getCombosByNog($data),
                 'getByDatePickup' => fn() => $booking->getByDatePickupService($this->service('CanalControllerService'), $this->service('RepControllerService'), $data['startdate'], $data['enddate']),
                 'searchReservation' => fn() => $booking->searchReservationService($data),
+                'searchReservationProcess' => fn() => $booking->searchReservationProcessService($data),
                 'getTagId' => fn() => $tag->find($data),
                 'idlocation' => fn()=> $this->service('LocationPortsControllerService')->find("8"),
                 // 'getAllRep' => fn() => $this->service('CanalControllerService')->getAll()
@@ -157,9 +159,9 @@ class ControlController extends API
                     $detailsInsert = $booking->validateCreateBookingDetails($details->crearBookingDetailsService($data, $control, $user));
                     $locationports = $this->service('LocationPortsControllerService');
                     $bodyMail = $booking->getByBookingDataService($control->id, $details, $product, $company, $empresainfo, $locationports);
-                    $mailResults = $booking->gestionarNotificacionCorreoService($control, $data, $user, $bodyMail, $this->mailTemplate, $historyMail, $notificationmail);
+                    // $mailResults = $booking->gestionarNotificacionCorreoService($control, $data, $user, $bodyMail, $this->mailTemplate, $historyMail, $notificationmail);
 
-                    $booking->enviarNotificacionService($control, $data, $notification,$company);
+                    // $booking->enviarNotificacionService($control, $data, $notification,$company);
                     $booking->crearMensajeNotaService($control, $data, $user, $bookingmessage, $history);
                     $history->registrarHistorial('Reservas', $control->id, 'create', 'Reserva creada', $user->id, [], [$booking->getTableName() => $control, $details->getTableNameBookingDetail() => $detailsInsert] );
 
@@ -169,7 +171,7 @@ class ControlController extends API
                         'message' => 'Reserva creada exitosamente',
                         'control' => $control,
                         'bodymail' => $bodyMail,
-                        'correo' => $mailResults['resultadoCorreo'] ?? null,
+                        // 'correo' => $mailResults['resultadoCorreo'] ?? null,
                         'combosArray' => $combosArray,
                         'productosHijos' => $productosHijos,
                         'productoHijoLang' => $productoHijoLang,
@@ -282,19 +284,19 @@ class ControlController extends API
                         if (!empty($mailInsert->id) && $tipo !== "SIN EMAIL") {
                             
                             $dataMail = $this->mailTemplate->procesarReserva($bodyMail);
-                            $correoCliente = $bodyMail['email'] ?? null;   // el correo del cliente
-                            $nombreCliente = $bodyMail['cliente_name'] ?? 'Cliente'; 
-                            $correoEmpresa = $bodyMail['questions_mail'] ?? 'no-reply@miapp.com'; 
-                            $nombreEmpresa = $bodyMail['empresaname'] ?? 'Mi Empresa';
-                            $this->mailer->setFrom($correoEmpresa, $nombreEmpresa);
-                            // Enviar al cliente y a los internos
-                            $this->mailer->sendMail(
-                                $tipo . " Confirm Notification",            // ya no importa el asunto aquí
-                                $dataMail,
-                                "",
-                                [],
-                                [$correoCliente]
-                            );
+                            // $correoCliente = $bodyMail['email'] ?? null;   // el correo del cliente
+                            // $nombreCliente = $bodyMail['cliente_name'] ?? 'Cliente'; 
+                            // $correoEmpresa = $bodyMail['questions_mail'] ?? 'no-reply@miapp.com'; 
+                            // $nombreEmpresa = $bodyMail['empresaname'] ?? 'Mi Empresa';
+                            // $this->mailer->setFrom($correoEmpresa, $nombreEmpresa);
+                            // // Enviar al cliente y a los internos
+                            // $this->mailer->sendMail(
+                            //     $tipo . " Confirm Notification",            // ya no importa el asunto aquí
+                            //     $dataMail,
+                            //     "",
+                            //     [],
+                            //     [$correoCliente]
+                            // );
                             
                             $datahistorymail = $historyMail->registrarOActualizarHistorialCorreoService($data, $user, $dataMail);
                         }

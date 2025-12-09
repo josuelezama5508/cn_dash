@@ -234,7 +234,16 @@ const incoming_bookings = async (search) => {
     try {
         // Construimos el endpoint dinámico para tu API
         // Si tu backend usa GET y query string
-        const endpoint = search ? `control?searchReservation=${encodeURIComponent(search)}` : `control?searchReservation`;
+        let endpoint;
+        console.log("SEARCH");
+        console.log(search);
+        if(window.userInfo.level === "checkin"){
+            endpoint = search ? `control?searchReservationProcess=${encodeURIComponent(search)}` : `control?searchReservationProcess`;
+        }else{
+            
+            endpoint = search ? `control?searchReservation=${encodeURIComponent(search)}` : `control?searchReservation`;
+        }
+        
         
         const response = await fetchAPI(endpoint, "GET");
         const data = await response.json();

@@ -63,6 +63,24 @@ class ControlRepository
 
         return $this->model->consult($fields, $join, $cond);
     }
+    public function getByDateLatestProcess()
+    {
+        $fields = [
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, 
+             C.nog, C.code_company, C.procesado, C.moneda, C.checkin, C.noshow',
+            'B.*', 'CO.company_name, CO.primary_color',
+            'S.name AS status, S.color AS statuscolor'
+        ];
+
+        $join = "C
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
+            INNER JOIN estatus AS S ON C.status = S.id_status";
+
+        $cond = "CO.statusD = '1' AND C.procesado = 1 AND C.status != 2 ORDER BY C.idpago DESC LIMIT 100";
+
+        return $this->model->consult($fields, $join, $cond);
+    }
     public function getRawPickupData($startDate, $endDate)
     {
         $sql = "
@@ -220,6 +238,32 @@ class ControlRepository
             INNER JOIN estatus AS S ON C.status = S.id_status";
     
         $cond = "CO.statusD = '1' AND (
+            LOWER(C.nog) LIKE :search OR
+            LOWER(C.cliente_name) LIKE :search OR
+            LOWER(C.cliente_lastname) LIKE :search OR
+            LOWER(CONCAT(C.cliente_lastname, ' ', C.cliente_name)) LIKE :search
+        ) ORDER BY C.idpago DESC LIMIT 100";
+    
+        $params = [
+            'search' => "%".strtolower($search)."%"
+        ];
+    
+        return $this->model->consult($campos, $join, $cond, $params, false);
+    }
+    public function searchreservationsprocess($search){
+        $campos = [
+            'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.procesado, C.checkin, C.noshow, C.moneda',
+            'B.*',
+            'CO.company_name, CO.primary_color, CO.statusD',
+            'S.name AS status, S.color AS statuscolor'
+        ];
+    
+        $join = "C 
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
+            INNER JOIN estatus AS S ON C.status = S.id_status";
+    
+        $cond = "CO.statusD = '1' AND C.procesado = 1 AND (
             LOWER(C.nog) LIKE :search OR
             LOWER(C.cliente_name) LIKE :search OR
             LOWER(C.cliente_lastname) LIKE :search OR

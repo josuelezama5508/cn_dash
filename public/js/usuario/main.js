@@ -39,8 +39,7 @@ $(document).ready(function () {
                     data-email="${u.email}"
                     data-level="${u.level}"
                     data-ip="${u.ip_user}"
-                    data-empresas='${JSON.stringify(u.productos_empresas).replace(/"/g, "&quot;")}'
-                >
+                    data-empresas='${JSON.stringify(u.productos_empresas).replace(/"/g, "&quot;")}'>
                     <div class="user-title">
                         <span>${u.name} ${u.lastname}</span>
                         <small>${u.username}</small>

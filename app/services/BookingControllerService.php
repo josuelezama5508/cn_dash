@@ -40,6 +40,10 @@ class BookingControllerService
     {
         return $this->control_repo->getByDateLatest();
     }
+    public function getByDateLatestProcess()
+    {
+        return $this->control_repo->getByDateLatestProcess();
+    }
     public function getRawPickupData($startDate, $endDate)
     {
         return $this->control_repo->getRawPickupData($startDate, $endDate);
@@ -81,6 +85,10 @@ class BookingControllerService
     public function searchreservations($search)
     {
         return $this->control_repo->searchreservations($search);
+    }
+    public function searchreservationsprocess($search)
+    {
+        return $this->control_repo->searchreservationsprocess($search);
     }
     public function getByDateDispo($date = null)
     {
@@ -341,6 +349,13 @@ class BookingControllerService
         }
     
         return $this->searchreservations($search);
+    }
+    public function searchReservationProcessService($search){
+        if ($search === '') {
+            return $this->getByDateLatestProcess();
+        }
+    
+        return $this->searchreservationsprocess($search);
     }
     private function obtenerDominioLimpioService($url) {
         // Asegúrate de que tenga esquema para que parse_url funcione bien

@@ -18,8 +18,8 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="comision" class="fw-semibold fs-15-px">Comision Agencia (%):</label> <span style="color: red;">*</span>
-                <input type="number" name="comision" id="comision" class="form-control ds-input">
+                <label for="channelcomision" class="fw-semibold fs-15-px">Comision Agencia (%):</label> <span style="color: red;">*</span>
+                <input type="number" name="channelcomision" id="channelcomision" class="form-control ds-input">
             </div>
         </div>
         
@@ -118,7 +118,7 @@
                     if (texto.length == 0)
                         ban = "correcto";
                     break;
-                case 'comision':
+                case 'channelcomision':
                     [ban, msg] = validate_data(texto, regexInt);
                     break;
             }

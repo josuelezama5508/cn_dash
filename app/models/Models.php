@@ -592,7 +592,7 @@ class Canal extends ModelTable
         return $this->where(
             "$where ORDER BY nombre ASC, CAST(REGEXP_SUBSTR(nombre, '^[0-9]+') AS UNSIGNED) ASC",
             [],
-            ["nombre AS name", "metodopago", "tipo AS type"]
+            ["nombre AS name", "metodopago", "tipo AS type", "comision"]
         );
     }
     function getChannelById($id)
