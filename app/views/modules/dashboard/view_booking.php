@@ -13,30 +13,44 @@
 <body>
     <?php include_once(__DIR__ . '/../../partials/menu_dash.php') ?>
     <main>
-        <div class="content">
+        <div class="content pt-3 mt-5">
             <!--  -->
-            <div class="main-content" style="padding-top: 0;">
+            <div class="main-content">
                 <!--  -->
-                <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; margin-bottom: 30px;">
-                    <div style="color: black; display: flex; flex-direction: row; justify-content: flex-start; align-items: center; align-items: center;">
-                        <i class="bi bi-archive" style="font-size: 31px;margin-right: 10px;"></i>
-                        <p style="margin: 0;font-size: 15px;font-weight: 600;">Registro de reserva para: </p>
+                <div class="booking-container booking-blue mb-3" style="height: fit-content;">
+                    <div class="header row-content-left">
+                        <i class="bi bi-bookmark-plus"></i>
+                        <p class="m-0 text-white fs-16-px">Registro de reserva:</p>
                     </div>
-                    <section class="header-reserva" style="display:flex; gap:10px; align-items:center; width:80%;">
-                        <img id="logocompany" style="width:80px; height:50px; object-fit:contain;" alt="Logo empresa">
-                        <div style="flex:2;">
-                            <label for="companySelect" style="font-weight:bold;">Empresa:</label>
-                            <select id="companySelect" class="form-control ds-input" style="width:100%;"></select>
-                            <input type="hidden" id="companycode" name="companycode" value="<?= $data['company'] ?>">
-                        </div>
+                    <div class="container py-4 px-1">
+                        <div class="row g-3 align-items-center">
 
-                        <div style="flex:3;">
-                            <label for="productSelect" style="font-weight:bold;">Producto:</label>
-                            <select id="productSelect" class="form-control ds-input" style="width:100%;"></select>
-                            <input type="hidden" id="productcode" name="productcode" value="<?= $data['product'] ?>">
+                            <!-- Logo -->
+                            <div class="col-1 px-1 ps-3">
+                                <img class="logo-new-product" id="logocompany"
+                                    style="object-fit:contain;"
+                                    alt="Logo empresa">
+                            </div>
+
+                            <!-- Empresa -->
+                            <div class="col-md-4 ps-4 pe-2">
+                                <label for="companySelect" class="fw-bold">Empresa:</label>
+                                <select id="companySelect" class="form-control ds-input w-100 no-transition"></select>
+                                <input type="hidden" id="companycode" name="companycode" value="<?= $data['company'] ?>">
+                            </div>
+
+                            <!-- Producto -->
+                            <div class="col-7 pe-3 ps-0">
+                                <label for="productSelect" class="fw-bold">Producto:</label>
+                                <select id="productSelect" class="form-control ds-input w-100 no-transition"></select>
+                                <input type="hidden" id="productcode" name="productcode" value="<?= $data['product'] ?>">
+                            </div>
+
                         </div>
-                    </section>
+                    </div>
+
                 </div>
+                
                 <!--  -->
                 <div class="section-header-new-reserva" style="display: flex; flex-direction: column; gap: 20px;">
                     <!--  -->
@@ -44,19 +58,19 @@
                         <div class="booking-container booking-blue" style="height: fit-content;">
                             <div class="header row-content-left">
                                 <i class="bi bi-bookmark-plus"></i>
-                                <p style="margin: 0;font-size: 16px;">Servicio:</p>
+                                <p style="margin: 0;font-size: 16px;">Tipo de Actividad:</p>
                             </div>
                             <div class="container" style="display: flex; flex-direction: column; gap: 8px;">
-                                <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
-                                        <div style="flex: 2;">
+                                <div class="container p-0" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+                                        <div style="flex: 1;">
                                             <label for="tourtype" style="font-weight: bold; margin-left: 10px;">Tipo de servicio:</label>
-                                            <select id="tourtype" class="form-control ds-input" style="width: 100%;">
+                                            <select id="tourtype" class="form-control ds-input no-transition" style="width: 100%;">
                                             </select>
                                         </div>
                                         <div style="flex: 1;">
                                             <label for="language" style="font-weight: bold; margin-left: 10px;">Idioma:</label>
                                             <div id="DivLang">
-                                                <select id="language" name="language" class="form-control ds-input" style="width: 100%;">
+                                                <select id="language" name="language" class="form-control ds-input no-transition" style="width: 100%;">
                                                     <option value="es">Español</option>
                                                     <option value="en">Inglés</option>
                                                 </select>
@@ -72,17 +86,17 @@
                                 <p style="margin: 0;font-size: 16px;">Canal:</p>
                             </div>
                             <div class="container" style="display: flex; flex-direction: column;">
-                                <div class="container" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
+                                <div class="container p-0" style="display: flex; flex-direction: row; gap: 8px; border: 0px;">
                                     <div style="flex: 1;">
                                         <label for="Channel" style="font-weight: bold; margin-left: 10px;">Canal:</label>
                                         <div id="DivChannel">
-                                            <select id="channelSelect" name="Channel" class="form-control ds-input"></select>
+                                            <select id="channelSelect" name="Channel" class="form-control ds-input no-transition"></select>
                                         </div>
                                     </div>
                                     <div style="flex: 1;">
                                         <label for="Rep" style="font-weight: bold; margin-left: 10px;">Rep:</label>
                                         <div id="DivRep">
-                                            <select id="repSelect" name="Rep" class="form-control ds-input"></select>
+                                            <select id="repSelect" name="Rep" class="form-control ds-input no-transition"></select>
                                         </div>
                                     </div>
                                     <!-- Contenedor donde se inyectará el formulario de nuevo canal -->
@@ -103,7 +117,7 @@
                         <div class="container" style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; flex-direction: row; gap: 10px;"> 
                                 <div id="toursBlock" class="container" style="display: flex; flex-direction: column; gap: 10px; border-color: transparent; padding: 0px;">
-                                    <div style="padding: 5px; border-bottom: 2px solid #D70000;">
+                                    <div style="padding: 5px 0px; border-bottom: 2px solid #D70000;">
                                         <span class="row-content-left" style="height: 22px; margin-left: 10px;">
                                             <i class="bi bi-ticket-detailed row-content-left"></i> Tickets
                                         </span>
@@ -133,7 +147,7 @@
                                     </h2>
                                     </header>
                                     <div style="margin-top:10px; display:flex; justify-content:center; align-items:center;">
-                                    <div id="datepicker"></div>
+                                    <div id="datepicker" class="d-none"></div>
                                     </div>
                                 </article>
 
@@ -145,7 +159,7 @@
                                     </h2>
                                     </header>
                                     <div style="margin-top:10px; display:flex; flex-direction:column; align-items:center; gap:15px;">
-                                    <select id="selectHorario" class="form-select" style="max-width:250px;"></select>
+                                    <select id="selectHorario" class="form-select no-transition" style="max-width:250px;"></select>
                                     <div id="horariosDisponibles" class="horarios-grid"></div>
                                     </div>
                                 </article>
@@ -159,7 +173,7 @@
                     <!--  -->
                     <div class="booking-container booking-blue">
                         <div class="header row-content-left">
-                            <i class="bi bi-calendar2-plus"></i>
+                            <i class="bi bi-person-vcard"></i>
                             <p style="margin: 0;font-size: 16px;">Datos de Usuario:</p>
                         </div>
                         <div class="container" style="display: flex; flex-direction: column; gap: 10px;">
@@ -193,62 +207,54 @@
                         </div>
                     </div>
                     <!--  -->
-                    <div class="booking-container booking-blue full-width-container" >
-                        <div class="container full-width-inner" style="border-color: transparent;">
-                            <!-- hidden de motodopago -->
-                             
+                    <div class="booking-container booking-blue">
+                        <div class="header row-content-left">
+                            <i class="bi bi-ui-checks-grid"></i>
+                            <p style="margin: 0;font-size: 16px;">Tipo de reservación</p>
+                        </div>
+                        <div class="container full-width-inner">
+
                             <input type="hidden" id="metodopago" name="metodopago" value="">
+
                             <!-- Botones principales -->
                             <div id="mainButtons">
-                                <button class="btn-primary" id="btnPagarAhora">Pagar Ahora</button>
-                                <button class="btn-primary" id="btnBalance">Balance</button>
-                                <button class="btn-primary" id="btnPaymentRequest">Payment Request</button>
+                                <button class="btn-primary rounded-1" id="btnVoucherMain">Voucher</button>
+                                <button class="btn-primary rounded-1" id="btnBalance">Balance</button>
+                                <button class="btn-primary rounded-1" id="btnPaymentRequest">Payment Request</button>
                             </div>
-                            <!-- Opciones de Pagar Ahora -->
-                            <div id="pagarAhoraOpciones" style="display: none;">
-                                <!-- <button class="btn-primary" id="btnEfectivo">Efectivo</button> -->
-                                <button class="btn-primary" id="btnVoucher">Voucher</button>
-                                <button class="btn-primary" id="btnOtro">Otro</button>
-                                <button class="btn-back corner-button" id="btnVolverPagarAhora"  style ="position: absolute; right: 0;bottom: 0;">
-                                    <i class="fas fa-arrow-left"></i>
-                                </button>
-                                <!-- Input de Voucher/Otro -->
-                                <div id="voucherInputGroup" style="display: none; margin-top: 10px;">
-                                    <textarea id="voucherCode" placeholder="Ingresa tu código o detalle" rows="3"></textarea>
-                                    <div class="btn-group" style="align-items: center; gap: 10px;"> 
-                                        <button class="btn-primary" id="btnConfirmVoucher">Confirmar</button>
-                                        <button class="btn-back corner-button" id="btnVolverVoucher" style=" position: relative; padding: 8px; height: min-content; right: auto;">
-                                            <i class="fas fa-arrow-left"></i>
-                                        </button>
-                                    </div>
+
+                            <!-- Input de Voucher -->
+                            <div id="voucherInputGroup" style="display:none; margin-top:10px;">
+                                <textarea id="voucherCode" placeholder="Ingresa tu código o detalle" rows="3"></textarea>
+
+                                <div class="btn-group w-100" style="align-items:center; gap:10px;">
+                                    <button class="btn-primary rounded-1" id="btnConfirmVoucher">Confirmar</button>
+                                    <button class="btn-back corner-button" id="btnVolverVoucher"
+                                        style="position:absolute; padding:8px; height:min-content;">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
                                 </div>
                             </div>
-                            <!-- Opciones de Payment Request -->
-                            <div id="paymentRadios" style="display: none;">
 
-                                <!-- Contenedor de radios y botón -->
-                                <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px;">
-                                    
-                                    <!-- Radios en fila -->
-                                    <div style="display: flex; flex-direction: row; gap: 15px; justify-content: center;">
+                            <!-- Payment Request -->
+                            <div id="paymentRadios" style="display:none;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:15px; margin-bottom:15px;">
+                                    <div style="display:flex; gap:15px; justify-content:center;">
                                         <label><input type="radio" name="paymentMethod" value="stripe"> Stripe</label>
                                         <label><input type="radio" name="paymentMethod" value="paypal"> PayPal</label>
                                     </div>
 
-                                    <!-- Botón enviar pago -->
-                                    <div style="text-align: center;">
-                                        <button class="btn-primary" id="btnSendPayment">Enviar Pago</button>
-                                    </div>
-
+                                    <button class="btn-primary rounded-1" id="btnSendPayment">Enviar Pago</button>
                                 </div>
 
-                                <!-- Botón volver -->
-                                <button class="btn-back corner-button" id="btnVolverPayment" style="position: absolute; right: 0; bottom: 0;">
+                                <button class="btn-back corner-button" id="btnVolverPayment"
+                                    style="position:absolute; right:0; bottom:0;">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                             </div>
 
                         </div>
+
                     </div>
                     <!--  -->
                 </div>
@@ -333,7 +339,7 @@
                             <span style="font-size: 18px;color: #1565C0;">Codigo de promoción:</span>
                             <div style="display: flex; gap: 10px;">
                                 <input type="text" id="promoCode" class="form-control ds-input" placeholder="Ingresa tu código" style="flex: 1;">
-                                <button type="button" id="btnCanjearPromo" class="btn btn-primary">Canjear</button>
+                                <button type="button" id="btnCanjearPromo" class="btn btn-primary rounded-1">Canjear</button>
                             </div>
                         </div>
                         <div class="item">

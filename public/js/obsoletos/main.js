@@ -346,7 +346,7 @@ function renderHorarios(horarios) {
 }
 async function initBookingForm(initialCompany, initialProduct) {
     // 🔹 1. Cargar empresas
-    const companies = await fetch_companies();
+    const companies = await fetch_companies_by_user(window.userInfo.user_id);
     render_companies(companies, "#companySelect");
     // 🔹 2. Si hay empresa inicial
     setSelectLanguage(languagecode);

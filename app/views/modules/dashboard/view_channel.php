@@ -9,7 +9,7 @@
     <?php include_once(__DIR__ . '/../../partials/menu_dash.php') ?>
 
     <main>
-        <div class="content">
+        <div class="content pt-3 mt-5">
             <!--  -->
             <div class="main-content" style="padding-top: 0;">
                 <!--  -->
@@ -21,12 +21,13 @@
                         <table class="table table-hover" style="margin: 0;">
                             <thead>
                                 <tr>
-                                    <th scope="col">N°</th>
-                                    <th scope="col">Canal</th>
-                                    <th scope="col" style="width: 80px;">Rep</th>
-                                    <th scope="col" style="width: 280px;">Metodo de pago</th>
-                                    <th scope="col" style="width: 260px;">Tipo</th>
-                                    <th scope="col" style="width: 80px;"></th>
+                                    <th scope="col" class="text-center">N°</th>
+                                    <th scope="col" class="text-center">Canal</th>
+                                    <th scope="col" class="text-center" style="width: 80px;">Rep</th>
+                                    <th scope="col" class="text-center" style="width: 280px;">Metodo de pago</th>
+                                    <th scope="col" class="text-center" style="width: 260px;">Tipo</th>
+                                    <th scope="col" class="text-center" style="width: 80px;">Comision Agencia</th>
+                                    <th scope="col" class="text-center" style="width: 80px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="RBuscador"></tbody>

@@ -34,6 +34,7 @@ const registered_channel_main = async (condition) => {
                         </td>
                         <td class="channel-phone">${element.metodopago || '-'}</td>
                         <td class="channel-type">${element.type}</td>
+                        <td></td>
                         <td>
                             <div class="channel-actions">
                                 <button class="edit-btn" id="channel-${element.id}" style="background: transparent; border: none;"><i class="material-icons" style="color: #03a9f4;">edit</i>
@@ -67,7 +68,7 @@ const registered_channel_main = async (condition) => {
             $("#RBuscador").on("click", ".edit-btn", function() {
                 const id = $(this).attr("id").split("channel-")[1];
                 if (!id) return;
-                paintModal("edit_channel", id);
+                paintModal("edit_channel", id, 'Actualizar', 'Cerrar');
             });
             $("#RBuscador").on("click", ".delete-btn", function() {
                 const id = $(this).attr("id").split("channel-")[1];
@@ -119,7 +120,7 @@ function btnRepEvent(input) {
     if (!id) return;
     paintModal("show_rep", id);
 }
-function paintModal(version = '', id) {
+function paintModal(version = '', id, txtSave = 'Guardar', txtClose = 'Cerrar') {
     if (instance_of_modal && instance_of_modal.isOpen) {
         instance_of_modal.close();
         instance_of_modal = null;
@@ -128,7 +129,7 @@ function paintModal(version = '', id) {
         useBootstrap: false,
         buttons: {
             ok: {
-                text: "Aceptar",
+                text: txtSave,
                 btnClass: "btn-green",
                 action: () => {
                     if (typeof sendEvent === "function") sendEvent(instance_of_modal);
@@ -136,7 +137,7 @@ function paintModal(version = '', id) {
                 }
             },
             no: {
-                text: "Cancelar",
+                text: txtClose,
                 btnClass: "btn-red",
                 action: () => {
                     if (typeof cancelEvent === "function") {
@@ -151,13 +152,13 @@ function paintModal(version = '', id) {
     };
     switch (version) {
         case "show_rep":
-            modal.title = "Representantes";
+            modal.title = "Módulo de Canal Con Reps";
             modal.boxWidth = "900px";
             modal.content = `url:${window.url_web}/form/detalles_rep?channelid=${id}`;
             delete modal.buttons.ok;
             break;
         case "edit_channel":
-            modal.title = "Editar canal";
+            modal.title = "Módulo Para Editar Canal/Agencia";
             modal.boxWidth = "600px";
             modal.content = `url:${window.url_web}/form/edit_channel?id=${id}`;
             break;
@@ -177,13 +178,13 @@ function activandomodalEvent() {
     }
 
     instance_of_modal = $.confirm({
-        title: 'Nuevo canal',
+        title: 'Modulo Para Crear Canal',
         content: `url:${window.url_web}/form/add_channel`,
         boxWidth: "900px",
         useBootstrap: false,
         buttons: {
             ok: {
-                text: "Aceptar",
+                text: "Agregar",
                 btnClass: "btn-green",
                 action: () => {
                     if (typeof sendEvent === 'function') sendEvent(instance_of_modal);
@@ -191,7 +192,7 @@ function activandomodalEvent() {
                 }
             },
             no: {
-                text: "Cancelar",
+                text: "Cerrar",
                 btnClass: "btn-red",
                 action: () => {
                     if (typeof cancelEvent === "function") {

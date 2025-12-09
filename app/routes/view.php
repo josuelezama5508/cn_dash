@@ -36,6 +36,9 @@ return [
          "mailer/details" => ["controller" => "MailerController", "method" => "read"],
          //Camioneta
          "camioneta" => ["controller" => "CamionetaController", "method" => "index"],
+         //Usuarios
+         "usuarios" => ["controller" => "UserController", "method" => "index"],
+
         //Detalles Reserva
         "detalles-reserva/view" =>["controller" => "DetallesReservaController", "method" => "viewdetails"],
         "detalles-reserva/form_sapa" => ["controller" => "DetallesReservaController","method" => "formSapa"],
@@ -43,6 +46,7 @@ return [
         "detalles-reserva/form_cancelar" => ["controller" => "DetallesReservaController","method" => "formCancel"],
         "detalles-reserva/form_payment" => ["controller" => "DetallesReservaController","method" => "formPayment"],
         "detalles-reserva/form_update_sapa" => ["controller" => "DetallesReservaController","method" => "formUpdateSapa"],
+        "detalles-reserva/form_send_voucher" => ["controller" => "DetallesReservaController","method" => "formSendVoucher"],
 
     ],
     // Version de desarrollo

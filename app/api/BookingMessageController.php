@@ -71,16 +71,17 @@ class BookingMessageController extends API
             [$action, $search] = $this->resolveAction($params, [
                 'getNotesIdPago' => 'getNotesIdPago',
                 'getNotesIdPagoUser' => 'getNotesIdPagoUser',
-                'getLastNoteIdPago' => 'getLastNoteIdPago'
+                'getLastNoteIdPago' => 'getLastNoteIdPago',
+                'getLastNoteIdPagoCheckin' => 'searchLastNoteByIdCheckin'
             ]);
 
             if (!$action) return $this->jsonResponse(['message' => 'Acción GET inválida'], 400);
 
             $map = [
                 'getNotesIdPago' => fn() => $this->service('BookingMessageControllerService')->searchNotesByIdPago($search),
-                'getNotesIdPagoUser' => fn() => $this->service('BookingMessageControllerService')
-                    ->searchNotesByIdPagoUser(...array_values(json_decode($search, true) ?? [])),
-                'getLastNoteIdPago' => fn() => $this->service('BookingMessageControllerService')->searchLastNoteByIdPago($search)
+                'getNotesIdPagoUser' => fn() => $this->service('BookingMessageControllerService')->searchNotesByIdPagoUser(...array_values(json_decode($search, true) ?? [])),
+                'getLastNoteIdPago' => fn() => $this->service('BookingMessageControllerService')->searchLastNoteByIdPago($search),
+                'searchLastNoteByIdCheckin' => fn() => $this->service('BookingMessageControllerService')->searchLastNoteByIdCheckin($search)
             ];
 
             $response = $map[$action]();
@@ -124,13 +125,14 @@ class BookingMessageController extends API
                 'tipomessage' => $tipomessage
             ], $postData['module'], $userData->id,
             $history);
-
-            $mensajesCombinados = $service->replicarMensajeEnCombos($controlData->nog, $mensaje, $userData->id, $tipomessage, $postData['module'], $booking, $history);
+            if($tipomessage != 'sapa'){
+                $mensajesCombinados = $service->replicarMensajeEnCombos($controlData->nog, $mensaje, $userData->id, $tipomessage, $postData['module'], $booking, $history);
+            }
 
             return $this->jsonResponse([
                 'message' => 'Mensaje creado y replicado correctamente',
                 'principal' => $mensajePrincipal,
-                'combinados' => $mensajesCombinados
+                'combinados' => $mensajesCombinados ?? ''
             ], 201);
 
         } catch (Exception $e) {

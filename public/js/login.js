@@ -9,7 +9,6 @@ $(document).ready(function() {
     });
 });
 
-
 function sendEvent() {
     function data(FormData) {
         var json = {};
@@ -25,22 +24,26 @@ function sendEvent() {
     block_form(true);
     
     const base = `${location.protocol}//${location.host}/cn_dash`;
-    console.log(`${base}/login`);
+
+    const payload = {
+        login: data(formData)
+    };
+
+    console.log("Payload que se enviará:", payload); // <- aquí está tu bendito console.log
+
     fetch(`${base}/login`, {
-
-
         method: "POST",
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
         cache: "default",
-        body: JSON.stringify(data(formData)),
+        body: JSON.stringify(payload),
     })
-      .then(async (response) => {
+    .then(async (response) => {
         const status = response.status;
         const text = await response.json();
-
+        console.log("Respuesta procesada:", text); 
         if (status == 400) {
             $("#contenrMsj").html(`<div style="margin-bottom: 10px;"><p style="background: #ff3100; padding: 5px 15px; color: white; margin-bottom: 0;"><b>Error:</b> ${text.message}</p></div>`);
         } else if (status == 200) {
@@ -48,14 +51,14 @@ function sendEvent() {
             window.localStorage.setItem("__token", text.__token);
             window.location.href = text.redirect;
         }
-
+    
         setTimeout(() => {
             $("[name='password']").val('');
             $("#contenrMsj").html('');
             block_form(false);
         }, 2000);
-      })
-      .catch((error) => {});
+    })
+    .catch((error) => {});
 }
 
 

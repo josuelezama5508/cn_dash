@@ -96,7 +96,8 @@
                     'widget': 'select',
                     'category': category,
                     'name': name,
-                    'selected_id': id
+                    'selected_id': id,
+                    'id_user': window.userInfo.user_id
                 },
                 success: function(response) {
                     $(div).html(response)

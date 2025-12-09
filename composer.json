@@ -1,5 +1,18 @@
 {
+    "name": "sistemas/cn_dash",
+    "description": "totalsnorkelv2",
+    "autoload": {
+        "psr-4": {
+            "Sistemas\\CnDash\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "josuelezama5508",
+            "email": "cotzi3avb@gmail.com"
+        }
+    ],
     "require": {
-        "minishlink/web-push": "^9.0"
+        "phpmailer/phpmailer": "^7.0"
     }
 }

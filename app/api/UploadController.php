@@ -58,8 +58,9 @@ class UploadController extends API
 
         if (move_uploaded_file($image['tmp_name'], $this->image_directory . $uniqueName)) {
             $domain = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/' .  ROOT_DIR;
-            $url_image = $domain . '/uploads/images/' . $uniqueName;
-            return $this->jsonResponse(["message" => "Archivo subido correctamente", "url" => $url_image], 201);
+            $url_image = $domain . '/images/' . $uniqueName;
+            $url_image_v2 = '/images/' . $uniqueName;
+            return $this->jsonResponse(["message" => "Archivo subido correctamente", "url" => $url_image, "url_v2" => $url_image_v2], 201);
         }
 
         return $this->jsonResponse(["message" => "Error al guardar el archivo"], 500);

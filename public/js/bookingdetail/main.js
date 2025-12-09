@@ -1,6 +1,7 @@
 let descuento = 0;
 let porcentajeDescuento = 0; // ✅ ahora es global
-
+let fechaOriginal = "";
+let sapaData = "";
 $(document).ready(async function () {
   const pathParts = window.location.pathname.split('/').filter(Boolean); // Quita vacíos
   const nog = pathParts[3]; // [0]=cn_dash, [1]=detalles-reserva, [2]=view, [3]=1MIMBR45MQ
@@ -19,7 +20,6 @@ $(document).ready(async function () {
       alert("No se encontró la reserva.");
       return;
     }
-
     const reserva = json.data[0];
     modalData = reserva;
     console.log("Reserva completa:", reserva);
@@ -47,60 +47,13 @@ $(document).ready(async function () {
         $('#btnCanjearPromo').prop('disabled', false).text('Canjear');
       }
     }
-  //   // 1. Registro del Service Worker (se hace al cargar la página)
-  // if ('serviceWorker' in navigator && 'PushManager' in window) {
-  //   navigator.serviceWorker.register('/cn_dash/public/js/notificationservice/sw.js')
-  //     .then(function(registration) {
-  //       console.log('Service Worker registrado');
-  //     })
-  //     .catch(function(error) {
-  //       console.error('Error al registrar Service Worker:', error);
-  //     });
-  // } else {
-  //   alert('Tu navegador no soporta Service Workers o Push API');
-  // }
-
-  // // 2. Evento click para pedir permiso y mostrar notificación
-  // $('#btn_prueba').on('click', function() {
-  //   Notification.requestPermission().then(function(permission) {
-  //     if (permission === 'granted') {
-  //       // Payload para la notificación
-  //       const payload = {
-  //         title: 'Reserva creada',
-  //         body: '¡Se ha creado una nueva reserva!',
-  //         icon: '/icon.png',
-  //         url: 'https://6b287d39f8e9.ngrok-free.app/cn_dash/detalles-reserva/view/'
-  //       };
-  
-  //       fetch('https://6b287d39f8e9.ngrok-free.app/cn_dash/api/notificationservice?action=sendNotification', {
-  //         method: 'POST',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           'Accept': 'application/json',
-  //           // Agrega aquí si usas token de autenticación, ejemplo:
-  //           // 'Authorization': 'Bearer TU_TOKEN_AQUI'
-  //         },
-  //         body: JSON.stringify(payload)
-  //       })
-  //       .then(response => response.json())
-  //       .then(data => {
-  //         console.log('Notificación enviada al servidor:', data);
-  //         // alert('Notificación enviada al servidor. Revisa la consola.');
-  //       })
-  //       .catch(error => {
-  //         console.error('Error al enviar notificación:', error);
-  //         // alert('Error al enviar notificación. Revisa la consola.');
-  //       });
-  
-  //     } else {
-  //       // alert('Permiso de notificaciones denegado');
-  //     }
-  //   });
-  // });
-  
-
     if (modalData.id) {
-      renderUltimoMensajeContent(modalData.id);
+      if(window.userInfo.level != "checkin"){
+        renderUltimoMensajeContent(modalData.id);
+      }
+      if(window.userInfo.level != "reservaciones"){
+        autofillCheckin(modalData.id);
+      }
       mostrarSapas(modalData.id, modalData);
     }
     // Botón cerrar modal
@@ -145,6 +98,11 @@ $(document).ready(async function () {
     }
 
     // Función para renderizar datos de reserva e items
+    async function autofillCheckin(id) {
+      const messageCheckin = await search_last_messages_checkin(modalData.id);
+      const mensaje =Array.isArray(messageCheckin) && messageCheckin.length > 0 && messageCheckin[0]?.mensaje?messageCheckin[0].mensaje: '';
+      $('#comentario_checkin').val(mensaje);
+    }
     
     async function renderReserva() {
       // Datos usuario
@@ -159,14 +117,12 @@ $(document).ready(async function () {
       $("#reserva_actividad").text(reserva.actividad ?? 'N/A');
       // Cambiar el texto o contenido si quieres mostrarlo en otro lado, 
       // pero para la imagen se cambia el atributo src
-      $("#company_logo_home").attr("src", reserva.company_logo);
-
+      $("#company_logo_home").attr("src", window.url_web + reserva.company_logo);
+      
       // $("#company_name").text(reserva.company_name ?? 'N/A');
-      const fechaOriginal = reserva.datepicker ?? '';
+      fechaOriginal = formatDate(reserva.datepicker, "es");
       if (fechaOriginal) {
-        const [anio, mes, dia] = fechaOriginal.split('-');
-        const fechaFormateada = `${dia}/${mes}/${anio}`;
-        $("#reserva_fecha").text(fechaFormateada);
+        $("#reserva_fecha").text(fechaOriginal.f10);
       } else {
         $("#reserva_fecha").text('N/A');
       }
@@ -235,7 +191,7 @@ $(document).ready(async function () {
 
       // Otros datos
       $("#pago_referencia").text(reserva.referencia ?? '');
-      $("#reserva_balance").text(`${(reserva.id_estatus === 1) ? "SIN BALANCE" :`$${parseFloat(reserva.balance).toFixed(2)} USD`}`);
+      $("#reserva_balance").text(`${(reserva.id_estatus === 1) ? "Sin balance" :`$${parseFloat(reserva.balance).toFixed(2)} USD`}`);
       if (reserva.id_estatus === 2) {
         $('#motivo_cancelación').text(reserva.accion || '');
         // Quita la clase d-none si la tiene
@@ -249,12 +205,18 @@ $(document).ready(async function () {
       }
       
       $("#reserva_checkin").text("No").addClass("badge bg-danger");
+      if(reserva.checkin == '0'){
+        $("#web_checkin").text('FALSE').addClass('badge bg-danger text-white');
+      }else{
+        $("#web_checkin").text('TRUE').addClass('badge background-green-custom text-white');
+      }
+      
       $("#reserva_canal").text(reserva.canal_nombre ?? "N/A");
       $("#reserva_rep").text(reserva.rep_nombre ?? "N/A");
       $("#reserva_tipo").text(reserva.type ?? "NORMAL");
       // $('#pago_estado').text((reserva.proceso ?? "PENDIENTE").toUpperCase());
       $('#reserva_referencia').text((reserva.referencia ?? "N/A").toUpperCase());
-      $("#reserva_fecha_compra").text(reserva.fecha_details ?? 'N/A');
+      $("#reserva_fecha_compra").text(formatearFecha(reserva.fecha_details) ?? 'N/A');
       $("#reserva_metodo_pago").text((reserva.metodo ?? 'balance').toUpperCase());
       $("#reserva_ip").text("N/A");
       $("#reserva_nav").text("Undefined");
@@ -268,10 +230,10 @@ $(document).ready(async function () {
 
       if (procesadoValor === true || procesadoValor === 1 || procesadoValor === "SI" || procesadoValor === "si") {
         procesadoBadge.text("PROCESADO");
-        procesadoBadge.removeClass().addClass("badge bg-success text-white");
+        procesadoBadge.removeClass().addClass("badge background-green-custom-3 p-2 text-white w-100 d-block text-start  fw-normal fs-15-px rounded-1");
       } else {
         procesadoBadge.text("NO PROCESADO");
-        procesadoBadge.removeClass().addClass("badge bg-danger text-white");
+        procesadoBadge.removeClass().addClass("badge bg-danger p-2 text-white w-100 d-block text-start fw-normal fs-15-px rounded-1");
       }
       // check-in switch
       // const checkinSwitch = $("#reserva_checkin_switch");
@@ -288,11 +250,11 @@ $(document).ready(async function () {
       // Función para crear <p> con texto, clase y color personalizado
       function crearElemento(texto, clase = "", color = null) {
         const estilo = color ? `style="background-color: ${color} !important;"` : "";
-        return `<p class="text-uppercase text-white ${clase} m-1 px-2 py-1 rounded fs-7" ${estilo}>${texto}</p>`;
+        return `<p class="text-uppercase fs-15-px fw-normal text-white ${clase} ms-0 me-1 px-2 py-1 rounded-1 fs-7" ${estilo}>${texto}</p>`;
       }
       
       // Crear contenedor base
-      let contenido = `<div class="d-flex justify-content-start align-items-center flex-wrap w-100">`;
+      let contenido = `<div class="d-flex p-0 m-0 justify-content-start align-items-start flex-wrap">`;
       
       // === ESTADOS PRINCIPALES ===
       switch (estado) {
@@ -384,7 +346,12 @@ $(document).ready(async function () {
 
       
     }
-
+    function formatearFecha(fechaOriginal) {
+      // Crear objeto Date desde la cadena
+      const fecha = formatFechas(fechaOriginal);
+      return fecha.f5;
+  }
+  
     
 
     function calcularTotal() {
@@ -404,24 +371,29 @@ $(document).ready(async function () {
       if (total === 0) {
         total = parseFloat(reserva.total || 0);
       }
-    
+      
       const totalConDescuento = descuentoAplicado > 0 ? total * descuentoAplicado : total;
       const totalBase = total;
       const balance = parseFloat(reserva.balance ?? 0);
     
       let htmlTotal = "";
-    
+      let buttonEditPax = `
+        <div class="d-flex align-items-center justify-content-end flex-wrap mb-2">
+            <button class="btn btn-warning align-item-end p-2 text-white background-blue-2 border-0" id="btnEditarPax">Editar Pax</button>
+        </div>
+      `;
       // 🔴 Lógica si id_estatus == 1
       if (parseInt(reserva.id_estatus) === 1) {
         htmlTotal += `
           <div>
-            <span style="font-weight: bold; color:#000;">
+            <span class="fs-4" style="font-weight: bold; color:#000;">
               Total:
               <strong>$${totalConDescuento.toFixed(2)} ${reserva.moneda}</strong>
             </span>
           </div>
+          ${buttonEditPax}
           <div style="margin-top: 8px;">
-            <span style="background:#03a9f4; padding: 6px 12px; color:white; border-radius:4px; display:inline-block;">
+            <span class="fs-22-px" style="background:#03a9f4; padding: 6px 12px; color:white; border-radius:4px; display:inline-block;">
               SIN BALANCE
             </span>
           </div>
@@ -446,13 +418,14 @@ $(document).ready(async function () {
       if (descuentoAplicado > 0) {
         htmlTotal += `
           <div style="margin-bottom: 4px;">
-            <span style="font-weight: bold; color:#000;">
+            <span class="fs-4" style="font-weight: bold; color:#000;">
               Total:
               <strong style="text-decoration: line-through; color: #999;">
                 $${totalBase.toFixed(2)} ${reserva.moneda}
               </strong>
             </span>
           </div>
+          ${buttonEditPax}
           <div>
             <span style="font-weight: bold; color:#000;">
               Total con descuento:
@@ -465,19 +438,20 @@ $(document).ready(async function () {
       } else {
         htmlTotal += `
           <div>
-            <span style="font-weight: bold; color:#000;">
+            <span class="fs-4" style="font-weight: bold; color:#000;">
               Total:
               <strong>$${totalBase.toFixed(2)} ${reserva.moneda}</strong>
             </span>
           </div>
+          ${buttonEditPax}
         `;
       }
     
       // Estado del balance
       if (balance === 0) {
-        htmlTotal += `
+        htmlTotal += ` 
           <div style="margin-top: 8px;">
-            <span style="background:#03a9f4; padding: 6px 12px; color:white; border-radius:4px; display:inline-block;">
+            <span class="fs-22-px" style="background:#03a9f4; padding: 6px 12px; color:white; border-radius:4px; display:inline-block;">
               SIN BALANCE
             </span>
           </div>
@@ -485,8 +459,8 @@ $(document).ready(async function () {
       } else {
         htmlTotal += `
           <div style="margin-top: 8px;">
-            <span style="background:#03a9f4; padding: 6px 12px; color:white; border-radius:4px; display:inline-block;">
-              BALANCE DE: $${balance.toFixed(2)} ${reserva.moneda}
+            <span class="fw-bold" style="background:#03a9f4; padding: 6px 12px; color:white; border-radius:4px; display:inline-block;">
+              BALANCE DE: <strong class="fs-22-px fw-normal">$${balance.toFixed(2)} ${reserva.moneda}</strong>
             </span>
           </div>
         `;
@@ -522,28 +496,6 @@ $(document).ready(async function () {
       camposUsuario[key].val(usuarioOriginal[key]).prop("readonly", false);
     });
 
-    // Toast flotante
-    function mostrarToast(mensaje, tipo = "success") {
-      const toast = $(`
-        <div class="toast align-items-center text-white ${tipo==='success'?'bg-success':'bg-danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-          <div class="d-flex">
-            <div class="toast-body">${mensaje}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-          </div>
-        </div>
-      `);
-
-      let container = $("#toast-container");
-      if (!container.length) {
-        container = $('<div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>');
-        $("body").append(container);
-      }
-      container.append(toast);
-
-      const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
-      bsToast.show();
-      toast.on('hidden.bs.toast', () => toast.remove());
-    }
 
     const debounceTimers = {};
 
@@ -594,7 +546,7 @@ $(document).ready(async function () {
     renderReserva();
     // después de cargar la reserva:
     controlarBotonEditarPax(reserva);
-
+    openReagendar()
    
 
     calcularTotal();
@@ -614,7 +566,50 @@ $(document).ready(async function () {
     const valor = $(this).is(':checked') ? 1 : 0;
     updateReservaCampo('checkin', 'checkin', valor);
   });
-  
+  $('#enviar_checkin').off('click').on('click', function() {
+      createCheckInNote(modalData);
+  });
+
+
+  async function createCheckInNote(modalData) {
+    const mensaje = $('#comentario_checkin').val().trim();
+    if (!mensaje) {
+        alert("Escribe un mensaje antes de enviar.");
+        return;
+    }
+        const idPago = modalData.id;
+
+        const data = {
+            create: {
+                idpago: idPago,
+                tipomessage: 'checkin',
+                mensaje: mensaje,
+                module: 'DetalleReservas'
+            }
+        };
+
+        console.log("Enviando nota CHECKIN:", data);
+          try {
+              const response = await fetchAPI("message", "POST", data);
+              const json = await response.json();
+              console.log("Respuesta mensaje:", json);
+
+              if (!response.ok) {
+                  showErrorModal("Error al guardar la nota para SAPA ID " + idSapa);
+              }else{
+                showSuccessModal(json.message || 'Nota creada correctamente.')
+
+              }
+              
+
+          } catch (error) {
+              console.error("Error al enviar nota para SAPA ID:", idSapa, error);
+              showErrorModal("Error al enviar nota");
+          }
+
+    console.log("Notas generadas correctamente para todas las SAPAs activas.");
+}
+
 async function updateReservaCampo(action, campo, valor) {
     const data = {
         [action]: {
@@ -624,16 +619,12 @@ async function updateReservaCampo(action, campo, valor) {
         [campo]: valor,
         }
     };
-
     try {
         const response = await fetchAPI("control", "PUT", data);
         const result = await response.json();
-
         if (!response.ok) throw new Error(result.message || "Error al actualizar");
-
         mostrarToast(`Campo ${campo} actualizado con éxito.`);
         location.reload();
-
         return true;
 
     } catch (err) {
@@ -642,9 +633,33 @@ async function updateReservaCampo(action, campo, valor) {
         return false;
     }
 }
+async function openReagendar() {
+  const btnReagendar = document.getElementById("btnReagendarReserva");
+  const dateInput = document.getElementById("datepickerReagendar");
+  const spanFecha = document.getElementById("reserva_fecha");
+  const fp = flatpickr(dateInput, {
+      dateFormat: "Y-m-d",
+      defaultDate: fechaOriginal.f9,
+      static: true,
+      appendTo: document.getElementById("flatpickrAnchor"),
+      position: "below",
+
+      onChange: function(selectedDates, dateStr) {
+          if (!dateStr) return;
+
+          spanFecha.textContent = fechaOriginal.f10;
+
+          console.log("modalData que llega a openReagendar:", modalData);
+
+          // Aquí truena si modalData está vacío
+          openReagendarModal(modalData, dateStr);
+      }
+  });
+
+  btnReagendar.addEventListener("click", () => fp.open());
+}
 $('#modalGeneric').on('hide.bs.modal', function () {
   const $modal = $('#modalGeneric');
-
   // Si el foco está dentro del modal, quitarlo
   if ($modal.has(document.activeElement).length) {
       $(document.activeElement).blur(); // 🔥 Esto previene el warning

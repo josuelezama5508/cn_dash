@@ -14,6 +14,8 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
     $canal_service          = ServiceContainer::get('CanalControllerService'); 
     $rep_service            = ServiceContainer::get('RepControllerService'); 
     $estatussapa_service    = ServiceContainer::get('EstatusSapaControllerService');
+    $rol_service            = ServiceContainer::get('RolControllerService');
+    $user_service            = ServiceContainer::get('UserControllerService');
     function get_request_param($key, $default = null) {
         return $_REQUEST[$key] ?? $default;
     }
@@ -36,18 +38,43 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
         }
         return $html;
     }
-
-    function get_category_data($category, $search, $selected_id) {
-        global $company_service, $languagecodes_service, $prices_service, $currencycodes_service, $product_service, $canal_service, $rep_service, $estatussapa_service;
+    function build_options_by_name($items, $selected_name, callable $formatter) {
+        $html = '';
+    
+        // Primer opción obligatoria
+        $html .= '<option value="">Selecciona un rol</option>';
+    
+        foreach ($items as $item) {
+            $item = (object) $item;
+    
+            // Comparar por nombre
+            $selected = ((string) $item->name === (string) $selected_name) ? ' selected' : '';
+    
+            $html .= '<option value="' . htmlspecialchars($item->name) . '" ';
+    
+            // Atributos data-* excepto id y name
+            foreach ($item as $key => $val) {
+                if ($key == 'id' || $key == 'name') continue;
+                $html .= 'data-' . $key . '="' . htmlspecialchars($val) . '" ';
+            }
+    
+            $html .= $selected . '>' . $item->name . '</option>';
+        }
+    
+        return $html;
+    }
+    
+    function get_category_data($category, $search, $selected_id, $id_user) {
+        global $company_service, $languagecodes_service, $prices_service, $currencycodes_service, $product_service, $canal_service, $rep_service, $estatussapa_service, $rol_service, $user_service;
         switch ($category) {
             case 'companies':
-                $companies = $company_service->getAllCompaniesActive();
+                $companies = $company_service->getAllCompaniesActiveService($id_user);
                 $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon"]];
+                $base = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/cn_dash';
                 foreach ($companies as $row) {
-                    $default[] = ["id" => $row->id, "name" => $row->company_name, "logo" => $row->company_logo, "alt" => "Logo de $row->company_name"];
+                    $default[] = ["id" => $row->id, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name"];
                 }
                 return [$default, fn($item) => $item->name];
-
             case 'products':
                 $products = $company_service->getProductCompanyByDashOrLang($search);
                 $default = [["id" => 0, "name" => "Seleccione un producto"]];
@@ -55,24 +82,20 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                     $default[] = ["id" => $row->id, "name" => $row->product_name];
                 }
                 return [$default, fn($item) => $item->name];
-
             case 'language':
                 $result = $languagecodes_service->getLangsActivesV2();
                 $items = array_map(function ($r) {
                     return ["id" => $r->id, "name" => strtoupper($r->code)];
                 }, $result);
                 return [$items, fn($item) => $item->name];
-
             case 'product_language':
                 $items = [];
                 foreach ($search as $pid => $lid) {
                     $lang = $languagecodes_service->getById($lid);
                     if (!count($lang)) continue;
-
                     $items[] = ["id" => $lang[0]->id, "name" => $lang[0]->language, "product" => $pid];
                 }
                 return [$items, fn($item) => $item->name];
-
             case 'prices':
                 $result = $prices_service->getAllActives();
                 $items = array_map(function ($r) {
@@ -91,14 +114,12 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                     return ["id" => $r->id, "name" => strtoupper($r->denomination)];
                 }, $result);
                 return [$items, fn($item) => $item->name];
-
             case 'show':
                 $items = [
                     ["id" => 0, "name" => "INACTIVO"],
                     ["id" => 1, "name" => "ACTIVO"]
                 ];
                 return [$items, fn($item) => $item->name];
-
             case 'products_codepromo':
                 $products = $company_service->getAllActives();
                 $default = [["id" => 9999, "name" => "Todos los productos"], /*["id" => 8888, "name" => "Todos los productos"]*/];
@@ -151,14 +172,54 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                     $default[] = ["id" => $row->id, "name" => $row->rep_name];
                 }
                 return [$default, fn($item) => $item->name];
-                case 'statussapa':
-                    $statusSapa = $estatussapa_service->getAllActive();
-                    $default = [["id" => 0, "name" => "Selecciona Estado"]];
-                    foreach ($statusSapa as $row) {
-                        $default[] = ['id' => $row->id, 'name' => $row->nombre];
+            case 'statussapa':
+                $statusSapa = $estatussapa_service->getAllActive();
+                $default = [["id" => 0, "name" => "Selecciona Estado"]];
+                foreach ($statusSapa as $row) {
+                    $default[] = ['id' => $row->id, 'name' => $row->nombre];
+                }
+                return [$default, fn($item) => $item->name];
+            case 'rol_user':
+                // Obtener rol del usuario logueado
+                $userLogged = $user_service->find($id_user);
+                $currentUserRole = strtolower($userLogged->level ?? '');
+            
+                $roles = $rol_service->getAllDataActive();
+                $items = [];
+            
+                foreach ($roles as $row) {
+                    $roleName = strtolower($row->name);
+            
+                    // FILTRO SEGÚN EL ROL DEL USUARIO LOGUEADO
+                    if ($currentUserRole === "administrador") {
+                        if (in_array($roleName, ["master", "administrador"])) {
+                            continue; // NO mostrar estos
+                        }
                     }
-                    return [$default, fn($item) => $item->name];
-                
+            
+                    if ($currentUserRole !== "master") {
+                        if (in_array($roleName, ["master", "administrador"])) {
+                            continue; // Cualquier rol inferior no ve "master"
+                        }
+                    }
+            
+                    $items[] = [
+                        'id' => $row->name, // importante porque usas name, NO id
+                        'name' => $row->name
+                    ];
+                }
+            
+                return [$items, fn($item) => $item->name];
+            case 'rol':
+                $roles = $rol_service->getAllDataActive();
+                $items = [];
+                foreach ($roles as $row) {
+                    $items[] = [
+                        'id' => $row->id,
+                        'name' => $row->name
+                    ];
+                }
+                return [$items, fn($item) => $item->name];
             default:
                 return [[], fn($item) => $item->name];
         }
@@ -167,6 +228,15 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
     // Lógica principal
     $widget = get_request_param('widget');
     if ($widget) {
+        $id_user = get_request_param('id_user');
+        ?>
+        <!-- <script>
+        {
+            let usersito = <?= json_encode($id_user) ?>;
+            console.log("ID de usuario:", usersito);
+        }
+        </script> -->
+        <?php
         $category = get_request_param('category');
         $select_name = get_request_param('name', 'select');
         $selected_id = get_request_param('selected_id', 0);
@@ -176,8 +246,8 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
             case 'select':
                 $html = '<select name="' . $select_name . '" class="form-control ds-input">';
                 if ($category) {
-                    [$items, $formatter] = get_category_data($category, $search, $selected_id);
-                    $html .= build_options($items, $selected_id, $formatter);
+                    [$items, $formatter] = get_category_data($category, $search, $selected_id, $id_user);
+                    $html .= ($category === "rol") ? build_options_by_name($items, $selected_id, $formatter) : build_options($items, $selected_id, $formatter);
                 }
                 $html .= '</select>';
                 break;
@@ -185,7 +255,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
             case 'text':
                 $data = '';
                 if ($category === 'language') {
-                    $row = $model_language->find($selected_id);
+                    $row = $languagecodes_service->find($selected_id);
                     if (!empty((array)$row)) {
                         $data = strtoupper($row->code);
                     }

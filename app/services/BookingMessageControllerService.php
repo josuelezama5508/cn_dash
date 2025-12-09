@@ -12,15 +12,33 @@ class BookingMessageControllerService
     public function insert($data){
         return $this->bookingmessage_repo->insert($data);
     }
+    public function find(int $id)
+    {
+        return $this->bookingmessage_repo->find($id);
+    }
+    public function delete(int $id)
+    {
+        return $this->bookingmessage_repo->delete($id);
+    }
+    public function getTableName(){
+        return  $this->bookingmessage_repo->getTableName();
+    }
     public function searchNotesByIdPago($search){
         return $this->bookingmessage_repo->searchNotesByIdPago($search);
     }
     public function searchLastNoteByIdPago($id){
         return $this->bookingmessage_repo->searchLastNoteByIdPago($id);
     }
+    public function searchLastNoteByIdCheckin($id){
+        return $this->bookingmessage_repo->searchLastNoteByIdCheckin($id);
+    }
+    public function searchLastNoteByIdSapa($id){
+        return $this->bookingmessage_repo->searchLastNoteByIdSapa($id);
+    }
     public function searchNotesByIdPagoUser($id, $user){
         return $this->bookingmessage_repo->searchNotesByIdPagoUser($id, $user);
     }
+    
     // ---------------------------
     // Helpers
     // ---------------------------

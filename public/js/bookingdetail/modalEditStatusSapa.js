@@ -15,6 +15,19 @@ window.openEditSapaModal = async function (id) {
     const html = renderEditSapaModal();
     document.getElementById("modalGenericContent").innerHTML = html;
     document.getElementById("modalGenericTitle").innerText = "Estado de la SAPA";
+    // 3. INYECTAR BOTONES EN EL FOOTER
+    $("#modal_generic_footer").html(`
+        <button id="btnCancelarGeneric" type="button" class="btn btn-danger py-1 px-3 rounded-1" data-bs-dismiss="modal">
+            Cancelar
+        </button>
+        <button id="btnGuardarGeneric" type="button" class="btn btn-primary background-green-custom py-1 px-3 rounded-1">
+            Actualizar
+        </button>
+    `);
+    $('#modalGeneric').removeClass(function (_, className) {
+        return (className.match(/w-\d+/g) || []).join(' ');
+    });
+    $('#modalGeneric').addClass('w-25');
 
     // Inicializar modal Bootstrap
     const modalEl = document.getElementById("modalGeneric");
@@ -35,7 +48,8 @@ window.openEditSapaModal = async function (id) {
             widget: "select",
             category: "statussapa",
             name: "statussapa",
-            selected_id: estadoSeleccionado
+            selected_id: estadoSeleccionado,
+            'id_user': window.userInfo.user_id
         },
         success: function (response) {
             $("#divStatusSapaSelect").html(response);
@@ -46,7 +60,7 @@ window.openEditSapaModal = async function (id) {
     });
 
     // Evento de guardar cambios
-    document.querySelector("#modalGeneric .btn-primary").onclick = async () => {
+    $("#btnGuardarGeneric").on("click", async () => {
         const newStatus = $("select[name='statussapa']").val();
 
         try {
@@ -66,7 +80,9 @@ window.openEditSapaModal = async function (id) {
         } catch (e) {
             console.error(e);
         }
-    };
+    });
+    // 6. CANCELAR
+    $("#btnCancelarGeneric").on("click", () => closeModal());
 };
 
 // 3. Cierre del modal (reutilizable)
@@ -75,4 +91,12 @@ window.closeModal = function () {
         window.currentModal.hide();
         window.currentModal = null;
     }
+
+    // Limpiar contenido del modal
+    $("#modalGenericContent").empty();
+    $("#modalGenericTitle").text("");
+
+    // Quitar cualquier evento previo de los botones del footer
+    $("#modalGeneric .btn-primary").off("click");
+    $("#modalGeneric .btn-secondary").off("click");
 };

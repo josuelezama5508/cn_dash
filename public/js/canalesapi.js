@@ -63,11 +63,14 @@ function render_add_channel_form() {
         <section style="padding: 4px; border: 1px solid #ccc; border-radius: 8px;">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div id="form-add-channel" style="display: flex; flex-direction: column; gap: 20px;">
+                    
                     <div class="form-group">
                         <label for="channel-name" style="font-weight: 700;">Canal: <span style="color: red;">*</span></label>
                         <input type="text" name="channelname" id="channel-name" class="form-control ds-input">
                     </div>
                 </div>
+
+                
 
                 <div class="form-group">
                     <button id="addRepItem" class="btn-icon" type="button" style="color: #FFF; background: #007bff; border-radius: 3px; border:none;">
@@ -76,6 +79,7 @@ function render_add_channel_form() {
                 </div>
 
                 <form id="form-add-rep" style="display:none;">
+                   
                     <table class="table table-scrollbar" style="margin: 0;">
                         <thead>
                             <tr>
@@ -162,7 +166,7 @@ const registered_channel = async (condition) => {
                 <tr>
                     <td colspan="5" style="text-align:center; padding:15px;">
                         <button class="btn-add-channel btn btn-success">
-                            <i class="material-icons">add</i> Nuevo canal
+                            <i class="material-icons">add</i> Modulo para crear canal
                         </button>
                     </td>
                 </tr>`;
@@ -180,7 +184,7 @@ function activandomodalEvent() {
     }
 
     instance_of_modal = $.confirm({
-        title: 'Nuevo canal',
+        title: 'Modulo para craer canal',
         content: `url:${window.url_web}/form/add_channel`,
         boxWidth: "900px",
         useBootstrap: false,

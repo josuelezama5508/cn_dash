@@ -33,7 +33,8 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
 
 <!-- ✅ Daterangepicker CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
@@ -66,15 +67,23 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" defer></script>
-
-<!-- 3️⃣ Scripts locales que dependen de jQuery -->
+<!-- 3️⃣ Variable global de URL -->
+<script>
+    // URL base de la aplicación
+    window.url_web = window.location.origin + '/cn_dash';
+    window.userInfo = {
+        user_id: <?= json_encode($user_id) ?>,
+        level:   <?= json_encode($level) ?>
+    };
+    
+    console.log("User info global:", window.userInfo); // debug
+    console.log("URL WEB:", window.url_web); // debug
+</script>
+<!-- 4️⃣ Scripts locales que dependen de jQuery -->
 <script src="<?= asset('/js/main.js') ?>?v=1" defer></script>
 <script src="<?= asset('/js/contentMessages.js') ?>?v=1" defer></script>
 <script src="<?= asset('/js/ctrl-number.js') ?>?v=1" defer></script>
 <script src="<?= asset('/js/widgets.js') ?>?v=1" defer></script>
+<script src="<?= asset('/js/utils.js') ?>?v=1"></script>
 
-<!-- 4️⃣ Variable global de URL -->
-<script>
-    // URL base de la aplicación
-    window.url_web = window.location.origin + '/cn_dash';
-</script>
+

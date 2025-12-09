@@ -53,7 +53,7 @@ function postProduct(item) {
     fetchAPI_AJAX("products", "POST", formData)
         .done((response, textStatus, jqXHR) => {
             const status = jqXHR.status;
-            if (status == 201) {
+            if (status == 200) {
                 setTimeout(() => {
                     uploadScreen.close();
                     location.reload();
@@ -194,11 +194,15 @@ function save_item_product(item) {
         fetchAPI('products', 'POST', formData)
             .then(async (response) => {
                 const status = response.status;
-                if (status == 201) {
+                console.log("ESTATUS DEL POST");
+                console.log(status);
+                
+                console.log("FIN DEL POST");
+                if (status == 200) {
                     setTimeout(() => {
                         uploadScreen.close();
                         location.reload();
-                    }, 900);
+                    }, 500);
                 }
             })
             .catch((error) => {});

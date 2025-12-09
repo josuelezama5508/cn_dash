@@ -113,4 +113,85 @@ function initGenericModal() {
   
   // Inicializar automáticamente al cargar el script
   document.addEventListener('DOMContentLoaded', initGenericModal);
+  // =====================================
+// MODAL DE MENSAJES POSITIVOS / ÉXITO
+// =====================================
+
+// Crea el modal y su estilo si no existe
+function initSuccessModal() {
+  if (document.getElementById('genericSuccessModal')) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'genericSuccessModal';
+  modal.className = 'modal-overlay';
+  modal.style.display = 'none';
+  modal.innerHTML = `
+    <div class="modal-container success">
+      <h2 id="genericSuccessTitle" class="modal-title"></h2>
+      <p id="genericSuccessMessage" class="modal-message"></p>
+      <button id="closeSuccessModalBtn" class="modal-btn success-btn">Aceptar</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const style = document.createElement('style');
+  style.textContent = `
+    /* Reutiliza estilos base del modal existente */
+    .modal-container.success {
+      border-left: 6px solid #2ecc71;
+    }
+    .modal-title {
+      margin-bottom: 10px;
+    }
+    .success-btn {
+      background: #2ecc71;
+    }
+    .success-btn:hover {
+      background: #239b56;
+    }
+  `;
+  document.head.appendChild(style);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) hideSuccessModal();
+  });
+
+  document.getElementById('closeSuccessModalBtn').addEventListener('click', hideSuccessModal);
+}
+
+// Mostrar modal de éxito
+function showSuccessModal(data) {
+  initSuccessModal();
+
+  const modal = document.getElementById('genericSuccessModal');
+  const title = document.getElementById('genericSuccessTitle');
+  const msg = document.getElementById('genericSuccessMessage');
+
+  let messageText = 'Se ha completado el envío.';
+  let titleText = 'Éxito';
+
+  if (typeof data === 'string') {
+    messageText = data;
+  } else if (typeof data === 'object' && data !== null) {
+    if (data.message) {
+      messageText = data.message;
+    } else if (data.status) {
+      messageText = data.status;
+    }
+  }
+
+  title.textContent = titleText;
+  msg.textContent = messageText;
+  modal.style.display = 'flex';
+}
+
+// Ocultar modal
+function hideSuccessModal() {
+  const modal = document.getElementById('genericSuccessModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Inicializar automáticamente
+document.addEventListener('DOMContentLoaded', initSuccessModal);
+
   

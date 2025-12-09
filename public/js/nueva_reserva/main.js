@@ -37,8 +37,8 @@ $(document).ready(async function () {
             render_company(null);
             return;
         }
-        const companies = await fetch_companies();
-        const selectedCompany = companies.find(c => c.companycode == companycode) || null;
+        const companies = await fetch_companies_by_user(window.userInfo.user_id);
+        const selectedCompany = companies.find(c => c.company_code == companycode) || null;
         render_company(selectedCompany);
         descuentoAplicado = 0;
         await renderItems([], getSelectedLanguage());
@@ -166,7 +166,7 @@ function syncLanguageSelect(langId) {
     $("#language").val(lang).trigger("change");
 }
 async function initBookingForm(initialCompany, initialProduct) {
-    const companies = await fetch_companies();
+    const companies = await fetch_companies_by_user(window.userInfo.user_id);
     render_companies(companies, "#companySelect");
     setSelectLanguage(languagecode);
     if (initialCompany) {
@@ -213,64 +213,65 @@ function bindHorarioSelection() {
     });
 }
 function bindReservationButtons() {
-    const toggleSections = (hideSelector, showSelector) => {
-        $(hideSelector).hide();
-        $(showSelector).show();
+
+    const toggle = (hideSel, showSel) => {
+        $(hideSel).hide();
+        $(showSel).show();
     };
 
-    const setHiddenMethod = (method) => {
-        $("#metodopago").val(method); // 🟢 actualizar hidden
-    };
+    const setMethod = (m) => $("#metodopago").val(m);
 
-    // ==== BOTONES PRINCIPALES ====
-    $("#btnPagarAhora").click(() => toggleSections("#mainButtons", "#pagarAhoraOpciones"));
-
-    $("#btnPaymentRequest").click(() => {
-        toggleSections("#mainButtons", "#paymentRadios");
-        setHiddenMethod("paymentrequest"); // PaymentRequest
+    // ==== BOTÓN DIRECTO DE VOUCHER ====
+    $("#btnVoucherMain").click(() => {
+        $("#voucherCode").val("");
+        toggle("#mainButtons", "#voucherInputGroup");
+        setMethod("voucher");
     });
 
+    $("#btnConfirmVoucher").click(() => {
+        const voucher = $("#voucherCode").val().trim();
+
+        if (!voucher) {
+            showErrorModal("Ingresa el código del voucher");
+            return;
+        }
+
+        setMethod("voucher");
+        enviarReservaConEstatus("btnConfirmVoucher", 1, voucher, "dash", window.soloAddons, true);
+    });
+
+    $("#btnVolverVoucher").click(() => {
+        toggle("#voucherInputGroup", "#mainButtons");
+    });
+
+    // ==== BALANCE ====
     $("#btnBalance").click(() => {
-        console.log("🧪 [btnBalance] Valor actual de soloAddons:", window.soloAddons);
-        setHiddenMethod("balance"); // Balance
+        console.log("🧪 [btnBalance] soloAddons:", window.soloAddons);
+        setMethod("balance");
         enviarReservaConEstatus("btnBalance", 3, "", "dash", window.soloAddons);
     });
 
-    // ==== VOUCHER / OTRO ====
-    $("#btnConfirmVoucher").click(() => {
-        const $voucher = $("#voucherCode");
-        const voucherCode = $voucher.val().trim();
-
-        const status = 1; // voucher
-        const buttonId = voucherSource === "voucher" ? "btnConfirmVoucher" : "btnOtro";
-
-        setHiddenMethod("voucher"); // Voucher
-        console.log("🧪 [btnConfirmVoucher] Valor actual de soloAddons:", window.soloAddons);
-        enviarReservaConEstatus(buttonId, status, voucherCode, "dash", window.soloAddons, true);
+    // ==== PAYMENT REQUEST ====
+    $("#btnPaymentRequest").click(() => {
+        toggle("#mainButtons", "#paymentRadios");
+        setMethod("paymentrequest");
     });
 
-    $("#btnVoucher").click(() => showVoucherInput("voucher"));
-    $("#btnOtro").click(() => showVoucherInput("otro"));
-    $("#btnVolverVoucher").click(() => {
-        $("#voucherInputGroup").hide();
-        $("#pagarAhoraOpciones > button").show();
-    });
-
-    $("#btnVolverPagarAhora").click(() => toggleSections("#pagarAhoraOpciones", "#mainButtons"));
-    $("#btnVolverPayment").click(() => toggleSections("#paymentRadios", "#mainButtons"));
-
-    // ==== NUEVO: ENVIO DESDE PAYMENTRADIOS ====
     $("#btnSendPayment").click(() => {
-        const selectedMethod = $('input[name="paymentMethod"]:checked').val();
-        if (!selectedMethod) {
-            alert("Selecciona un método de pago");
+        const selected = $('input[name="paymentMethod"]:checked').val();
+        if (!selected) {
+            showErrorModal("Selecciona un método de pago");
             return;
         }
-        setHiddenMethod("paymentrequest");
+
+        setMethod("paymentrequest");
         enviarReservaConEstatus("btnSendPayment", 1, "", "dash", window.soloAddons);
     });
-}
 
+    $("#btnVolverPayment").click(() => {
+        toggle("#paymentRadios", "#mainButtons");
+    });
+}
 
 function showVoucherInput(source) {
     voucherSource = source; // "voucher" o "otro"
@@ -315,7 +316,7 @@ async function handleRepSelectChange() {
 async function handleSaveRep() {
     const repname = $("#repNombre").val().trim();
     const channelId = $("#channelSelect").val();
-    if (!repname) return alert("El nombre es obligatorio.");
+    if (!repname) return showErrorModal("El nombre es obligatorio.");
 
     try {
         const response = await fetchAPI("rep", "POST", {
@@ -329,13 +330,13 @@ async function handleSaveRep() {
             render_reps(updatedReps);
             $("#repSelect").val(data.id);
             $("#repFormContainer").empty();
-            // alert("Representante agregado correctamente.");
+            // showErrorModal("Representante agregado correctamente.");
         } else {
             console.error("Error al guardar representante.");
         }
     } catch (err) {
         console.error("Error al guardar rep:", err);
-        alert("Error de conexión.");
+        showErrorModal("Error de conexión.");
     }
 }
 function bindPriceControlEvents() {
@@ -366,8 +367,8 @@ function bindPromoCodeHandler() {
         const promoCode = $('#promoCode').val().trim();
         const companyCode = $('#companySelect').val().trim(); // ✅ FIXED
 
-        if (!promoCode) return alert("Por favor, ingresa un código promocional válido.");
-        if (!companyCode) return alert("No se encontró el código de la empresa.");
+        if (!promoCode) return showErrorModal("Por favor, ingresa un código promocional válido.");
+        if (!companyCode) return showErrorModal("No se encontró el código de la empresa.");
 
         const $btn = $(this);
         $btn.prop('disabled', true).text('Validando...');
@@ -378,7 +379,7 @@ function bindPromoCodeHandler() {
                 descuentoAplicado = 1 - (parseFloat(promo.descount) / 100);
                 calcularTotal();
             } else {
-                alert("Código promocional inválido o descuento no válido.");
+                showErrorModal("Código promocional inválido o descuento no válido.");
             }
         } finally {
             $btn.prop('disabled', false).text('Canjear');

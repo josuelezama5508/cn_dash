@@ -34,7 +34,7 @@ footer {
 }
 
 .content {
-    width: 80%;
+    width: 90%;
     margin: 0 auto;
     display: flex;
     gap: 10px;
@@ -114,19 +114,7 @@ footer {
     padding: 10px;
 }
 .flatpickr-calendar {
-    z-index: 1055 !important;
-}
-
-/* Personalización opcional */
-#modalGeneric .modal-dialog {
-    width: fit-content;
-    max-width: 95vw;
-    margin: auto;
-}
-
-#modalGeneric .modal-content {
-    width: fit-content;
-    max-width: 95vw;
+    z-index: 1050 !important;
 }
   .modal-body {
     max-height: 80vh;   /* el body nunca pasa del 75% del alto de pantalla */
@@ -171,6 +159,8 @@ footer {
 .relation-select {
     width: 100%; /* ocupa todo el ancho del td */
 }
+
+#addReference,
 #reserva_tipo,
 #reserva_canal,
 #reserva_metodo_pago {
@@ -178,11 +168,11 @@ footer {
     transition: background-color 0.1s;
 }
 
-#reserva_tipo:hover,
+/* #reserva_tipo:hover,
 #reserva_canal:hover,
 #reserva_metodo_pago:hover{
-    opacity: 0.8; /* opcional: un leve efecto visual */
-}
+    opacity: 0.8; /* opcional: un leve efecto visual 
+}*/
 .hidden {
     display: none !important;
 }
@@ -240,11 +230,7 @@ footer {
     margin: 0;
     padding: 0;
   }
-.flatpickr-day.prevMonthDay,
-.flatpickr-day.nextMonthDay,
-.flatpickr-day.flatpickr-disabled {
-    color: #555; /* Más oscuro que #ccc */
-}
+
 /* Aumentar contraste de placeholders de Select2 */
 .select2-selection__placeholder {
     color: #555 !important; /* Gris más oscuro */
@@ -304,7 +290,6 @@ span, p,  .booking-salmon h2 span {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 1.2rem;
     /* box-shadow:
         0 0 6px rgba(74, 144, 226, 0.7),
         inset 0 -3px 5px rgba(255, 255, 255, 0.3); */
@@ -313,9 +298,8 @@ span, p,  .booking-salmon h2 span {
     overflow: hidden;
 }
 #RBuscador td {
-    text-align: justify !important;  /* Texto justificado */
     vertical-align: middle;  /* Opcional: alinea arriba */
-    padding: 6px;         /* Un poco de aire */
+    
   }
   /* Sólo celdas de Actividad dentro del tbody */
 /* Forzar ancho de la columna de Actividad */
@@ -326,7 +310,7 @@ span, p,  .booking-salmon h2 span {
 }
 
 #table-home-reservas thead th:nth-child(4) {
-    text-align: center;
+    text-align: left;
 }
 
 /* Estilo base para la tabla */
@@ -338,27 +322,27 @@ span, p,  .booking-salmon h2 span {
   /* Reset general para celdas */
   #RBuscador td,
   #table-home-reservas th {
-    white-space: nowrap;
-    /* overflow: hidden; */
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+    font-weight: 500;
   }
   
   /* 🏢 Columna 3: EMPRESA */
   #RBuscador td:nth-child(3),
   #table-home-reservas th:nth-child(3) {
     white-space: normal;
-    min-width: 150px;
-    width: 150px;
+    min-width: 180px;
+    width: 180px;
   }
   
   /* 🎯 Columna 4: ACTIVIDAD */
   #RBuscador td:nth-child(4),
   #table-home-reservas th:nth-child(4) {
     text-align: left;
-    white-space: normal;
+    white-space: 1px;
     width: auto;
     min-width: 250px;
-    max-width: 100%;
   }
   #RBuscador td:nth-child(4) {
     text-align: justify;
@@ -368,15 +352,16 @@ span, p,  .booking-salmon h2 span {
   #RBuscador td:nth-child(5),
   #table-home-reservas th:nth-child(5) {
     white-space: normal;
-    width: auto;
+    width: 165;
     min-width: 100px;
+    text-align: left;
   }
   
   /* Otras columnas: tamaños fijos o mínimos */
   #RBuscador td:nth-child(1),
   #table-home-reservas th:nth-child(1) {
     width: 140px;
-    min-width: 100px;
+    min-width: 140px;
   }
   #RBuscador td:nth-child(2),
   #table-home-reservas th:nth-child(2),
@@ -390,27 +375,30 @@ span, p,  .booking-salmon h2 span {
   #table-home-reservas th:nth-child(9),
   #RBuscador td:nth-child(10),
   #table-home-reservas th:nth-child(10) {
-    width: 80px;
-    min-width: 80px;
-    text-align: center;
+    width: 95px;
+    min-width: 95px;
+    text-align: left;
   }
-  
+  #RBuscador td,
+  #table-home-reservas th{
+    padding: 15px 5px !important;
+  }
   /* 📱 RESPONSIVE: Ajustes para pantallas medianas */
   @media (max-width: 1360px) {
     #RBuscador td:nth-child(3),
     #table-home-reservas th:nth-child(3) {
-      width: 150px;
-      min-width: 150px;
+      width: 145px;
+      min-width: 145px;
     }
   
     #RBuscador td:nth-child(4),
     #table-home-reservas th:nth-child(4) {
-      min-width: 200px;
+      min-width: 225px;
     }
   
     #RBuscador td:nth-child(5),
     #table-home-reservas th:nth-child(5) {
-      min-width: 90px;
+      min-width: 120px;
     }
   }
   

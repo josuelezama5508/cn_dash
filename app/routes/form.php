@@ -15,7 +15,8 @@ return [
         "add_Mails" => "form_add_mails",
         "update_sapa" => "form_update_sapa",
         "detalles_rep" => "form_detail_rep",
-        "form_add_edit_combos" => "form_add_edit_combos"
+        "form_add_edit_combos" => "form_add_edit_combos",
+        "form_send_voucher" => "form_send_voucher"
     ],
     // Version de desarrollo
     "dev" => []

@@ -176,8 +176,8 @@ $('#btnCanjearPromo').click(async function () {
     const promoCode = $('#promoCode').val().trim();
     const companyCode = $('#companycode').val().trim();
 
-    if (!promoCode) return alert("Por favor, ingresa un código promocional válido.");
-    if (!companyCode) return alert("No se encontró el código de la empresa.");
+    if (!promoCode) return showErrorModal("Por favor, ingresa un código promocional válido.");
+    if (!companyCode) return showErrorModal("No se encontró el código de la empresa.");
 
     const $btn = $(this);
     $btn.prop('disabled', true).text('Validando...');
@@ -189,7 +189,7 @@ $('#btnCanjearPromo').click(async function () {
             descuentoAplicado = 1 - (parseFloat(promo.descount) / 100);
             calcularTotal();
         } else {
-            alert("Código promocional inválido o descuento no válido.");
+            showErrorModal("Código promocional inválido o descuento no válido.");
         }
     } finally {
         $btn.prop('disabled', false).text('Canjear');

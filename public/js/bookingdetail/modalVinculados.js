@@ -3,39 +3,51 @@ window.renderizarReservasVinculadas = function(reservas, nogActual) {
     const hasData = Array.isArray(reservas) && reservas.length > 0;
 
     const content = hasData
-        ? reservas.map((r,i) => `
-            <tr>
-                <td>${r?.datepicker ?? '-'}</td>
-                <td>${r?.actividad ?? '-'}</td>
-                <td>${(r?.cliente_name) + ' ' + (r?.cliente_lastname ?? '')}</td>
-                
-                <td>${r?.nog ?? '-'}</td>
-                <td>${r?.total ?? 0}</td>
-                <td>
-                    ${
-                        r?.nog == nogActual
-                            ? `<span class="badge bg-secondary">this</span>`
-                            : `<button class="btn btn-sm btn-primary ver-detalle" data-nog="${r?.nog ?? ''}">
-                                   <i class="fas fa-eye"></i>
-                               </button>`
-                    }
-                </td>
-            </tr>
-        `).join('')
+        ? reservas.map((r,i) => {
+
+            // Aquí metes tu conversión
+            let datepickerFormat = formatDate(r.datepicker);
+
+            return `
+                <tr>
+                    <td class="text-start">${datepickerFormat?.f5 ?? '-'}</td>
+                    <td>${r?.actividad ?? '-'}</td>
+                    <td class="text-start">${(r?.cliente_name) + ' ' + (r?.cliente_lastname ?? '')}</td>
+                    <td class="text-start text-blue-custom-2">${r?.nog ?? '-'}</td>
+                    <td class="text-start">$${r?.total ?? 0}</td>
+                    <td class="text-start">
+                        ${
+                            r?.nog == nogActual
+                                ? `<span class="badge background-blue-3 text-white rounded-1 fs-15-px fw-semibold px-2">This</span>`
+                                : `<div class="d-flex justify-content-start align-items-center h-100 p-0">
+                                        <button class="btn-sm background-rosa-custom btn-primary ver-detalle rounded-1 px-2 py-1 d-flex justify-content-center align-items-center" data-nog="${r?.nog ?? ''}">
+                                            <i class="material-icons m-0 p-0" style="color: white;">more</i>
+                                        </button>
+                                    </div>`
+                        }
+                    </td>
+                </tr>
+            `;
+        }).join('')
         : `<tr><td colspan="8" class="text-center">No hay reservas vinculadas.</td></tr>`;
 
-    return `<div class="table-responsive" style="min-width: 1000px;">
+    return `
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Fecha</th><th>Actividad</th><th>Cliente</th>
-                    <th>Booking ID</th><th>Total</th><th>Acción</th>
+                    <th class="text-start fw-semibold" style="width: 140px;">Fecha</th>
+                    <th class="text-start fw-semibold">Actividad</th>
+                    <th class="text-start fw-semibold" style="width: 150px;">Cliente</th>
+                    <th class="text-start fw-semibold">Booking ID</th>
+                    <th class="text-start fw-semibold">Total</th>
+                    <th class="text-start fw-semibold" style="width: 80px;">Acción</th>
                 </tr>
             </thead>
             <tbody>${content}</tbody>
         </table>
     </div>`;
 }
+
 
 
 window.openModalReservasVinculadas = async function(nog) {

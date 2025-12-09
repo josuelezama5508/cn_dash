@@ -1,29 +1,37 @@
 <section style="padding: 4px;">
-    <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
         <!--  -->
-        <div id="form-add-channel" style="display: flex; flex-direction: column; gap: 20px;">
+        <div id="form-add-channel" style="display: flex; flex-direction: column; gap: 10px;">
             <div class="form-group">
-                <label for="channel-name" style="font-weight: 700;">Canal:</label> <span style="color: red;">*</span>
+                <label for="channel-name" class="fw-semibold fs-15-px">Canal:</label> <span style="color: red;">*</span>
                 <input type="text" name="channelname" id="channelname" class="form-control ds-input">
             </div>
 
-            <div style="display: flex; flex-direction: row; gap: 20px;">
+            <div style="display: flex; flex-direction: row; gap: 5px;">
                 <div class="form-group" style="flex: 1;">
-                    <label for="channel-type" style="font-weight: 700;">Tipo:</label> <span style="color: red;">*</span>
+                    <label for="channel-type" class="fw-semibold fs-15-px">Tipo:</label> <span style="color: red;">*</span>
                     <div id="divType"></div>
                 </div>
                 <div class="form-group" style="flex: 1;">
-                    <label for="channelmethodpay" style="font-weight: 700;">Metodo de pago:</label>
+                    <label for="channelmethodpay" class="fw-semibold fs-15-px">Metodo de pago:</label>
                     <input type="text" name="channelmethodpay" id="channelmethodpay" class="form-control ds-input">
                 </div>
             </div>
+            <div class="form-group">
+                <label for="comision" class="fw-semibold fs-15-px">Comision Agencia (%):</label> <span style="color: red;">*</span>
+                <input type="number" name="comision" id="comision" class="form-control ds-input">
+            </div>
         </div>
         
-        
+        <label id="titleReps" class="d-none fw-semibold fs-15-px m-0">
+            Representantes agencia
+        </label>
+
+
         <!--  -->
         <form id="form-add-rep">
-            <table class="table table-scrollbar" style="margin: 0;">
-                <thead>
+            <table class="table table-scrollbar m-0">
+                <thead class="d-none">
                     <tr>
                         <th scope="col"></th>
                         <th scope="col"></th>
@@ -32,6 +40,7 @@
                         <th scope="col" style="width: 50px;"></th>
                     </tr>
                 </thead>
+                
                 <tbody id="addRep"></tbody>
             </table>
         </form>
@@ -69,6 +78,7 @@
         let count = itemProductCount;
 
         let item = `
+        
             <tr class="rep-item-${count}">
                 <td><div class="form-group" style="flex: 1;"><input type="text" name="repname[]" class="form-control ds-input" placeholder="Nombre"></div></td>
                 <td><div class="form-group" style="flex: 1;"><input type="text" name="repemail[]" class="form-control ds-input" placeholder="Email"></div></td>
@@ -80,6 +90,13 @@
             </tr>`;
         itemProductCount++;
         $("#addRep").append(item)
+          // Mostrar título si hay reps
+        if ($("#addRep tr").length > 0) {
+            $("#titleReps").removeClass("d-none");
+        }else{
+            $("#titleReps").addClass("d-none");
+
+        }
     }
 
 
@@ -100,6 +117,9 @@
                     [ban, msg] = validate_data(texto, regexTextMetodoPayment);
                     if (texto.length == 0)
                         ban = "correcto";
+                    break;
+                case 'comision':
+                    [ban, msg] = validate_data(texto, regexInt);
                     break;
             }
 
@@ -142,7 +162,7 @@
                     }
                     break;
                 case 'repcommission[]':
-                    [ban, msg] = validate_data(texto, regexCommission);
+                    [ban, msg] = validate_data(texto, regexInt);
                     break;
             }
 
@@ -163,6 +183,8 @@
 
 
     function remove_rep_item(item) {
+        $("#titleReps").removeClass("d-none");
+        $("#titleReps").addClass("d-none");
         let className = $(item).closest("tr").attr("class"); // Obtener la clase del <tr>
         if (className) {
             let elementos = $("tr." + className); // Seleccionar todos los <tr> con la misma clase

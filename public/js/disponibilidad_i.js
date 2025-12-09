@@ -48,7 +48,7 @@ const show_availability = async (condition) => {
             $("#disponivilidad-container hr").css("border", `solid 1px ${company_data.primarycolor}`);
             $("#companyname").val(company_data.companyname);
             $("#companycolor").val(company_data.primarycolor);
-            $("#companyimage").attr({ src: company_data.image });
+            $("#companyimage").attr({ src: window.url_web + company_data.image });
             
             // Suponiendo que actualizas los valores así:
             $("#diasdispo").val(company_data.dias_dispo).trigger("change");
@@ -153,7 +153,7 @@ async function putCompany() {
     fetchAPI_AJAX("uploads", "POST", formData)
       .done((response, textStatus, jqXHR) => {
         const status = jqXHR.status;
-        let url = status == 201 ? response.url : "";
+        let url = status == 201 ? response.url_v2 : "";
 
         formData = new FormData(document.getElementById("form-edit-company"));
         formData.set("companyimage", url);

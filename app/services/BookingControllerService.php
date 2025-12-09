@@ -526,7 +526,6 @@ class BookingControllerService
                 ',
             "address" => $dataLocationPort
         ];
-        //NECESITO LLENAR ADDRES ANTES DE PROBAR LO QUE SON LAS UBICACIONES.
     }
     public function validateCreateBookingDetails($bookingDetailsInsert){
         if (!$bookingDetailsInsert || empty($bookingDetailsInsert->id)) {
@@ -710,6 +709,7 @@ class BookingControllerService
             'moneda'    => $data['moneda'] ?? $controlOld->moneda,
             'balance'    => $data['balance'] ?? $controlOld->balance,
             'total'    => $data['total'] ?? $controlOld->total,
+            'referencia'    => $data['referencia'] ?? $controlOld->referencia,
         ]);
 
         $this->update($controlOld->id, $dataUpdateControl);
@@ -734,27 +734,11 @@ class BookingControllerService
         foreach ($detailsOld as $detail) {
             $bookingDetails_service->update($detail->id, $dataUpdateDetails);
         }
-        // foreach ($detailsOld as $detail) {
-        //     $this->model_bookingDetails->update($detail->id, $extraUpdatesDetails);
-        // }
-
         // Historial madre
         $controlNew = $this->find($controlOld->id);
         $detailsNew = $bookingDetails_service->findByIdPago($controlOld->id);
         
         $history_service->registrarOActualizar($data['module'], $controlOld->id, $tipoAccion, $mensajeMadre, $userData->id, [$this->getTableName() => $controlOld, $bookingDetails_service->getTableNameBookingDetail() => $detailsOld] , [$this->getTableName() => $controlNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsNew]);
-        // $history_service->insert(
-        //     [
-        //         "module"    => $data['module'] ?? 'Reservas',
-        //         "row_id"    => $controlOld->id,
-        //         "action"    => $tipoAccion,
-        //         "details"   => $mensajeMadre,
-        //         "user_id"   => $userData->id,
-        //         "old_data"  => json_encode([$this->getTableName() => $controlOld, $bookingDetails_service->getTableNameBookingDetail() => $detailsOld]),
-        //         "new_data"  => json_encode([$this->getTableName() => $controlNew, $bookingDetails_service->getTableNameBookingDetail() => $detailsNew]),
-        //     ]
-        // );
-
         // --- Actualizar hijos
         foreach ($combosHijos as $combo) {
             $detailsComboOld = $bookingDetails_service->findByIdPago( $combo->id);
@@ -779,6 +763,7 @@ class BookingControllerService
                 'moneda'    => $data['moneda'] ?? $combo->moneda,
                 'balance'    => $data['balance'] ?? $combo->balance,
                 'total'    => $data['total'] ?? $combo->total,
+                'referencia' => $data['referencia'] ?? $combo->referencia,
             ]);
 
             $this->update($combo->id, $dataUpdateControlCombo);

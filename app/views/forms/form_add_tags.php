@@ -67,6 +67,7 @@
                 'category': 'language',
                 'name': 'language[]',
                 'selected_id': lang_id,
+                'id_user': window.userInfo.user_id
             },
             success: async function(response) {
                 $(`#${divname}`).html(response);

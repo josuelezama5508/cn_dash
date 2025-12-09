@@ -152,7 +152,7 @@ function render_reservationResponse(buttonId, responseObj) {
         // Esperar 2 segundos antes de redirigir
         setTimeout(() => {
             hideLoadingModal(); // ⬅️ Ocultar modal justo antes de redirigir
-            // window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
+            window.location.href = `${window.url_web}/datos-reserva/successConfirm/`;
         }, 1000);
 
     } else {

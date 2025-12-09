@@ -55,6 +55,7 @@ function sendEvent() {
                 }
             })
             .catch((error) => {
+                  
                 console.error("Error:", error);
                 alert("Error de conexión.");
             });

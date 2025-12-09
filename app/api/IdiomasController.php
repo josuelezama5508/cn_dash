@@ -22,7 +22,6 @@ class IdiomasController extends API
     {
         return $this->services[$name] ?? null;
     }
-
     private function validateToken()
     {
         $headers = getallheaders();

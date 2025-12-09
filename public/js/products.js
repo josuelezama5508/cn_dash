@@ -321,7 +321,11 @@ function saveProducts(item) {
         fetchAPI_AJAX("products", "POST", formData)
           .done((response, textStatus, jqXHR) => {
             const status = jqXHR.status;
-            if (status == 201) {
+            console.log("ESTATUS DEL POST");
+            console.log(status);
+            
+            console.log("FIN DEL POST");
+            if (status == 200) {
                 const result = response.data;
                 location.reload();
             }

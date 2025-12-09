@@ -1,6 +1,6 @@
 <!-- Modal Reagendar -->
 <section class="d-flex justify-content-center align-items-center" style="height:auto;">
-  <div class="card shadow-sm" style="width:400px; border-radius:8px; position:relative;">
+  <div class="card " style="width:400px; border-radius:8px; position:relative;">
     
     <!-- Icono superior -->
     <div style="position: absolute; top: -24px; left: 24px;">

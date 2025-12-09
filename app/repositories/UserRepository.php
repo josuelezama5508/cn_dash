@@ -30,4 +30,27 @@ class UserRepository
     {
         return $this->model->where("password = :pwd AND username :user", ['pwd' => $pwd, 'user' => $user]);
     }
+    public function getUserEnterprises($id_user)
+    {
+        return $this->model->where("user_id = :id_user", ['id_user' => $id_user], ['productos_empresas AS enterprises']);
+    }
+    public function getAll()
+    {
+        return $this->model->where("1 = 1", [], ['*']);
+    }
+    public function search($search)
+    {
+        // Sanitizar la búsqueda
+        $data = '%' . trim($search) . '%';
+
+        return $this->model->where(
+            "name LIKE :search OR lastname LIKE :search OR username LIKE :search",
+            ['search' => $data],
+            ['*']
+        );
+    }
+    public function searchUser($user, $pwd)
+    {
+        return $this->model->where("username = :user AND password = :pwd AND active = '1'", ["user" => $user, "pwd" => $pwd], ['*']);
+    }
 }

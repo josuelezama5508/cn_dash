@@ -30,6 +30,9 @@ class PricesControllerService
     {
         return $this->prices_repo->searchprice($value);
     }
+    public function getAllActives(){
+        return $this->prices_repo->getAllActives();
+    }
     public function getAllActivesV2()
     {
         $prices = $this->prices_repo->getAllActivesV2();

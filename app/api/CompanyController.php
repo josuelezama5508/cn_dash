@@ -3,7 +3,6 @@ require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
 
-
 class CompanyController extends API
 {
     // private $model_company;
@@ -18,6 +17,7 @@ class CompanyController extends API
         $this->model_user = new UserModel();
          $serviceList = [
             'CompanyControllerService',
+            'UserControllerService'
         ];
 
         foreach ($serviceList as $service) {
@@ -66,7 +66,9 @@ class CompanyController extends API
                 'companyid' => 'companyid',
                 'companycode' => 'companycode',
                 'companycodeput' => 'companycodeput',
-                'id'    => 'id'
+                'companiescode' =>  'companiescode',
+                'id'    => 'id',
+                'byUser' => 'byUser'
             ]);
             $service = $this->service('CompanyControllerService'); 
 
@@ -75,7 +77,9 @@ class CompanyController extends API
                 'companyid' => fn() => $service->getCompanyIdService($search),
                 'companycode' => fn() => $service->getCompanyByCode($search),
                 'companycodeput' => fn() => $service->getCompanyStatusDByIdService($search),
-                'id'    => fn() => $service->find($search)
+                'companiescode' => fn() => $service->getCompaniesCodesService($search),
+                'id'    => fn() => $service->find($search),
+                'byUser' => fn() => $service->getAllCompaniesActiveService($search, $this->service('UserControllerService')),
             ];
 
            // Si action está vacío → default
@@ -90,7 +94,7 @@ class CompanyController extends API
 
             return $this->jsonResponse(['data' => $response], 200);
         } catch (Exception $e) {
-            return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.'), 403);
+            return $this->jsonResponse(array('message' => 'No tienes permisos para acceder al recurso.' . $e), 403);
         }
 
     }

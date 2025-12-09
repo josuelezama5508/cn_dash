@@ -34,6 +34,7 @@
                 category: category,
                 name: name,
                 search: selected,
+                'id_user': window.userInfo.user_id
             },
             success: async function(response) {
                 $(`#${div}`).html(response);

@@ -5,13 +5,13 @@
         <form id="form-edit-channel" style="display: flex; flex-direction: column; gap: 20px;">
             <!--  -->
             <div class="form-group">
-                <label style="font-weight: 700;">Nombre:</label> <span style="color: red;">*</span>
+                <label style="font-weight: 700;">Nombre de Canal/Agencia:</label> <span style="color: red;">*</span>
                 <input type="text" name="channelname" class="form-control ds-input">
             </div>
             <!--  -->
             <div style="display: flex; flex-direction: row; gap: 20px;">
                 <div class="form-group" style="flex: 1;">
-                    <label style="font-weight: 700;">Tipo:</label> <span style="color: red;">*</span>
+                    <label style="font-weight: 700;">Tipo de Canal/Agencia:</label> <span style="color: red;">*</span>
                     <div id="divType" style="width: 100%;"></div>
                 </div>
                 <div class="form-group" style="flex: 1;">
@@ -22,6 +22,10 @@
                     <label style="font-weight: 700;">Subcanal:</label> <span style="color: red;">*</span>
                     <div id="divSubchannel" style="width: 100%;"></div>
                 </div> -->
+            </div>
+            <div class="form-group">
+                <label style="font-weight: 700;">Comision del Canal/Agencia (%)</label> <span style="color: red;">*</span>
+                <input type="number" name="comision" class="form-control ds-input">
             </div>
             <!--  -->
         </form>
@@ -97,6 +101,9 @@
                     break;
                 case 'subchannel':
                     [ban, msg] = validate_data(texto, regexSubChannel);
+                    break;
+                case 'comision':
+                    [ban, msg] = validate_data(texto, regexInt);
                     break;
             }
 

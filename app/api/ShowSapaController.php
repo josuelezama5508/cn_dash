@@ -18,7 +18,8 @@ class ShowSapaController extends API
             'LanguageCodesControllerService',
             'ItemProductControllerService',
             'TravelTypesControllerService',
-            'HistoryControllerService'
+            'HistoryControllerService',
+            'BookingMessageControllerService'
         ];
         foreach ($services as $service) {
             $this->services[$service] = ServiceContainer::get($service);
@@ -70,17 +71,23 @@ class ShowSapaController extends API
             [$action, $search] = $this->resolveAction($params, [
                 'getSapaIdPago' => 'getSapaIdPago',
                 'getSapaIdPagoUser' => 'getSapaIdPagoUser',
+                'getSapaIdPagoCheckin' => 'getSapaIdPagoCheckin',
                 'getLastSapaIdPago' => 'getLastSapaIdPago',
                 'id' => 'id',
-                'family' => 'family'
+                'family' => 'family',
+                'getSapaIdPagoDetails' => 'getSapaIdPagoDetails',
+                'searchSapaByIdPagoV2' => 'searchSapaByIdPagoV2'
             ]);
             $service = $this->service('ShowSapaControllerService'); 
             $map = [
-                'getSapaIdPago' => fn() => $service->searchSapaByIdPago($search),
+                'getSapaIdPago' => fn() => $service->searchSapaByIdPagoService($search),
                 'getSapaIdPagoUser' => fn() => $service->searchSapaByIdPagoUserService($search),
+                'getSapaIdPagoCheckin' => fn() => $service->searchSapaByIdPagoServiceV3($search),
                 'getLastSapaIdPago' => fn() => $service->searchLastSapaByIdPago($search),
                 'id'=> fn() => $service->find($search),
                 'family' => fn() => $service->getFamilySapas($search),
+                'getSapaIdPagoDetails' => fn () => $service->searchSapaById($search),
+                'searchSapaByIdPagoV2' => fn () => $service->searchSapaByIdPagoV2($search)
             ];
             $response = $map[$action]();
             if (empty($response)) return $this->jsonResponse(['message' => 'No se encontraron resultados', 'search' => $search, 'action' => $action], 404);
@@ -101,7 +108,7 @@ class ShowSapaController extends API
 
             $service = $this->service('ShowSapaControllerService'); 
             $map = [
-                'create' => fn() => $service->postCreate($data, $userData, $this->service('TravelTypesControllerService'), $this->service('BookingControllerService'), $this->service('SapaDetailsControllerService'),$this->service('HistoryControllerService')),
+                'create' => fn() => $service->postCreate($data, $userData, $this->service('TravelTypesControllerService'), $this->service('BookingControllerService'), $this->service('SapaDetailsControllerService'),$this->service('HistoryControllerService'), $this->service('BookingMessageControllerService')),
             ];
             $response = $map[$action]();
             if (isset($response['error'])) {
@@ -128,7 +135,7 @@ class ShowSapaController extends API
                 return $this->jsonResponse($response, $response['status']);
             }
             if (empty($response)) return $this->jsonResponse(['message' => 'No se pudo actualizar la sapa', 'params' => $params], 404);
-            return $this->jsonResponse(['message' => 'Actualizacion éxitosa'], 200);
+            return $this->jsonResponse(['message' => 'Actualizacion éxitosa', 'status' => 200], 200);
            
         } catch (Exception $e) {
             return $this->jsonResponse([

@@ -36,6 +36,25 @@ async function search_last_messages(condition) {
 }
 //-----------FIN SEARCH LAST MESSAGES BY IDPAGO-------------------------//
 
+//-----------SEARCH DE LAST MESSAGE BY IDPAGO CHECKIN-------------------------//
+async function search_last_messages_checkin(condition) {
+    try {
+        const response = await fetchAPI(`message?getLastNoteIdPagoCheckin=${condition}`, "GET");
+        const data = await response.json();
+
+        if (response.status === 200 && data.data?.length) {
+            return data.data; // ✅ devuelve los mensajes encontradas
+        } else {
+            console.warn(data.message || "No se pudo cargar el mensaje.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error al obtener los mensaje:", error);
+        return null;
+    }
+}
+//-----------FIN SEARCH LAST MESSAGES BY IDPAGO CHECKIN-------------------------// 
+
 
 //-----------UPDATE MESSAGES BY ID-------------------------//
 async function update_message(condition) {

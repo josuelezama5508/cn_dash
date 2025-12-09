@@ -70,10 +70,10 @@ $(document).ready(function () {
 
             fetchAPI_AJAX("transportation", "POST", { disabled: {id, module: 'transportation_i'} })
                 .done(() => {
-                    alert("Hotel eliminado correctamente.");
+                  showErrorModal("Hotel eliminado correctamente.");
                     location.reload();
                 })
-                .fail(() => alert("Error al eliminar hotel."));
+                .fail(() => showErrorModal("Error al eliminar hotel."));
         });
     }
     let debounceTimer;

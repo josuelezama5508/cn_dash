@@ -5,6 +5,8 @@ return [
         "slug" => ["controller" => "RoutesController", "methods" => array("POST", "GET", "PUT")],
 
         "user/login" => ["controller" => "UserController", "methods" => array("POST")],
+        "user" => ["controller" => "UserController", "methods" => array("GET", "POST", "PUT")],
+        "rol" => ["controller" => "RolController", "methods" => array("GET")],
         "bookings" => ["controller" => "BookingController", "methods" => array("GET")],
         "typeservice" => ["controller" => "TypeServiceController", "methods" => array("GET")],
         "control" => ["controller" => "ControlController", "methods" => array("POST", "GET", "PUT")],

@@ -34,6 +34,7 @@ window.confirmSapa = async function () {
         destino: document.getElementById("destino")?.value.trim(),
         origenV: document.getElementById("origen_vuelta")?.value.trim() || "",
         destinoV: document.getElementById("destino_vuelta")?.value.trim() || "",
+        horarioV: document.getElementById("hora_vuelta")?.value.trim() || "",
         horario: document.getElementById("hora")?.value.trim(),
         nota: document.getElementById("comentario")?.value.trim(),
         traslado_tipo: document.querySelector('input[name="traslado_tipo"]:checked')?.value,
@@ -75,7 +76,7 @@ window.formatHora = function(horario){
 
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
 }
-window.renderTransportation = function($input, $list, transports) {
+window.renderTransportation = function($input, $list, transports, setHorarios = false) {
     $list.empty();
 
     function agregarHorario($item, tr) {
@@ -87,9 +88,7 @@ window.renderTransportation = function($input, $list, transports) {
 
         if (horariosValidos.length === 0) return;
 
-        const horarioCercano = horariosValidos.reduce((prev, curr) => {
-            return curr.value > prev.value ? curr : prev;
-        });
+        const horarioCercano = horariosValidos.reduce((prev, curr) => curr.value > prev.value ? curr : prev);
 
         const nombre = horarioCercano.key === 'nocturno' ? 'Nocturno' : 'Pickup';
         const horaFormateada = horarioCercano.value.slice(0,5);
@@ -98,7 +97,7 @@ window.renderTransportation = function($input, $list, transports) {
         $item.find('.horarios').append($label);
     }
 
-    function crearTarjeta(tr) {
+    function crearTarjeta(tr, setHorarios) {
         const $item = $(`
           <div class="list-group-item transport-item" data-id="${tr.id}" style="padding: 8px; position: relative; cursor: pointer;">
             <strong>${tr.hotel} - ${tr.ubicacion}</strong>
@@ -106,22 +105,35 @@ window.renderTransportation = function($input, $list, transports) {
           </div>
         `);
 
-        $item.on('click', function () {
+        $item.data("tr", tr);
+
+        $item.off("click").on("click", function () {
             $input.val(tr.hotel);
             $input.data('selected-id', tr.id);
             $list.hide();
 
-            const $origen = $("#origen");
-            if ($origen.length) $origen.val(tr.hotel || '');
+            $("#origen").val(tr.hotel || '');
+            $("#destino_vuelta").val(tr.hotel || '');
 
-            $("#hora").val(''); // Limpiar hora al seleccionar normal
+            if (setHorarios) {
+                const horaLimite = formatTo24Hour(modalData.horario);
+
+                const horariosValidos = ['tour1','tour2','tour3','tour4','tour5','nocturno','tour7']
+                    .map(t => tr[t])
+                    .filter(h => h && h !== '00:00:00' && h.trim() !== '' && h < horaLimite);
+
+                if (horariosValidos.length) {
+                    const mejor = horariosValidos.reduce((prev, curr) => curr > prev ? curr : prev);
+                    $("#hora").val(mejor.slice(0,5));
+                }
+            }
         });
 
         return $item;
     }
 
     transports.forEach(tr => {
-        const $item = crearTarjeta(tr);
+        const $item = crearTarjeta(tr, setHorarios);
         agregarHorario($item, tr);
         $list.append($item);
     });
@@ -131,9 +143,12 @@ window.renderTransportation = function($input, $list, transports) {
     }
 
     $list.show();
-}
+};
+
 window.renderInitialSuggestions = function($container, suggestions) {
+    $container.show(); // FIX obligatorio
     $container.empty();
+
     $container.css({
         display: 'flex',
         overflowX: 'auto',
@@ -141,7 +156,7 @@ window.renderInitialSuggestions = function($container, suggestions) {
         padding: '8px 0',
         borderBottom: '1px solid #ddd'
     });
-
+    
     suggestions.forEach(tr => {
         const $item = $(`
             <div class="initial-suggestion-item" style="
@@ -173,12 +188,12 @@ window.renderInitialSuggestions = function($container, suggestions) {
             const $label = $(`<span class="badge bg-success">${nombre}: ${horaFormateada}</span>`);
             $item.find('.horarios').append($label);
         }
-
         $item.on('click', () => {
             $("#hotelSearch").val(tr.hotel).data('selected-id', tr.id);
             $("#hotelList").hide();
 
             $("#origen").val(tr.hotel);
+            $("#destino_vuelta").val(tr.hotel);
             $("#hora").val(
                 horariosValidos.length ? horariosValidos.reduce((prev, curr) => curr.value > prev.value ? curr : prev).value.slice(0,5) : ''
             );
@@ -207,7 +222,6 @@ function extraerPalabraClaveIngles(texto) {
     }
     return partes[0] || '';
 }
-
 // Inicialización si necesitas algo más al abrir modalSapa
 window.initModalSapa = function(modalData) {
     if (!modalData) return;
@@ -228,19 +242,17 @@ window.initModalSapa = function(modalData) {
             console.error("Error al parsear items_details:", e);
             return 0;
         }
-    
         if (!Array.isArray(items)) return 0;
-    
         // Sumar los "item" de tipo "tour"
         const totalPax = items
             .filter(item => item.tipo === "tour")
             .reduce((acc, curr) => acc + parseInt(curr.item || 0), 0);
-    
         return totalPax;
     }
+    document.getElementById('horario_activity').textContent = modalData.horario;
+
     // Fecha traslado
     document.getElementById('fecha_traslado').value = modalData.datepicker || '';
-
     // Cliente
     const clienteNombre = `${modalData.cliente_name || ''} ${modalData.cliente_lastname || ''}`.trim();
     document.getElementById('cliente_nombre').value = clienteNombre;
@@ -249,20 +261,23 @@ window.initModalSapa = function(modalData) {
     // Origen y destino
     document.getElementById('origen').value = modalData.hotel || '';
     document.getElementById('destino').value = modalData.destino || 'Marina Punta Norte';
+    // 🔥 Insertar hotel en hotelSearch
+    $("#hotelSearch").val(modalData.hotel || "").data("selected-id", modalData.hotel_id || "");
     const lang = modalData?.lang;
     if (lang === 1) {
         document.getElementById('idioma_en').checked = true;    
         document.getElementById('idioma_es').disabled = true;
-    } else if (lang === 2) {
-        document.getElementById('idioma_es').checked = true;
-            // Deshabilitar los radios de idioma
-        document.getElementById('idioma_en').disabled = true;
+        // Ocultar el radio desactivado
+        document.getElementById('idioma_es').closest('.form-check').classList.add('d-none');
     }
-
-
+    if (lang === 2) {
+        document.getElementById('idioma_es').checked = true;
+        document.getElementById('idioma_en').disabled = true;
+        // Ocultar el radio desactivado
+        document.getElementById('idioma_en').closest('.form-check').classList.add('d-none');
+    }
     // Horario
     // document.getElementById('hora').value = formatHora(modalData.horario);
-
     // Comentario
     document.getElementById('comentario').value = modalData.comentario || '';
     const $input = $("#hotelSearch");
@@ -293,7 +308,6 @@ window.initModalSapa = function(modalData) {
     // }
 
     // $(window).on("resize scroll", positionList);
-
     $input.on("input", function() {
         clearTimeout(debounceTimer);
         const query = $(this).val().trim();
@@ -307,13 +321,12 @@ window.initModalSapa = function(modalData) {
             } catch (err) {
                 console.error(err);
             }
-            renderTransportation($input, $list, hoteles);
+            renderTransportation($input, $list, hoteles, true);
             if (hoteles.length) $list.show();
             else $list.hide();
             // positionList();
         }, 300);
     });
-
     $list.on("click", ".hotel-item", function() {
         const name = ($(this).data("name")).trim();
         const id = $(this).data("id");
@@ -321,28 +334,25 @@ window.initModalSapa = function(modalData) {
         $input.data("selected-id", id);
         $list.hide();
     });
-
     $(document).on("click", function(e) {
         if (!$(e.target).closest('#hotelSearch').length) {
             $list.hide();
         }
     });
-
     // === Mostrar 3 sugerencias al abrir ===
     (async function () {
-        let keyword = "";
+        
+
         const hotelOriginal = modalData?.hotel?.trim() || "";
-    
-        // 🔍 Verificar que el hotel no sea vacío ni "PENDIENTE"
-        const esHotelValido = hotelOriginal && hotelOriginal.toUpperCase() !== "PENDIENTE";
-    
-        // 🔸 Extraer palabra clave si el hotel es válido
-        if (esHotelValido) {
-            keyword = extraerPalabraClaveIngles(hotelOriginal); // 👇 usamos versión extendida
+        let keyword = hotelOriginal || "";
+        // Si NO es pendiente, extraemos keyword
+        if (hotelOriginal){
+            keyword = extraerPalabraClaveIngles(hotelOriginal);
         }
     
         try {
             const resultados = await search_transportation_tours(keyword, modalData.horario);
+    
             if (!Array.isArray(resultados) || resultados.length === 0) return;
     
             const horaLimite = formatTo24Hour(modalData.horario);
@@ -355,6 +365,7 @@ window.initModalSapa = function(modalData) {
                 if (horariosValidos.length === 0) return null;
                 return horariosValidos.reduce((prev, curr) => (curr > prev ? curr : prev));
             }
+    
             const hotelesConHorario = resultados
                 .map(h => ({
                     ...h,
@@ -364,57 +375,34 @@ window.initModalSapa = function(modalData) {
     
             if (hotelesConHorario.length === 0) return;
     
-          // Normalizar texto a uppercase para comparación
-            const normalizarTexto = txt => (txt || '').toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
-            // Buscar el hotel exacto si es válido, usando uppercase para comparar
-            let hotelExacto = null;
-            if (esHotelValido) {
-                const ref = normalizarTexto(hotelOriginal);
-                hotelExacto = hotelesConHorario.find(h => normalizarTexto(h.hotel) === ref);
-            }
-
-            let restantes = hotelesConHorario.filter(h => !hotelExacto || h.id !== hotelExacto.id);
-
-            // Ordenar restantes por cercanía de horario
             const toMinutes = h => {
                 const [hh, mm] = h.split(":").map(Number);
                 return hh * 60 + mm;
             };
-
-            restantes.sort((a, b) => toMinutes(b.horarioCercano) - toMinutes(a.horarioCercano));
-
-            // Armar lista final poniendo primero el hotel exacto (si existe)
-            const sugerenciasFinales = [
-                ...(hotelExacto ? [hotelExacto] : []),
-                ...restantes.slice(0, 2)
-            ];
-
     
-        renderInitialSuggestions($initialSugContainer, sugerenciasFinales);
-        $initialSugContainer.show();
+            hotelesConHorario.sort((a, b) => toMinutes(b.horarioCercano) - toMinutes(a.horarioCercano));
+    
+            const sugerenciasFinales = hotelesConHorario.slice(0, 3);
+    
+            renderInitialSuggestions($("#initialSuggestionsContainer"), sugerenciasFinales);
+            $("#initialSuggestionsContainer").show();
     
         } catch (err) {
             console.error("Error al cargar sugerencias iniciales:", err);
         }
     })();
     
-    
-
     // ==== NUEVO: pintar datos de la empresa ====
     const logo = document.getElementById("logocompany");
     const empresaName = document.getElementById("empresaname");
-
     if (logo && modalData?.company_logo) {
-        logo.src = modalData.company_logo;
+        logo.src = window.url_web + modalData.company_logo;
     }
-
     if (empresaName && modalData?.company_name) {
         empresaName.value = modalData.company_name;
         empresaName.disabled = true; // desactiva el input
         // o si prefieres que se vea pero no se edite, solo readonly:
         // empresaName.readOnly = true;
-
         if (modalData?.primary_color) {
             empresaName.style.color = modalData.primary_color;
         }
@@ -423,7 +411,6 @@ window.initModalSapa = function(modalData) {
     function toggleCamposVuelta() {
         const tipo = $('input[name="traslado_tipo"]:checked').val();
         const $camposVuelta = $('#campos-vuelta');
-    
         if (tipo === "redondo") {
         $camposVuelta.show(); // o .css("display", "flex") si lo prefieres
         } else {
@@ -434,7 +421,6 @@ window.initModalSapa = function(modalData) {
         $('#destino').val('Marina Punta Norte');
         }
     }
-    
     // Ejecutar al cargar el modal
     toggleCamposVuelta();
     const paxInput = document.getElementById("pax_cantidad");
@@ -444,7 +430,6 @@ window.initModalSapa = function(modalData) {
             paxInput.value = paxCalculado;
         }
     }
-
     // Escuchar cambios en el tipo de traslado
     $('input[name="traslado_tipo"]').on('change', toggleCamposVuelta);
     // === Sincronizar campos de ida y vuelta ===
@@ -453,41 +438,32 @@ window.initModalSapa = function(modalData) {
         const $destino = $("#destino");
         const $origenVuelta = $("#origen_vuelta");
         const $destinoVuelta = $("#destino_vuelta");
-
         function esValido(valor) {
             return valor && valor.trim() !== "" && valor.toUpperCase() !== "PENDIENTE";
         }
-
         // Evento ida → vuelta
         $origen.on("input", function() {
             const valor = $(this).val().trim();
             if (esValido(valor)) $destinoVuelta.val(valor);
         });
-
         $destino.on("input", function() {
             const valor = $(this).val().trim();
             if (esValido(valor)) $origenVuelta.val(valor);
         });
-
         // Evento vuelta → ida
         $origenVuelta.on("input", function() {
             const valor = $(this).val().trim();
             if (esValido(valor)) $destino.val(valor);
         });
-
         $destinoVuelta.on("input", function() {
             const valor = $(this).val().trim();
             if (esValido(valor)) $origen.val(valor);
         });
-
         // Sincronización inicial si ya viene con valores
         const origenVal = $origen.val()?.trim();
         const destinoVal = $destino.val()?.trim();
-
         if (esValido(origenVal)) $destinoVuelta.val(origenVal);
         if (esValido(destinoVal)) $origenVuelta.val(destinoVal);
     }
-
     sincronizarCampos();
-
 }

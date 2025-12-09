@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../../app/core/Controller.php";
-
+require_once __DIR__ . "/../models/UserModel.php";
 
 class BookingController extends Controller
 {
@@ -26,7 +26,15 @@ class BookingController extends Controller
     public function create(...$param)
     {
         Auth::requireLogin();
+        // Obtener el token de la sesión (suponiendo que guardaste en $_SESSION['user'] el token)
+        $tokenHeader = ['Authorization' => 'Bearer ' . Auth::user()];
+            
+        $userModel = new UserModel();
+        $userInfo = $userModel->getUserIdAndLevelByToken($tokenHeader);
 
+        if ($userInfo['status'] !== 'SUCCESS') {
+            die($userInfo['message']); // o redirigir a login
+        }
         // Si no vienen parámetros por URL, leer desde POST
         if ((!count($param) || count($param) < 2) && isset($_POST['company']) && isset($_POST['product'])) {
             $param[0] = $_POST['company'];
@@ -44,7 +52,9 @@ class BookingController extends Controller
 
         $this->view('dashboard/view_booking', [
             "company" => $companyCode,
-            "product" => $productCode
+            "product" => $productCode,
+            'user_id' => $userInfo['data']['user_id'],
+            'level'   => $userInfo['data']['level']
         ]);
     }
 

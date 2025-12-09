@@ -21,7 +21,7 @@ window.initModalSearchT = function(modalData = {}) {
                 max-height: 500px;
             ">
                 <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-                    <h4 style="margin:0; font-weight:600; color:#333;">Buscar registros</h4>
+                    <h5 class="m-0 fw-semibold" style="color:#333;">Busqueda de horarios de transporte</h4>
                     <button id="closeModalT" class="btn btn-sm btn-danger" style="font-weight:600; border-radius:6px;">X</button>
                 </div>
                 <input type="search" id="searchT" placeholder="Buscar..." class="form-control mb-3" style="border-radius:8px; border:1px solid #ccc; padding:10px;">
@@ -43,7 +43,7 @@ window.initModalSearchT = function(modalData = {}) {
     function renderSearchT(items) {
         $container.empty();
         if (!Array.isArray(items) || items.length === 0) {
-            $container.html('<div class="text-center text-muted" style="padding:20px; font-style:italic;">No se encontraron registros</div>');
+            $container.html('<div class="text-center text-muted" style="padding:20px; font-style:italic;">Escriba un nombre del hotel</div>');
             return;
         }
 

@@ -48,7 +48,7 @@ const show_availability = async (condition) => {
                         <div>
                             <div class="card-title " style="display: flex; align-items: center; gap: 10px;">
                                 <div class="row-content-center" style="width: 50px; height: 50px; padding: 0; border-radius: 50%; background-color: #ECECEC;">
-                                    <img src="${element.image}" alt="Logo de ${element.name}" width="50" class="circle responsive-img" style="width: 80%; height: 80%; object-fit: contain; font-size: 24px;">
+                                    <img src="${window.url_web + element.image}" alt="Logo de ${element.name}" width="50" class="circle responsive-img" style="width: 80%; height: 80%; object-fit: contain; font-size: 24px;">
                                 </div>
                                 <span style="font-size: 24px; font-weight: 300;">
                                     ${element.name}<a href="${window.url_web}/dispo_test/details/${element.companycode}"><i class="small material-icons" style="cursor:pointer;">keyboard_arrow_right</i></a>

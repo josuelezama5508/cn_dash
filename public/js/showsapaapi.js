@@ -4,17 +4,56 @@ async function search_sapas(condition) {
         const response = await fetchAPI(`showsapa?getSapaIdPago=${condition}`, "GET");
         const data = await response.json();
 
-        if (response.status === 200 && data.data?.length) {
-            return data.data; // ✅ devuelve los mensajes encontradas
-        } else {
-            console.warn(data.message || "No se pudo cargar el mensaje.");
-            return null;
+        if (response.status === 200) {
+            // Si devuelve { data: {...} }
+            if (data.data && typeof data.data === 'object') {
+                return data.data;
+            }
+            // Si devuelve directamente el objeto agrupado
+            if (typeof data === 'object' && !Array.isArray(data)) {
+                return data;
+            }
+            // Si devuelve array clásico
+            if (Array.isArray(data.data)) {
+                return data.data;
+            }
         }
+
+        console.warn(data.message || "No se pudo cargar las SAPAs.");
+        return null;
     } catch (error) {
-        console.error("Error al obtener los mensaje:", error);
+        console.error("Error al obtener las SAPAs:", error);
         return null;
     }
 }
+async function search_sapas_checkin(condition) {
+    try {
+        const response = await fetchAPI(`showsapa?getSapaIdPagoCheckin=${condition}`, "GET");
+        const data = await response.json();
+
+        if (response.status === 200) {
+            // Si devuelve { data: {...} }
+            if (data.data && typeof data.data === 'object') {
+                return data.data;
+            }
+            // Si devuelve directamente el objeto agrupado
+            if (typeof data === 'object' && !Array.isArray(data)) {
+                return data;
+            }
+            // Si devuelve array clásico
+            if (Array.isArray(data.data)) {
+                return data.data;
+            }
+        }
+
+        console.warn(data.message || "No se pudo cargar las SAPAs.");
+        return null;
+    } catch (error) {
+        console.error("Error al obtener las SAPAs:", error);
+        return null;
+    }
+}
+
 //-----------FIN SEARCH SHOWSAPA BY IDPAGO-------------------------//
 
 //-----------SEARCH DE LAST SHOWSAPA BY IDPAGO-------------------------//
@@ -81,3 +120,25 @@ async function search_id(condition) {
 }
 
 //-----------FIN SEARCH BY ID-------------------------//
+//-----------SEARCH BY DETAILS SAPA BY ID-------------------------//
+async function search_id_details_family(condition) {
+    try {
+        const response = await fetchAPI(`showsapa?getSapaIdPagoDetails=${condition}`, "GET");
+        const data = await response.json();
+
+        if (response.status === 200 && data.data) {
+            console.log("RESPUESTA");
+            console.log(data);
+            return data.data; // ✅ devuelve el objeto directamente
+        } else {
+            console.warn(data.message || "No se pudo cargar el registro.");
+            return null;
+        }
+    } catch (error) {
+        console.error("Error al obtener el registro:", error);
+        return null;
+    }
+}
+
+//-----------FIN SEARCH BY DETAILS SAPA BY ID-------------------------//
+

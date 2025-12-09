@@ -3,18 +3,20 @@ require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/TemplatesMailModel.php';
-
+require_once __DIR__ . '/../mailerservice/Mailer.php';
+use App\MailerService\Mailer;
 class ControlController extends API
 {
     private $userModel;
     private $mailTemplate;
     private $services = [];
+    private $mailer;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->mailTemplate = new TemplatesMailModel();
-
+        $this->mailer = new Mailer();
         $serviceList = [
             'BookingControllerService',
             'TagsControllerService',
@@ -44,7 +46,6 @@ class ControlController extends API
     {
         return $this->services[$name] ?? null;
     }
-
     private function validateToken()
     {
         $headers = getallheaders();
@@ -53,10 +54,8 @@ class ControlController extends API
         if ($validation['status'] !== 'SUCCESS') {
             throw new Exception('NO TIENES PERMISOS PARA ACCEDER AL RECURSO', 401);
         }
-    
         return $validation['data'];
     }
-    
     private function resolveAction(array $params, array $map): array
     {
         foreach ($map as $key => $action) {
@@ -66,7 +65,6 @@ class ControlController extends API
         }
         return ['', null];
     }
-
     private function validateRequest(): array
     {
         $headers = getallheaders();
@@ -214,7 +212,8 @@ class ControlController extends API
                 'transporte' => 'transporte',
                 'sin_transporte' => 'sin_transporte',
                 'sin_email' => 'sin_email',
-                'paymentmetod' => 'paymentmetod'
+                'paymentmetod' => 'paymentmetod',
+                'reference' => 'reference'
             ]);
             $booking = $this->service('BookingControllerService');
             $historyMail = $this->service('HistoryMailControllerService');
@@ -283,6 +282,20 @@ class ControlController extends API
                         if (!empty($mailInsert->id) && $tipo !== "SIN EMAIL") {
                             
                             $dataMail = $this->mailTemplate->procesarReserva($bodyMail);
+                            $correoCliente = $bodyMail['email'] ?? null;   // el correo del cliente
+                            $nombreCliente = $bodyMail['cliente_name'] ?? 'Cliente'; 
+                            $correoEmpresa = $bodyMail['questions_mail'] ?? 'no-reply@miapp.com'; 
+                            $nombreEmpresa = $bodyMail['empresaname'] ?? 'Mi Empresa';
+                            $this->mailer->setFrom($correoEmpresa, $nombreEmpresa);
+                            // Enviar al cliente y a los internos
+                            $this->mailer->sendMail(
+                                $tipo . " Confirm Notification",            // ya no importa el asunto aquí
+                                $dataMail,
+                                "",
+                                [],
+                                [$correoCliente]
+                            );
+                            
                             $datahistorymail = $historyMail->registrarOActualizarHistorialCorreoService($data, $user, $dataMail);
                         }
                     
@@ -304,7 +317,10 @@ class ControlController extends API
                     $resultado = $booking->actualizarReservaConHijosService($data['idpago'], $data, $user, 'update', ucfirst($action) . ' madre', ucfirst($action) . ' hijo', $details, $messageService, $history);
                     $correo = $historyMail->registrarOActualizarHistorialCorreoService($data, $user);
                     return $this->jsonResponse(['message' => "$action actualizado correctamente", 'data' => $resultado, 'correo' => $correo], 200);
-
+                case 'reference':
+                    $resultado = $booking->actualizarReservaConHijosService($data['idpago'], $data, $user, 'update', ucfirst($action) . ' madre', ucfirst($action) . ' hijo', $details, $messageService, $history);
+                    $correo = $historyMail->registrarOActualizarHistorialCorreoService($data, $user);
+                    return $this->jsonResponse(['message' => "$action actualizado correctamente", 'data' => $resultado, 'correo' => $correo], 200);
                 default:
                     return $this->jsonResponse(['message' => 'Acción PUT no reconocida'], 400);
             }

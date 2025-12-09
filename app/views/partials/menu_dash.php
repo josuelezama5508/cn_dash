@@ -6,20 +6,23 @@
             </button>
         </div>
 
-        <nav style="width: 100%;" id="menu-container">
-            <div id="horizontal-menu">
+        <nav style="width: 100%; position: fixed;z-index: 1050;" id="menu-container">
+            <div id="horizontal-menu" class="bg-black">
                 <div class="content" style="height: 100%;">
                     <ul class="left">
                         <li><a class="row-content-center" href="<?= route('inicio') ?>">Inicio</a></li>
                         <li><a class="row-content-center" href="<?= route('canales') ?>">Canales</a></li>
+                        <?php if($level === 'master' || $level === 'administrador'){?>
                         <li><a class="row-content-center" href="<?= route('productos') ?>">Productos</a></li>
                         <li><a class="row-content-center" href="<?= route('dispo_test') ?>">Horarios</a></li>
                         <li><a class="row-content-center" href="<?= route('transportation') ?>">Hoteles</a></li>
                         <li><a class="row-content-center" href="<?= route('mailer') ?>">Mailer</a></li>
+                        <li><a class="row-content-center" href="<?= route('usuarios') ?>">Usuarios</a></li>
+                        <?php } ?>
                     </ul>
                     <ul class="right" style="align-self: center;">
                         <li id="button-collapse">
-                            <button class="row-content-center custom-modal-found" ><i class="material-icons" style="font-size: 40px; color: white;">person_pin</i></button>
+                            <button class="row-content-center bg-black" ><i class="material-icons" style="font-size: 40px; color: white;">person_pin</i></button>
                         </li>
                     </ul>
                 </div>
@@ -37,7 +40,7 @@
             </div>
         </nav>
 
-        <nav class="breadcrumb">
+        <nav class="breadcrumb d-none">
             <input type="hidden" name="pagename" value="<?= getCurrentView() ?>">
         </nav>
     </header>

@@ -9,7 +9,7 @@
     <?php include_once(__DIR__ . '/../../partials/menu_dash.php') ?>
 
     <main>
-        <div class="content">
+        <div class="content pt-3 mt-5">
             <!--  -->
             <div class="sidebar" style="padding-top: 0; height: 60px; display: flex; flex-direction: column; align-items: flex-start;">
                 <div style="display: flex; flex-direction: column; justify-content: center; text-align: left; gap: 20px;">

@@ -204,12 +204,13 @@ function render_products(products, target = "#productSelect") {
 
     // Reiniciar Select2 con configuración
     $select.select2({
-        width: 'style',                  // respeta el estilo definido por CSS
-        dropdownAutoWidth: true,        // auto ancho en dropdown
-        minimumResultsForSearch: Infinity,  // 🔥 sin buscador
-        templateResult: formatOption,   // texto completo en dropdown
-        templateSelection: formatSelected // texto corto al seleccionar
+        width: '100%',  // mejor que 'style' para tu caso
+        dropdownAutoWidth: true,
+        minimumResultsForSearch: Infinity,
+        templateResult: formatOption,
+        templateSelection: formatSelected
     });
+    
 }
 
 function formatOption(option) {
@@ -221,7 +222,7 @@ function formatOption(option) {
 function formatSelected(option) {
     if (!option.id) return option.text;
     const description = $(option.element).data('description') || option.text;
-    return description.length > 40 ? description.slice(0, 40) + '…' : description;
+    return description.length > 92 ? description.slice(0, 92) + '…' : description;
 }
 
     //APARTADO PARA BUSCAR PRODUCTOS POR LENGUAJE Y CODIGO DE PRODUCTO REFERENTE A LA PLATAFORMA SOLICITADA.

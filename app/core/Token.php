@@ -15,7 +15,8 @@ class Token
         $__token = $model_encript->encryptToken(array(
             'username' => $user->username,
             'password' => $user->password,
-            'id' => $user->id
+            'id' => $user->id,
+            'level' => $user->level
         ));
         return rawurlencode($__token);
     }

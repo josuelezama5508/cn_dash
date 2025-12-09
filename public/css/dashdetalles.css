@@ -9,6 +9,10 @@
 .sombra-custom {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+.only-card-custom {
+  box-shadow: none !important;
+  border: 0px solid transparent !important;
+}
 .card-body {
     /* max-height: 70vh; */
     overflow-y: auto; /* Scroll si el contenido supera la altura */
@@ -147,9 +151,9 @@
 
 .table-container-scroll th,
 .table-container-scroll td {
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
-  padding: 8px;
+  padding: 2px;
   border: transparent;
   background-color: transparent;
 }

@@ -38,7 +38,9 @@ async function search_transportation_home(condition) {
 //----------- SEARCH DE TRANSPORTATIONS TOURS -------------------------//
 async function search_transportation_tours(condition, horario) {
     try {
-        const horarioFormateado = formatTo24Hour(horario);
+        const horarioFormateado = horario.includes("AM") || horario.includes("PM")
+        ? formatTo24Hour(horario)
+        : horario;
 
         const params = new URLSearchParams();
         params.append("searchTours[name]", condition);

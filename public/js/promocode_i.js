@@ -93,6 +93,7 @@ function create_status_select(selected) {
             category: "status",
             name: 'codestatus',
             selected_id: selected,
+            'id_user': window.userInfo.user_id
         },
         success: function (response) {
             $("#statusDiv").html(response);

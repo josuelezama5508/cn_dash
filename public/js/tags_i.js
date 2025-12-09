@@ -74,6 +74,7 @@ function new_item(lang = 0, tagname = '') {
             category: "language",
             name: "language[]",
             selected_id: lang,
+            'id_user': window.userInfo.user_id
         },
         success: async function (response) {
             $(`#${divname}`).html(response);

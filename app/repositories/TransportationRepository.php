@@ -61,7 +61,7 @@ class TransportationRepository
     public function getAllDataSearchHorarios($time){
         $campos = ["*"];
         $join = ""; //AMBOS
-        $cond = " AND mark = 0 AND :hora >= '00:00:00' AND (
+        $cond = "mark = 0 AND :hora >= '00:00:00' AND (
                 (tour1 IS NOT NULL AND tour1 <> '00:00:00' AND tour1 < :hora) OR
                 (tour2 IS NOT NULL AND tour2 <> '00:00:00' AND tour2 < :hora) OR
                 (tour3 IS NOT NULL AND tour3 <> '00:00:00' AND tour3 < :hora) OR

@@ -55,8 +55,8 @@ async function openEditarPaxModal() {
         return `<tr>
                     <td>${name}</td>
                     <td class="text-center">${inputControl}</td>
-                    <td class="text-end">$${price}</td>
-                    <td class="text-end">${moneda}</td>
+                    <td class="text-start">$${price}</td>
+                    <td class="text-start">${moneda}</td>
                 </tr>`;
     };
 
@@ -76,19 +76,20 @@ async function openEditarPaxModal() {
     const tableHtml = `
             <div id="modalContentWrapper" class="column g-3">
                 <div id="toursBlockModal" class="col-12 col-md-6">
-                    <div class="border-bottom border-danger pb-2 mb-2">
-                        <span class="ms-2 fw-bold">
+                    <div class="text-start py-1 mb-2" style="border-bottom: 1px solid #2198f4;">
+
+                        <span class="ms-2 fw-semibold  fs-15-px">
                             <i class="bi bi-ticket-detailed"></i> Tickets
                         </span>
                     </div>
                     <div class="booking-section table-responsive">
                         <table class="table table-hover align-middle text-sm mb-0">
-                            <thead class="table-primary text-center">
+                            <thead class="table-primary text-start">
                                 <tr>
-                                    <th style="width: 30%;">Nombre</th>
-                                    <th style="width: 10%;">Cantidad</th>
-                                    <th style="width: 10%;" class="text-end">Precio</th>
-                                    <th style="width: 10%;" class="text-end">Moneda</th>
+                                    <th class="background-blue-1 fw-semibold" style="width: 30%;">Nombre</th>
+                                    <th class="background-blue-1 fw-semibold text-center" style="width: 10%;">Cantidad</th>
+                                    <th class="background-blue-1 fw-semibold" style="width: 10%;" class="text-start">Precio</th>
+                                    <th class="background-blue-1 fw-semibold" style="width: 10%;" class="text-start">Moneda</th>
                                 </tr>
                             </thead>
                             <tbody id="productdetailspax">
@@ -99,19 +100,19 @@ async function openEditarPaxModal() {
                 </div>
 
                 <div id="addonsBlockModal" class="col-12 col-md-6">
-                    <div class="border-bottom border-danger pb-2 mb-2">
-                        <span class="ms-2 fw-bold">
+                    <div class="text-start py-1 mb-0" style="border-bottom: 1px solid #2198f4;">
+                        <span class="ms-2 fw-semibold ">
                             <i class="bi bi-ticket-detailed-fill"></i> Addons
                         </span>
                     </div>
-                    <div class="booking-section table-responsive">
+                    <div class="booking-section table-responsive mb-0 py-0">
                         <table class="table table-hover align-middle text-sm mb-0">
-                            <thead class="table-primary text-center">
+                            <thead class="table-primary text-start">
                                 <tr>
-                                    <th style="width: 30%;">Nombre</th>
-                                    <th style="width: 10%;">Cantidad</th>
-                                    <th style="width: 10%;" class="text-end">Precio</th>
-                                    <th style="width: 10%;" class="text-end">Moneda</th>
+                                    <th class="background-blue-1 fw-semibold" style="width: 30%;">Nombre</th>
+                                    <th class="background-blue-1 fw-semibold text-center" style="width: 10%;">Cantidad</th>
+                                    <th class="background-blue-1 fw-semibold" style="width: 10%;" class="text-start">Precio</th>
+                                    <th class="background-blue-1 fw-semibold" style="width: 10%;" class="text-start">Moneda</th>
                                 </tr>
                             </thead>
                             <tbody id="productdetailsaddons">
@@ -127,10 +128,10 @@ async function openEditarPaxModal() {
 
 
         const resumenHTML = `
-            <div id="pax-summary" class="mt-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                <h6 class="mb-3 text-primary fw-bold">Detalles de actividad</h6>
+            <div id="pax-summary" class="mt-1 mb-0">
+            <div class="card border-0 ">
+                <div class="card-body mt-0 pt-0 px-1">
+                <h5 class="my-2 text-primary fw-bold">Detalles de actividad</h6>
                 <table class="table table-sm table-borderless mb-0" style="width: auto;">
                     <tbody>
                         <tr>
@@ -235,8 +236,22 @@ async function openEditarPaxModal() {
         
 
     document.getElementById("modalGenericContent").innerHTML = tableHtml + resumenHTML;
-    document.getElementById("modalGenericTitle").innerText = "Editar Pax";
-
+    document.getElementById("modalGenericTitle").innerText = "Modulo de Edición de Pax";
+    // Ajustar ancho del modal
+    $('#modalGeneric').removeClass(function (_, className) {
+        return (className.match(/w-\d+/g) || []).join(' ');
+    });
+    $('#modalGeneric').addClass('w-45');
+    // =====================================
+    // INYECTAR FOOTER PERSONALIZADO
+    // =====================================
+    const footer = document.getElementById("modal_generic_footer");
+    footer.classList.remove('justify-content-start', 'justify-content-end');
+    footer.classList.add('justify-content-end');
+    footer.innerHTML = `
+        <button type="button" class="btn btn-danger rounded-1" id="btnCancelPax">Cancelar</button>
+        <button type="button" class="btn background-green-custom-2 text-white rounded-1" id="btnSavePax">Guardar</button>
+    `;
     // Aplicar código promocional si existe
     if (modalData.codepromo?.trim()) {
         try {
@@ -255,7 +270,8 @@ async function openEditarPaxModal() {
     }
     // Event listeners
     actualizarResumen();
-    let currentMoneda = modalData.moneda; // USD o MXN
+    window.currentMoneda = modalData.moneda; // USD o MXN
+    window.monedaOriginal = modalData.moneda;
     const $totalInput = $("#input-total");
     const $balanceInput = $("#input-balance");
     const $discountInput = $("#input-discount");
@@ -274,9 +290,6 @@ async function openEditarPaxModal() {
         const origBalance = $balanceInput.data("original");
         const origDiscount = $discountInput.data("original");
         const origSubtotal = $spanSubtotal.data("original");
-
-
-        
         if (currentMoneda === "USD") {
             $totalInput.val((parseFloat($totalInput.val()) * tipoCambio).toFixed(2));
             $balanceInput.val((parseFloat($balanceInput.val()) * tipoCambio).toFixed(2));
@@ -290,6 +303,12 @@ async function openEditarPaxModal() {
             $discountInput.text((parseFloat($discountInput.text()) / tipoCambio).toFixed(2));
             $spanSubtotal.text((parseFloat($spanSubtotal.text()) / tipoCambio).toFixed(2));
             currentMoneda = "USD";
+        }
+        // Bloquear o desbloquear descuento según moneda actual
+        if (currentMoneda !== modalData.moneda) {
+            $("#input-tipo-cambio").addClass("no-edit");
+        } else {
+            $("#input-tipo-cambio").removeClass("no-edit");
         }
         
         // Actualizar texto de todos los botones
@@ -337,7 +356,7 @@ async function openEditarPaxModal() {
     
     $("#input-discount").prop("disabled", true);
     
-    document.querySelector("#modalGeneric .btn-primary").onclick = async () => {
+    document.getElementById("btnSavePax").onclick = async () => {
         const nuevosItems = [];
         let total = 0;
         const totalFinal = parseFloat($("#input-total").val()) || 0;
@@ -408,11 +427,37 @@ async function openEditarPaxModal() {
             alert("Ocurrió un error de red al guardar los cambios.");
         }
     };
-
+    // BOTÓN CANCELAR
+    document.getElementById("btnCancelPax").onclick = () => closeModal();
     const modal = new bootstrap.Modal(document.getElementById("modalGeneric"));
     modal.show();
     window.currentModal = modal;
 }
+// Cerrar modal genérico
+window.closeModal = function () {
+    if (window.currentModal) {
+        window.currentModal.hide();
+        window.currentModal = null;
+    }
+
+    // Restaurar ancho default
+    $('#modalGeneric').removeClass(function (_, className) {
+        return (className.match(/w-\d+/g) || []).join(' ');
+    });
+    $('#modalGeneric').addClass('w-50');
+};
+function aplicarConversion(price, monedaItem, monedaActual, tipoCambio) {
+    if (monedaItem === monedaActual) return price;
+
+    if (monedaItem === "USD" && monedaActual === "MXN") {
+        return price * tipoCambio;
+    }
+    if (monedaItem === "MXN" && monedaActual === "USD") {
+        return price / tipoCambio;
+    }
+    return price;
+}
+
 function actualizarResumen() {
     let pax = 0;
     let totalItems = 0; // solo items principales y addons seleccionados
@@ -422,16 +467,28 @@ function actualizarResumen() {
     // --- 1. Contar PAX y calcular totalItems ---
     $(".detalles-pax-input").each(function () {
         const cantidad = parseInt($(this).val()) || 0;
-        const price = parseFloat($(this).data("price")) || 0;
+        let price = parseFloat($(this).data("price")) || 0;
+    
+        const monedaItem = $(this).data("moneda") || window.monedaOriginal;
+        const monedaActual = window.currentMoneda;
+        console.log("MONEDA ACTUAL");
+        console.log(monedaActual);
+        console.log("MONEDA ORIGINAL");
+        console.log(monedaItem);
+        const tipoCambio = parseFloat($("#input-tipo-cambio").val()) || 1;
+    
         if (cantidad > 0) {
             pax += cantidad;
+    
+            price = aplicarConversion(price, monedaItem, monedaActual, tipoCambio);
             totalItems += cantidad * price;
-
+    
             const name = $(this).data("name") || "PAX";
             if (!paxGrouped[name]) paxGrouped[name] = 0;
             paxGrouped[name] += cantidad;
         }
     });
+    
 
     // --- 2. Contar addons seleccionados ---
     $(".detalles-pax-checkbox").each(function () {
@@ -451,7 +508,17 @@ function actualizarResumen() {
         if (mostrar) {
             $parentRow.show();
             $input.prop("disabled", false);
-            if ($input.prop("checked")) totalItems += parseFloat($input.data("price")) || 0;
+            if ($input.prop("checked")) {
+                let price = parseFloat($input.data("price")) || 0;
+            
+                const monedaItem = $input.data("moneda") || window.monedaOriginal;
+                const monedaActual = window.currentMoneda;
+                const tipoCambio = parseFloat($("#input-tipo-cambio").val()) || 1;
+            
+                price = aplicarConversion(price, monedaItem, monedaActual, tipoCambio);
+                totalItems += price;
+            }
+            
             anyAddonVisible = true;
         } else {
             $parentRow.hide();

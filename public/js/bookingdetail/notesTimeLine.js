@@ -1,59 +1,6 @@
 let mensajeEditando = null;
 $('#btnAgregarNota').on('click', function () {
-  const $formulario = $('#formularioNota');
-  const isVisible = $formulario.is(':visible');
-
-  if (isVisible) {
-      $formulario.slideUp();
-      $('#btnAgregarNota').html('<i class="fas fa-plus-circle"></i> Agregar nota');
-  } else {
-      $formulario.slideDown();
-      $('#btnAgregarNota').html('<i class="fas fa-times-circle"></i> Cancelar nota');
-  }
-});
-
-$('#btnEnviarNota').on('click', async function() {
-    const $textarea = $('#nuevaNota');
-    const texto = $textarea.val().trim();
-    const $inputtype = $('#typenote');
-    const tipo = $inputtype.val();
-    if (!texto) return alert("Escribe un comentario antes de enviar.");
-    if (!tipo) return alert("Selecciona el tipo de nota antes de enviar.");
-
-    try {
-        const data ={mensaje: texto,
-            idpago: modalData.id,
-            tipomessage: tipo,
-            module: "DetalleReservas"
-        };
-        console.log(data);
-        const response = await fetchAPI('message', 'POST', {create: {...data}});
-
-        if (!response.ok) throw new Error('Error al guardar la nota');
-
-        // Opcional: podrías esperar la respuesta para tener datos más precisos
-        // const nuevaNota = await response.json();
-
-        // const notaItem = $(`
-        //     <div class="list-group-item">
-        //         <div class="d-flex w-100 justify-content-between">
-        //             <h6 class="mb-1">Tipo: Nota</h6>
-        //             <small>${new Date().toLocaleString()}</small>
-        //         </div>
-        //         <p class="mb-1"><em>${texto}</em></p>
-        //         <small>Usuario: ${modalData.usuario || 'Desconocido'}</small>
-        //     </div>
-        // `);
-
-        // $('#notasList').prepend(notaItem);
-        if (modalData.id) {
-          renderUltimoMensajeContent(modalData.id);
-        }
-        $textarea.val('');
-    } catch (error) {
-        alert('No se pudo guardar la nota. Intenta nuevamente.');
-        console.error(error);
-    }
+  openMessagesNotesModal(null, modalData);
 });
 
 // Abrir modal mensajes
@@ -67,7 +14,6 @@ function abrirModalCorreos() {
 // Cerrar modal mensajes
 function cerrarModalCorreos() {
   $('#modalCorreos').removeClass('show');
-  mensajeEditando = null;
 }
 
 // Cargar mensajes y mostrar en modal usando search_messages
@@ -90,7 +36,7 @@ async function cargarCorreos(nog) {
       const visto = mensaje.vistoC == 1;
 
       const cartaHTML = `
-        <div class="card mb-2 border-0 shadow-sm carta-correo ${visto ? 'bg-light' : 'bg-white'}">
+        <div class="card mb-2 border-0 carta-correo ${visto ? 'bg-light' : 'bg-white'}">
           <div class="card-body d-flex justify-content-between align-items-center px-3 py-2">
             <div class="d-flex align-items-center">
               <i class="fas ${visto ? 'fa-envelope-open text-success' : 'fa-envelope text-secondary'} fs-5 me-3"></i>
@@ -115,10 +61,10 @@ async function cargarCorreos(nog) {
 
 // Guardar mensaje editado
 $('#btnGuardarMensaje').on('click', async () => {
-    if (!mensajeEditando) return alert('Selecciona un mensaje para editar.');
+    if (!mensajeEditando) return showErrorModal('Selecciona un mensaje para editar.');
     
     const nuevoTexto = $('#mensajeEditTexto').val().trim();
-    if (!nuevoTexto) return alert('El mensaje no puede estar vacío.');
+    if (!nuevoTexto) return showErrorModal('El mensaje no puede estar vacío.');
   
     try {
         const data = {
@@ -131,7 +77,7 @@ $('#btnGuardarMensaje').on('click', async () => {
         const response = await update_message({ update: data });
         console.log("Respuesta de update_message:", response);
         
-        if (!response) throw new Error('Error al actualizar mensaje.');
+        if (!response) showErrorModal('Error al actualizar mensaje.');
         
 
         //   alert('Mensaje actualizado.');
@@ -144,138 +90,172 @@ $('#btnGuardarMensaje').on('click', async () => {
         mensajeEditando = null;
 
     } catch (error) {
-        alert('No se pudo actualizar el mensaje. Intenta de nuevo.');
+      showErrorModal('No se pudo actualizar el mensaje. Intenta de nuevo.');
         console.error(error);
     }
   });
-  
-async function renderUltimoMensaje(idpago) {
-  const mensajes = await search_last_messages(idpago);
 
-  if (mensajes && mensajes.length > 0) {
-      const mensaje = mensajes[0]; // Asumimos que es el último
+function activarBotonesEditar() {
+  document.querySelectorAll(".btnEditarMensaje").forEach(btn => {
+      btn.addEventListener("click", function() {
+          const id = this.dataset.id;
 
-      const contenedor = document.getElementById("ultimoMensajeReserva");
-      const box = document.getElementById("mensajeTipoBox");
-      const contenido = document.getElementById("contenidoUltimoMensaje");
-      const info = document.getElementById("infoUltimoMensaje");
-
-      // Insertar contenido del mensaje
-      contenido.textContent = mensaje.mensaje || "(Mensaje vacío)";
-      info.textContent = `— ${mensaje.name} | ${formatDateTime(mensaje.datestamp)}`;
-
-      // Asignar clase según tipo de mensaje
-      const tipo = mensaje.tipomessage;
-      box.className = "alert"; // limpia clases previas
-
-      switch (tipo) {
-          case 'importante':
-              box.classList.add("alert-danger");
-              break;
-          case 'balance':
-              box.classList.add("alert-warning");
-              break;
-          default: // 'nota'
-              box.classList.add("alert-info");
-      }
-
-      // Mostrar el contenedor
-      contenedor.style.display = "block";
-  }
+          const texto = document.getElementById(`mensaje-${id}`).innerText.trim();
+          const tipo = document.getElementById(`tipo-${id}`).innerText.trim().toLowerCase();
+          openMessagesNotesModal({id, texto, tipo}, modalData)
+      });
+  });
 }
-function obtenerDatosEtiqueta(tipo) {
-  switch (tipo) {
-      case 'importante':
-          return {
-              class: "badge bg-warning text-dark",
-              icono: '<i class="fas fa-exclamation-circle me-1"></i>',
-              texto: "Importante"
-          };
-      case 'balance':
-          return {
-              class: "badge bg-success text-white",
-              icono: '<i class="fas fa-dollar-sign me-1"></i>',
-              texto: "Balance"
-          };
-      case 'nota':
-      default:
-          return {
-              class: "badge bg-primary text-white",
-              icono: '<i class="fas fa-sticky-note me-1"></i>',
-              texto: "Nota"
-          };
-  }
-}
-
 async function renderUltimoMensajeContent(idpago) {
   const mensajes = await search_messages(idpago);
 
   const contenedor = document.getElementById("ultimoMensajeReserva");
-  const box = document.getElementById("mensajeTipoBox");
+  const btnBox = document.getElementById("btnEditarBox");
+  const iconosBox = document.getElementById("mensajeTipoBox");
+  const mensajeBox = document.getElementById("mensajeDetalleBox");
 
-  if (!mensajes || mensajes.length === 0) {
-      contenedor.style.display = "none";
-      return;
-  }
+  contenedor.style.display = "flex";
 
-  box.innerHTML = ''; // Limpiar contenido
+  btnBox.innerHTML = "";
+  iconosBox.innerHTML = "";
+  mensajeBox.innerHTML = "";
 
-  contenedor.style.display = "block";
+  // Contenedor scrollable para iconos+datos
+  const iconosContainer = document.createElement("div");
+  iconosContainer.className = "d-flex flex-column gap-2 overflow-x-hidden p-2 rounded-1";
+  iconosContainer.style.maxHeight = "130px";
+  iconosContainer.style.overflowY = "auto";
+// =========================================
+//         CASO SIN MENSAJES
+// =========================================
+if (!mensajes || mensajes.length === 0) {
 
-  // Crear contenedor para las notas adicionales ocultas
-  const extrasContainer = document.createElement('div');
-  extrasContainer.style.display = "none";
-  extrasContainer.id = "mensajesExtraContainer";
+  iconosContainer.innerHTML = `
+    <div class="px-1 py-4 border rounded-1 text-muted text-center small border-gray-custom-2">
+      Sin mensajes
+    </div>
+  `;
+  iconosBox.appendChild(iconosContainer);
 
-  mensajes.forEach((mensaje, index) => {
-      const imagenPerfil = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-      const { class: badgeClass, icono, texto: etiquetaTexto } = obtenerDatosEtiqueta(mensaje.tipomessage);
-      const isPrincipal = index === 0;
+  mensajeBox.innerHTML = `
+    <div class="border rounded-1 px-1 py-4 bg-white w-100 text-muted text-center" style="border-color:#e05050 !important;">
+      Sin nota
+    </div>
+  `;
 
-      const mensajeHTML = `
-          <div class="alert alert-secondary border-secondary mensaje-item ${isPrincipal ? 'principal' : 'respuesta'}">
-              <div class="d-flex align-items-center mb-2">
-                  <i class="fas fa-user-circle me-2 ${isPrincipal ? 'text-white' : 'text-dark'}" style="font-size: 2.5rem;"></i>
+  // Misma estructura y estilos que tu botón de editar
+  btnBox.innerHTML = `
+    <button 
+        id="btn-edit-empty"
+        class="btn btn-sm btn-warning px-4 py-2 text-white background-blue-dark-1 border-0 d-flex justify-content-center align-items-center w-75 position-relative"
+        onclick="openMessagesNotesModal(null, modalData)"
+    >
+        <i class="material-icons d-flex justify-content-center align-items-center" style="font-size:20px;">add</i>
+    </button>
 
-                  <div>
-                      <strong class="${isPrincipal ? 'text-white' : 'text-dark'}">${mensaje.name || 'Usuario'} ${mensaje.lastname || ''}</strong><br>
-                      <small class="${isPrincipal ? 'text-white' : 'text-dark'}">${formatDateTime(mensaje.datestamp)}</small>
-                      <span class="${badgeClass}" style="padding: 6px;">${icono} ${etiquetaTexto}</span>
-                  </div>
-              </div>
-              <p class="mb-0 ${isPrincipal ? 'text-white' : 'text-dark'}">${mensaje.mensaje || "(Mensaje vacío)"}</p>
-          </div>
-      `;
+    <span class="position-absolute w-75 fw-normal bordered-1 text-white background-orange-custom-2 text-center"
+        style="
+            font-size:12px;
+            top:80%;
+            left:45%;
+            transform:translate(-50%, -50%);
+        ">
+      0 Mensajes
+    </span>
+  `;
 
-      // Agregar el primero directamente
-      if (isPrincipal) {
-          box.innerHTML += mensajeHTML;
-      } else {
-          extrasContainer.innerHTML += mensajeHTML;
-      }
-  });
-
-  if (mensajes.length > 1) {
-      const toggleBtn = document.createElement('button');
-      toggleBtn.className = "btn btn-sm btn-outline-light mt-2";
-      toggleBtn.style.backgroundColor = "#709ac2";
-      toggleBtn.style.borderColor = "#7e9cc0";
-      toggleBtn.style.marginBottom = "1rem";
-      toggleBtn.innerHTML = '<i class="fas fa-eye me-2"></i> Mostrar más';
-
-      toggleBtn.onclick = () => {
-          const isHidden = extrasContainer.style.display === "none";
-          extrasContainer.style.display = isHidden ? "block" : "none";
-          toggleBtn.innerHTML = isHidden
-            ? '</i><i class="fas fa-eye-slash me-2"></i> Mostrar menos'
-            : '<i class="fas fa-eye me-2"></i> Mostrar más';
-      };
-
-      box.appendChild(toggleBtn);
-      box.appendChild(extrasContainer);
-  }
+  return;
 }
 
+  // =========================================
+  //        CASO CON MENSAJES
+  // =========================================
+  mensajes.forEach((msg, index) => {
+    const letra = (msg.name || "Usuario").charAt(0).toUpperCase();
+    const tipo = msg.tipomessage || "nota";
+    const usuario = msg.name || "Usuario";
+    const userLower = (msg.username || "sistema").toLowerCase();
+    const fecha = formatFechas(msg.datestamp);
+    const flotante = `<span class="position-absolute w-auto px-2 fw-normal bordered-1 text-white background-blue-5 text-center" style="font-size:12px; top:0px; right:20px; transform:translate(0, 50%); border-radius:4px; "> ULTIMO</span>`;
+    const fila = document.createElement("div");
+    fila.className = "row align-items-center g-2 p-1 bg-white rounded cursor-pointer hoverable-row border-gray-custom-2 mb-1 position-relative";
+    fila.innerHTML = `
+      <div class="col-auto d-flex justify-content-center align-items-center">
+        <div class="rounded-circle d-flex justify-content-center align-items-center"
+             style="width:45px;height:45px;background-color:#E91E63;color:white;font-weight:bold;">
+             ${letra}
+        </div>
+      </div>
+      <div class="col small position-relative">
+        <div class="fs-16-px">
+          <i class="material-icons ${(tipo === "nota") ? "text-blue-custom" : ((tipo === "importante") ? "text-red-custom" : "text-yellow-custom") }">comment</i>
+          <strong>Tipo:</strong> <span id="tipo-${msg.id}" class="${(tipo === "nota") ? "text-blue-custom" : ((tipo === "importante") ? "text-red-custom" : "text-yellow-custom") }">${tipo.charAt(0).toUpperCase() + tipo.slice(1)}</span>
+        </div>
+        <div class="fs-16-px"><strong>Modificado:</strong> ${usuario}</div>
+        <div class="fs-16-px"><strong>Usuario:</strong> ${userLower}</div>
+        <div class="fst-italic text-muted text-end mt-1 fs-12">${fecha.f1}</div>
+        ${index === 0 ? flotante : '' }
+      </div>
+    `;
+
+    fila.addEventListener("click", () => {
+      iconosContainer.querySelectorAll(".selected-row").forEach(el => el.classList.remove("selected-row"));
+      fila.classList.add("selected-row");
+
+      mensajeBox.innerHTML = `
+        <div class="row align-items-center g-3 ms-0 me-0 p-3 mb-3 bg-white w-100">
+          <div class="col-12 col-sm-12 col-lg-12 p-3 border rounded-1" style="border-color:#e05050 !important; word-break:break-word;">
+            <div class="fw-bold mb-2">Nota:</div>
+            <div id="mensaje-${msg.id}" class="fst-italic fs-4 text-gray-dark-custom">${msg.mensaje || "(Mensaje vacío)"}</div>
+          </div>
+        </div>
+      `;
+
+      btnBox.innerHTML = `
+        <button id="btn-edit-${msg.id}" 
+            class="btn btn-sm btn-warning btnEditarMensaje px-4 py-2 text-white background-blue-dark-1 border-0 d-flex justify-content-center align-items-center w-75 position-relative"
+            data-id="${msg.id}">
+            <i class="material-icons d-flex justify-content-center align-items-center" style="font-size:20px;">edit</i>
+        </button>
+
+        <span class="position-absolute w-75 fw-normal bordered-1 text-white background-orange-custom-2 text-center"
+              style="
+                  font-size:12px;
+                  top:65%;
+                  left:45%;
+                  transform:translate(-50%, -50%);
+              ">
+          ${mensajes.length} Mensajes
+        </span>
+      `;
+
+      activarBotonesEditar();
+    });
+
+    iconosContainer.appendChild(fila);
+
+    // Selección inicial
+    if (index === 0) fila.click();
+  });
+
+  iconosBox.appendChild(iconosContainer);
+}
+
+
+function editarNota(id, mensaje, tipo) {
+  console.log("Editando ID:", id);
+  
+  // Guardas el mensaje actual para usar en tu PUT
+  mensajeEditando = { id, mensaje, tipo };
+
+  // Rellenas tu form
+  $('#nuevaNota').val(mensaje);
+  $('#typenote').val(tipo);
+
+  // Muestras el formulario
+  $('#formularioNota').slideDown();
+  $('#btnAgregarNota').html('<i class="fas fa-times-circle"></i> Cancelar nota');
+}
 // Utilidad para formatear fecha (opcional)
 function formatDateTime(datetimeString) {
     const fecha = new Date(datetimeString);

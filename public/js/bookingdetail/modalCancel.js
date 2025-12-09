@@ -55,6 +55,8 @@ window.initModalCancel = function(modalData) {
 
     // Quitamos el estilo de ancho especial
     $('#modalGeneric .modal-content').removeClass('modal-custom-width');
+
+
     const total = Number(modalData?.total) || 0;
     const nombreCliente = `${modalData.cliente_name ?? '-'} ${modalData.cliente_lastname ?? ''}`.trim() || '-';
     const emailCliente = modalData?.email ?? '-';
@@ -127,7 +129,7 @@ window.initModalCancel = function(modalData) {
                 activeTypes.forEach(type => {
                     const nombreMotivo = idioma === 'en' ? type.name_en : type.name_es;
                     $motivoSelect.append(
-                        `<option value="${type.id}" data-refund="${type.refund_percentage}" data-name="${nombreMotivo}">${nombreMotivo}</option>`
+                        `<option value="${type.id}" data-refund="${type.refund_percentage}" data-name="${nombreMotivo}">${nombreMotivo} ${type.refund_percentage === 0 ? '': ' - Rembolso ' + type.refund_percentage + '%'}</option>`
                     );
                 });
                 if (activeTypes.length > 0) {
@@ -161,7 +163,7 @@ window.initModalCancel = function(modalData) {
     const $empresaName = $('#empresaname');
 
     if (modalData?.company_logo) {
-        $logo.attr('src', modalData.company_logo);
+        $logo.attr('src', window.url_web + modalData.company_logo);
     }
 
     if (modalData?.company_name) {

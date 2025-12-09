@@ -9,7 +9,7 @@
     <?php include_once(__DIR__ . '/../../partials/menu_dash.php') ?>
 
     <main>
-        <div class="content">
+        <div class="content pt-3 mt-5">
             <!--  -->
             <div class="sidebar" style="padding-top: 0; height: 60px; display: flex; flex-direction: column; align-items: flex-start;">
                 <!--  -->
@@ -196,7 +196,6 @@
         </tr>
     </template>
     <!-- UTILS -->
-    <script src="<?= asset('/js/utils.js') ?>?v=1"></script>
     <script src="<?= asset('/js/combosapi.js') ?>?v=1"></script>
     <!-- PRODUCTS -->
     <script src="<?= asset('/js/productsutils.js') ?>?v=1"></script>

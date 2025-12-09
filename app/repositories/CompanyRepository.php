@@ -57,6 +57,12 @@ class CompanyRepository
     public function getCompanyStatusDById($id){
         return $this->model->where("clave_empresa = :id AND statusD = '1'", ['id' => $id], ["nombre AS companyname", "primario AS primarycolor", "clave_empresa AS companycode", "productos AS products", "dias_dispo", "imagen AS image", "id AS companyid"]);
     }
+    public function getCompanyByUserDisponibility($where){
+        return $this->model->where("company_code IN (" . $where . ") AND active = '1' ORDER BY company_name ASC", []);
+    }
+    public function getCompaniesByCodes($where){
+        return $this->model->where($where . " ORDER BY company_name ASC", []);
+    }
     // public function getClave()
     // {
     //     $cadena = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

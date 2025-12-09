@@ -13,13 +13,13 @@ class BookingMessageRepository
     {
         return $this->model->insert($data);
     }
-    public function find(array $data)
+    public function find(int $id)
     {
-        return $this->model->find($data);
+        return $this->model->find($id);
     }
-    public function delete(array $data)
+    public function delete(int $id)
     {
-        return $this->model->delete($data);
+        return $this->model->delete($id);
     }
     public function getTableName(){
         return  $this->model->getTableName();
@@ -30,16 +30,30 @@ class BookingMessageRepository
     public function searchNotesByIdPago($id) {
         $fields = ['BM.*', 'U.*'];
         $join = "BM INNER JOIN users AS U ON BM.usuario = U.user_id";
-        $condicion = "BM.idpago = :id AND BM.tipomessage NOT IN ('procesar', 'reagendar', 'cancelar') ORDER BY BM.id DESC";
+        $condicion = "BM.idpago = :id AND BM.tipomessage NOT IN ('procesar', 'reagendar', 'cancelar', 'sapa', 'checkin') ORDER BY BM.id DESC";
 
     
-        return $this->model->consult($fields, $join, $condicion, ['id' => $id]);
+        return $this->model->consult($fields, $join, $condicion, ['id' => $id], false);
     
     }
     function searchLastNoteByIdPago($id) {
         $fields = ['BM.*', 'U.*'];
         $join = "BM INNER JOIN users AS U ON BM.usuario = U.user_id";
-        $condicion = "BM.idpago = :id ORDER BY BM.id DESC LIMIT 1";
+        $condicion = "BM.idpago = :id AND BM.tipomessage NOT IN ('sapa') ORDER BY BM.id DESC LIMIT 1";
+    
+        return $this->model->consult($fields, $join, $condicion, ['id' => $id]);
+    }
+    function searchLastNoteByIdCheckin($id) {
+        $fields = ['BM.*', 'U.*'];
+        $join = "BM INNER JOIN users AS U ON BM.usuario = U.user_id";
+        $condicion = "BM.idpago = :id AND BM.tipomessage IN ('checkin') ORDER BY BM.id DESC LIMIT 1";
+    
+        return $this->model->consult($fields, $join, $condicion, ['id' => $id]);
+    }
+    function searchLastNoteByIdSapa($id) {
+        $fields = ['BM.*', 'U.*'];
+        $join = "BM INNER JOIN users AS U ON BM.usuario = U.user_id";
+        $condicion = "BM.idpago = :id AND BM.tipomessage IN ('sapa') ORDER BY BM.id DESC LIMIT 1";
     
         return $this->model->consult($fields, $join, $condicion, ['id' => $id]);
     }

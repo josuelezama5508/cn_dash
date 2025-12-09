@@ -69,9 +69,9 @@ class ControlRepository
             SELECT 
                 C.idpago, C.actividad, C.datepicker, C.horario, C.procesado,
                 C.cliente_name, C.cliente_lastname, C.nog, C.code_company, 
-                C.balance, C.checkin, C.canal,
+                C.balance, C.checkin, C.noshow, C.canal,
                 B.items_details, B.*,
-                CO.company_name, S.name AS status,
+                CO.company_name, CO.primary_color as colorCompany, S.name AS status,
                 U.name AS username
             FROM control C
             INNER JOIN bookingdetails B ON C.idpago = B.idpago

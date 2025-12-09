@@ -11,29 +11,27 @@
     <?php include_once(__DIR__ . '/../../partials/menu_dash.php') ?>
 
     <main>
-        <div class="content">
+        <div class="content pt-3 mt-5">
             <!--  -->
-            <div class="main-content" style="padding: 0px;">
+            <div class="main-content p-1" >
                 <!--  -->
                 <div style="display: flex; flex-direction: column; justify-content: center; gap: 20px;">
                     <!--  -->
                     <!-- <input type="search" name="search" class="form-control ds-input" placeholder="Search..."> -->
                     <!--  -->
                     <div class="recent-bookings">
-                        
-                        <div class="container" style="display: flex; flex-direction: row; gap: 8px; align-items: end; padding-bottom: 15px; max-width: -webkit-fill-available;">
-                            <div style="flex: 4;">
-                                <p style="font-size: 17px; margin-bottom: 6px;">
-                                    <i class="bi bi-clipboard-data-fill" style="padding-right: 5px;"></i>Reservas Recientes
+                        <div class="container-fluid mt-2 p-0 d-flex gap-2 align-items-end pb-3 w-100">
+                            <div class="flex-grow-1">
+                                <p class="fs-3 mb-1">
+                                    <i style="color: #070513;" class="material-icons fs-3">beach_access</i>Entradas Recientes
                                 </p>
                             </div>
                             <div  style="flex: 6; display: flex; justify-content: center; align-items: center;">
-                                <div id="btn_show_transportacion" class="btn-transport custom-header-second">
+                                <div id="btn_show_transportacion" class="btn-transport background-blue-4 text-white">
                                     <i class="material-icons left">airport_shuttle</i>
-                                    Transportación
+                                    Horarios de transporte
                                 </div>
                             </div>
-
                             <div style="flex: 8;">
                                 <input type="search" name="search" id="search" class="form-control ds-input" placeholder="Search...">
                             </div>
@@ -41,14 +39,14 @@
                         <div class="table-container-scroll">
                             <table id="table-home-reservas" class="table table-bordered table-align-center">
                                 <thead>
-                                    <tr class="custom-header" style="position: sticky; top: 0; z-index: 1; border-right: 1px solid #ddd; ">
+                                    <tr class="background-blue-4 text-white" style="position: sticky; top: 0; z-index: 1; border-right: 1px solid #ddd; ">
                                         <th>Fecha de Actividad</th>
                                         <th>Horario</th>
                                         <th>Empresa</th>
                                         <th>Actividad</th>
                                         <th>Cliente</th>
                                         <th>Procesado</th>
-                                        <th>Booking</th>
+                                        <th>Booking ID</th>
                                         <th>Total</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
@@ -58,62 +56,83 @@
                             </table>
                         </div>
                     </div>
-
                     <!--  -->
-                    <div class="operation-summary">
-                        <p style="font-size: 17px;  margin-bottom: 0px;"><i class="bi bi-activity" style="padding-right: 5px;"></i>Resumen de Operacion</p>
+                    <div class="operation-summary shadow">
+                        <div class="background-gray-custom op-header border-bottom-primary py-3 px-2 rounded-1">
+                            <div class="op-header-row d-flex justify-content-between position-relative">
 
-                        <div style="border-bottom: 1px solid #0277BD;">
-                            <div style="padding: 10px 0; display: flex; flex-direction: row; justify-content: space-between;">
-                                <div style="display: flex; flex-direction: row; gap: 10px; align-items: center; justify-content: left;">
-                                    <div style="margin-right: 10px; display: flex; align-items: center; margin-left: 10px;">
-                                        <p style="margin: 0; display: flex; justify-content: flex-start; align-items: center; width: 100%;">
-                                            <i class="bi bi-list-ul" style="margin-right: 10px; font-size: 20px; font-weight: bold; color: #e91e63; display: flex; align-items: center;"></i>
-                                            <span style="display: flex; align-items: center;">Reservas del día</span>
+                                <div class="op-left d-flex align-items-center gap-3 position-relative">
+
+                                    <div class="op-title d-flex align-items-center">
+                                        <p class="fs-4 mb-1 d-flex align-items-center">
+                                            <i class="bi bi-list-ul fs-3 me-2"></i>
+                                            Reservas del día
                                         </p>
                                     </div>
 
-                                    <div style="display: flex; gap: 6px; align-items: center; justify-content: left; margin-left: 10px;">
-                                        <button type="button" name="today" class="btn btn-outline-primary" style="padding: 3px 6px;">
-                                            <span style="float: left;padding: 0px 20px;">Hoy</span>
+                                    <div class="op-buttons d-flex align-items-center gap-2">
+                                        <button type="button" name="today" class="btn btn-outline-primary px-3 py-1">
+                                            Hoy
                                         </button>
-                                        <button type="button" name="tomorrow" class="btn btn-outline-success" style="padding: 3px 6px;">
-                                            <span style="float: left;padding: 0px 20px;">Mañana</span>
+                                        <button type="button" name="tomorrow" class="btn btn-outline-success px-3 py-1">
+                                            Mañana
                                         </button>
                                     </div>
-                                    
+
                                 </div>
+
                                 <div div style="gap: 10px; align-items: center; justify-content: right;">
                                     <div style="margin-left: 10px;">
-                                        <input type="text" name="daterange" placeholder="DD/MM/YYYY TO DD/MM/YYYY" style="border: 1px solid #28a745; text-align: center; border-radius: 4px; width:280px; padding: 4px 8px;">
+                                        <input type="text" name="daterange" placeholder="DD/MM/YYYY TO DD/MM/YYYY" style="border: 1px solid #28a745; text-align: center; border-radius: 4px; width:280px; padding: 4px 4px;">
+                                        <!-- <input class="flatpickr-input form-control input" name="daterange" placeholder="" tabindex="0" type="text" readonly="readonly"> -->
+
                                     </div>
                                 </div>
-                            </div>
-                            <!-- Contenedor de tarjetas resumen -->
-                            <div id="resumen-operacion-container" style="padding-top: 15px;"></div>
 
-                                <!-- Modal reutilizable para detalles -->
-                                <div class="modal fade" id="modalDetallesReserva" tabindex="-1" aria-labelledby="modalHorario" aria-hidden="true">
-                                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Detalle de reservas para <span id="modalHorario"></span></h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            </div>
+                        </div>
+                        <div class="px-3 py-2">
+                            <div id="resumen-operacion-container" class="pt-0"></div>
+                        </div>
+
+
+                        <!-- Modal de detalles -->
+                        <div 
+                            class="modal fade w-75 pb-0" 
+                            id="modalDetallesReserva" 
+                            tabindex="-1" 
+                            aria-labelledby="modalHorario" 
+                            aria-hidden="true"
+                            >
+                            <div class="modal-dialog modal-fill modal-dialog-scrollable">
+                                <div class="modal-content p-0">
+
+                                    <div class="modal-header flex-column py-0">
+                                        <div class="row w-100 mb-1">
+                                            <div class="col">
+                                                <h5 class="modal-title"><span id="modalActividad"></span></h5>
                                             </div>
-                                            <div class="modal-body" id="modalContent">
-                                                <!-- Render dinámico aquí -->
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button class="btn btn-danger" data-bs-dismiss="modal">CERRAR</button>
+                                        </div>
+                                        <div class="row w-100 mb-1">
+                                            <div class="col">
+                                                <h5 class="modal-title"><span id="modalFecha"></span> - <span id="modalHorario"></span></h5>
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="modal-body p-0">
+                                        <div id="modalContent" class="table-responsive"></div>
+                                    </div>
+
+                                    <div class="modal-footer pb-0">
+                                        <button class="btn btn-danger" data-bs-dismiss="modal">CERRAR</button>
+                                    </div>
+
                                 </div>
-
                             </div>
-
                         </div>
                     </div>
+
                     <!--  -->
                 </div>
                 <!--  -->
@@ -121,7 +140,6 @@
             <!--  -->
         </div>
     </main>
-
     <div id="modalBooking" class="modal" style="width: 600px;">
         <div class="modal-header">
             <h4>Selecciona una empresa</h4>
@@ -150,6 +168,8 @@
     
     <script src="<?= asset('/js/routesapi.js') ?>?v=1"></script>
     <script src="<?= asset('/js/transportationapi.js') ?>?v=1"></script>
+    <script src="<?= asset('/js/showsapaapi.js')?>?v=1"></script>
+    <script src="<?= asset('/js/bookingmessageapi.js')?>?v=1"></script>
     <script src="<?= asset('/js/home/modalSearchT.js') ?>?v=1"></script>
 
     <script src="<?= asset('/js/home/resumen-operacion.js') ?>?v=1"></script>

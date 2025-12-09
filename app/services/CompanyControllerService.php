@@ -59,6 +59,12 @@ class CompanyControllerService
     public function getActiveCompanyAndDispoByCode($code){
         return $this->companies_repo->getActiveCompanyAndDispoByCode($code);
     }
+    public function getCompanyByUserDisponibility($where){
+        return $this->companies_repo->getCompanyByUserDisponibility($where);
+    }
+    public function getCompaniesByCodes($where){
+        return $this->companies_repo->getCompaniesByCodes($where);
+    }
     public function getClave()
     {
         $cadena = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -169,7 +175,7 @@ class CompanyControllerService
         }
     
         $domain = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/' . ROOT_DIR;
-        return $domain . '/images/' . $companyCode . '.' . $extension;
+        return '/images/' . $companyCode . '.' . $extension;
     }
     public function patchCompanyService(int $id, array $params): array
     {
@@ -236,7 +242,65 @@ class CompanyControllerService
 
         return ['data' => ['message' => 'No se realizó ninguna actualización.'], 'httpCode' => 400];
     }
+    public function getAllCompaniesActiveService($id_user, $user_service) 
+    {
+        $dataUser = $user_service->getUserEnterprises($id_user);
+        $dataUser = $dataUser[0]; // stdClass
+    
+        $raw = $dataUser->enterprises;
+    
+        // Caso 1: acceso total
+        if ($raw === 'all') {
+            return $this->companies_repo->getAllCompaniesActive();
+        }
+    
+        // Caso 2: viene null o vacío
+        if ($raw === null || $raw === '') {
+            throw new Exception("El usuario no tiene empresas asignadas.");
+        }
+    
+        // Caso 3: ya viene como array
+        if (is_array($raw)) {
+            $enterprises = $raw;
+        } else {
+            // Caso 4: intentar decodificar el JSON
+            $enterprises = json_decode($raw, true);
+    
+            // Si no es JSON válido, intentar formato tipo "MBOQG,OBONC"
+            if (!is_array($enterprises)) {
+                if (strpos($raw, ',') !== false) {
+                    $enterprises = array_map('trim', explode(',', $raw));
+                } else {
+                    // Nada que hacer, inválido
+                    throw new Exception("Valor inválido en enterprises: se esperaba JSON, array, 'all' o CSV.");
+                }
+            }
+        }
+    
+        // Ya estamos seguros de tener un array real
+        $cleanList = array_map(fn($e) => "'" . trim($e) . "'", $enterprises);
+        $whereEnterprises = implode(",", $cleanList);
+    
+        return $this->companies_repo->getCompanyByUserDisponibility($whereEnterprises);
+    }
+    public function getCompaniesCodesService(array $search)
+    {
+        if (empty($search)) {
+            return ''; // No hay condiciones
+        }
 
+        // Escapar cada valor para SQL (si no usas prepared statements)
+        $escaped = array_map(function($code) {
+            return "'" . addslashes($code) . "'";
+        }, $search);
+
+        // Unir con OR
+        $where = "company_code = " . implode(" OR company_code = ", $escaped);
+
+        return $this->getCompaniesByCodes($where);
+    }
+
+    
 }
 
 

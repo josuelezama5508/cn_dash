@@ -67,7 +67,7 @@ const cargarResumenOperacion = async (fecha = null) => {
             renderResumenOperacion(data.data);
         } else {
             document.getElementById('resumen-operacion-container').innerHTML = `
-                <div class="alert alert-info">No hay reservas programadas para este periodo.</div>
+                <div class="alert alert-info rounded-0 px-2">No hay reservas programadas para este periodo.</div>
             `;
         }
     } catch (error) {
@@ -104,7 +104,7 @@ function cargarResumenOperacionDesdePicker(startDate, endDate) {
                 renderResumenOperacion(data.data);
             } else {
                 document.getElementById('resumen-operacion-container').innerHTML = `
-                    <div class="alert alert-info">No hay reservas programadas en el rango seleccionado.</div>
+                    <div class="alert alert-info rounded-0 px-2 border-start border-2 border-custom-blue-2 border-top-0 border-bottom-0 border-end-0 ">No hay reservas programadas en el rango seleccionado.</div>
                 `;
             }
         })
@@ -121,55 +121,47 @@ function cargarResumenOperacionDesdePicker(startDate, endDate) {
  * Configura el datepicker para cargar resumen al aplicar
  */
 function configurarDatepickerResumen() {
-    const $input = $("[name='daterange']");
-
-    if (!$input.length || typeof $.fn.daterangepicker !== "function") {
-        console.error("DateRangePicker no está cargado o el input no existe.");
+    const $input = document.querySelector("[name='daterange']");
+    if (!$input) {
+        console.error("Input [name='daterange'] no encontrado.");
         return;
     }
 
-    $input.daterangepicker({
-        autoUpdateInput: false,
-        locale: {
-            format: 'DD/MM/YYYY',
-            cancelLabel: 'Cancelar',
-            applyLabel: 'Aplicar',
-            fromLabel: "Desde",
-            toLabel: "Hasta",
-            customRangeLabel: "Personalizado",
-            daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
-            monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
-            firstDay: 1
-        },
-        linkedCalendars: false,
-        showCustomRangeLabel: false,
-        alwaysShowCalendars: true
+    flatpickr($input, {
+        mode: "range",
+        dateFormat: "d/m/Y",
+        locale: "es",
+        onChange: function (selectedDates) {
+            if (selectedDates.length === 2) {
+                const start = selectedDates[0];
+                const end = selectedDates[1];
 
-    });
-    // CSS para ocultar el segundo calendario
-    $(".drp-calendar.right").hide();
-    $input.on('apply.daterangepicker', function (ev, picker) {
-        const formatted = `${picker.startDate.format('DD/MM/YYYY')} TO ${picker.endDate.format('DD/MM/YYYY')}`;
-        $(this).val(formatted);
+                // Formateamos el input
+                const format = (d) => 
+                    d.toLocaleDateString("es-MX", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric"
+                    });
 
-        const start = picker.startDate.format('YYYY-MM-DD');
-        const end = picker.endDate.format('YYYY-MM-DD');
+                $input.value = `${format(start)} TO ${format(end)}`;
 
-        cargarResumenOperacionDesdePicker(start, end);
-    });
+                const startISO = start.toISOString().slice(0, 10);
+                const endISO = end.toISOString().slice(0, 10);
 
-    $input.on('cancel.daterangepicker', function () {
-        $(this).val('');
+                cargarResumenOperacionDesdePicker(startISO, endISO);
+            }
+        }
     });
 }
+
 function formatearMoneda(monto) {
     if (!monto) return "-";
     return `$${parseFloat(monto).toFixed(2)}`;
 }
 
 function formatearEstado(estado, color = "#000") {
-    return `<span class="badge " style="font-size: 14px !important;color: ${color};background:white !important;">${estado}</span>`;
+    return `<span class="text-start badge " style="font-size: 14px !important;color: ${color};background:white !important;">${estado}</span>`;
 }
 
 function renderizarReservas(reservas) {
@@ -194,30 +186,33 @@ function renderizarReservas(reservas) {
         } catch (err) {
             console.warn("Error al parsear items_details:", err);
         }
-
+        let datepickerFormat=formatDate(r.datepicker);
         return `
-            <tr>
-                <td>${r.datepicker || '-'}</td>
-                <td>${r.horario || '-'}</td>
-                <td><span class="badge text-white" style="background: ${r.primary_color};" >${r.company_name || '-'}</span></td>
-                <td>${r.actividad || '-'}</td>
-                <td>${(r.cliente_name || '')} ${(r.cliente_lastname || '')}</td>
-                <td><span class="badge bg-secondary text-white" style="background: ${r.procesado == "1" ? "#228B22" : "#DC143C"} !important;">${r.procesado == "1" ? "SI" : "NO"}</span></td>
-                <td><span class="badge custom-nog-color">${r.nog || '-'}</span></td>
-                <td>${formatearMoneda(r.total) + " " + r.moneda}</td>
-               <td class="text-center">
-                    <div class="d-flex flex-column align-items-center">
+            <tr >
+                <td class="fw-semibold">${(datepickerFormat != null)? datepickerFormat.f5 : '-'}</td>
+                <td class="fw-semibold">${r.horario || '-'}</td>
+                <td><span class="badge text-white text-center justify-content-center fs-12-px fw-semibold rounded-4 w-fill" style="background: ${r.primary_color};" >${r.company_name || '-'}</span></td>
+                <td class="fw-semibold">${r.actividad || '-'}</td>
+                <td class="fw-semibold">${(r.cliente_name || '')} ${(r.cliente_lastname || '')}</td>
+                <td><span class="badge bg-secondary ${r.procesado == "1" ? "text-green-custom me-4" : "text-gray-light-custom"} fs-14-px fw-semibold" style="background: transparent !important;">${r.procesado == "1" ? "SI" :` NO <i style="color: orange;" class="material-icons fs-24-px">warning</i>`}</span></td>
+                <td><span class="badge bg-transparent fw-semibold fs-14-px text-blue-custom-3">${r.nog || '-'}</span></td>
+                <td class="fw-semibold">${formatearMoneda(r.total) + " " + r.moneda}</td>
+               <td>
+                    <div class="d-flex flex-column align-items-left fw-semibold">
                         ${formatearEstado(r.status, r.statuscolor)}
-                        ${r.checkin == 1 ? '<span class="badge bg-checkin mt-1">Check-in</span>' : ''}
-                        ${r.noshow == 1 ? '<span class="badge bg-noshow mt-1">No Show</span>' : ''}
+                        ${r.checkin == 1 ? '<span class="text-start badge rounded-1 bg-checkin mt-1" style="padding: 5px;">Check-in</span>' : ''}
+                        ${r.noshow == 1 ? '<span class=" text-start badge rounded-1 bg-noshow mt-1" style="padding: 5px;">No Show</span>' : ''}
                     </div>
                 </td>
 
                 <td>
-                    <button class="btn btn-sm btn-primary ver-detalle" data-nog="${r.nog}">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <button class="btn btn-sm background-rosa-custom btn-primary ver-detalle rounded-1 px-1 py-1 d-flex justify-content-center align-items-center" data-nog="${r.nog}">
+                            <i class="material-icons m-0 p-0" style="color: white;">more</i>
+                        </button>
+                    </div>
                 </td>
+
             </tr>
         `;
     });
@@ -294,14 +289,14 @@ function initBookingForm(input) {
 }
 
 function createSelectCompany() {
-    fetchAPI_AJAX("company", "GET")
+    fetchAPI_AJAX(`company?byUser=${window.userInfo.user_id}`, "GET")
       .done((response, textStatus, jqXHR) => {
         const status = jqXHR.status;
         if (status == 200) {
             let options = '<option value="0">Selecciona una empresa</option>';
             (response.data).forEach(element => {
-                let data = ` data-src="${element.image}" data-alt="${element.companyname}"`;
-                options += `<option value="${element.companycode}"${data}>${element.companyname}</option>`;
+                let data = ` data-src="${element.company_logo}" data-alt="${element.company_name}"`;
+                options += `<option value="${element.company_code}"${data}>${element.company_name}</option>`;
             });
             $("#modalBooking #company").html(options);
         }
@@ -316,18 +311,18 @@ function selectedCompany(input) {
     if (value == undefined)
         value = 0;
 
-    let src = `${window.url_web}/public/img/no-fotos.png`;
+    let src = `/public/img/no-fotos.png`;
     let alt = "Sin logo";
     if (value != 0) {
         src = selected.data("src");
         alt = "Logo de " + selected.html();
     }
-    $("#modalBooking #logocompany").attr({"src": src, "alt": alt});
+    $("#modalBooking #logocompany").attr({"src": (window.url_web + src), "alt": alt});
     createSelectProduct(value);
 }
 
 function createSelectProduct(companycode) {
-    $("#modalBooking #product").html('<option value="0">Selecciona un producto</option>');
+    $("#modalBooking #product").html('<option value="0">Selecciona una actividad</option>');
     if (companycode == 0) return;
 
     fetchAPI_AJAX(`products?companycode=${companycode}`, "GET")
