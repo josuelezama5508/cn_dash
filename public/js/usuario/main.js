@@ -53,9 +53,13 @@ $(document).ready(function () {
                     </div>
     
                     <div class="user-actions">
-                        <button class="user-btn-edit bg-transparent p-0 m-0 text-center">
-                            <i class="material-icons text-center p-2">edit</i>
-                        </button>
+                        ${window.userInfo.level === "master" ? 
+                            `<button class="user-btn-edit bg-transparent p-0 m-0 text-center">
+                                <i class="material-icons text-center p-2">edit</i>
+                            </button>
+                            `
+                        : ''}
+                        
 
                         <button class="user-btn-delete bg-transparent p-0 m-0 text-center"
                             data-id="${u.id}" data-active="${u.active}">

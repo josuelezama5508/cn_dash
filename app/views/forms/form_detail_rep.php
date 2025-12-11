@@ -193,32 +193,6 @@
 
     });
 
-    // function fetchAPI(endpoint, method = "GET", formData = null) {
-    //     let token = localStorage.getItem("__token");
-
-    //     let bodyData = DataForAPI(method, formData);
-
-    //     let options = {
-    //         method,
-    //         headers: {
-    //             'Accept': 'application/json',
-    //             'Authorization': `Bearer ${token}`,
-    //         },
-    //         cache: "default",
-    //     };
-
-    //     if (method !== "GET") {
-    //         if (bodyData instanceof FormData) {
-    //             options.body = bodyData;
-    //             // No agregues 'Content-Type' — fetch lo hace automáticamente
-    //         } else {
-    //             options.body = JSON.stringify(bodyData);
-    //             options.headers['Content-Type'] = 'application/json';
-    //         }
-    //     }
-
-    //     return fetch(`${window.url_web}/api/${endpoint}`, options);
-    // }
     var registered_reps = async () => {
         let condition = $("[name='channelid']").val();
         fetchAPI(`rep?channelid=${condition}`, 'GET')

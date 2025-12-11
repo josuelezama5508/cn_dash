@@ -1,6 +1,7 @@
 <?php 
 require_once __DIR__ . "/../../app/core/Controller.php";
 require_once __DIR__ . "/../models/UserModel.php";
+require_once(__DIR__ . "/../core/ServiceContainer.php");
 class DetallesReservaController extends Controller
 {
     public function index()
@@ -15,10 +16,16 @@ class DetallesReservaController extends Controller
         if ($userInfo['status'] !== 'SUCCESS') {
             die($userInfo['message']); // o redirigir a login
         }
+        $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
+        $ip = $ippermission_service->getClientIP();
+        if($userInfo['data']['ip_user'] != $ip){
+            Auth::logout();
+        }
         return $this->view("dashboard/view_details", [
         'nog' => $nog,
         'user_id' => $userInfo['data']['user_id'],
-        'level'   => $userInfo['data']['level']]);
+        'level'   => $userInfo['data']['level'],
+        'ip_user'   => $userInfo['data']['ip_user'],]);
     }
     public function formSapa()
     {
@@ -53,10 +60,16 @@ class DetallesReservaController extends Controller
         if ($userInfo['status'] !== 'SUCCESS') {
             die($userInfo['message']); // o redirigir a login
         }
+        $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
+        $ip = $ippermission_service->getClientIP();
+        if($userInfo['data']['ip_user'] != $ip){
+            Auth::logout();
+        }
         return $this->view("dashboard/view_details", [
             'nog' => $nog,
             'user_id' => $userInfo['data']['user_id'],
-            'level'   => $userInfo['data']['level']]);
+            'level'   => $userInfo['data']['level'],
+            'ip_user'   => $userInfo['data']['ip_user'],]);
     }
     
     public function formUpdateSapa($idSapa = null)

@@ -7,6 +7,12 @@ $(document).ready(function() {
             sendEvent();
         }
     });
+    $("#togglePassword").on("click", function() {
+        const passwordInput = $("[name='password']");
+        const type = passwordInput.attr("type") === "password" ? "text" : "password";
+        passwordInput.attr("type", type);
+        $(this).find("i").toggleClass("bi-eye bi-eye-slash");
+    });
 });
 
 function sendEvent() {

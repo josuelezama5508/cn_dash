@@ -47,22 +47,36 @@ $(document).on("click", "#overlay", function () {
     $("#overlay").css({ opacity: "0", visibility: "hidden" });
 });
 
-// Marcar la vista actual en el menu
 $(document).ready(function () {
-    // var currentPath = window.location.pathname;
     var currentPath = $("[name='pagename']").val();
-
+    var userLevel = window.userInfo.level; // <-- debes tener el level disponible en el HTML
+    console.log("NIVEL MENU");
+    console.log(userLevel);
     function markMenu(selector) {
-        $(selector + " a").each(function () {
+        var $menu = $(selector + " a");
+        var marked = false;
+
+        $menu.each(function () {
             var linkPath = $(this).attr("href");
 
-            if (linkPath && linkPath && currentPath) {
+            if (linkPath && currentPath) {
                 if (linkPath.includes(currentPath)) {
                     $(this).addClass("active");
                     $(this).closest("ul").prev().addClass("active");
+                    marked = true;
                 }
             }
         });
+
+        // 🔹 Si no marcó nada y es reservaciones, marcar Prospectos
+        if (!marked && userLevel === "reservaciones") {
+            $menu.each(function () {
+                if ($(this).text().trim() === "prospectos") {
+                    $(this).addClass("active");
+                    $(this).closest("ul").prev().addClass("active");
+                }
+            });
+        }
     }
 
     markMenu("#horizontal-menu");

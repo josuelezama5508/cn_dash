@@ -17,12 +17,31 @@ async function fetch_typeServices() {
 }
 
 // 🔹 Pinta los servicios en el select
-function render_typeServices(services) {
-    const $servicesSelect = $("#tourtype").empty().append('<option value="">Selecciona un servicio</option>');
+function render_typeServices(services, lang = 'en') {
+    const $servicesSelect = $("#tourtype");
+
+    // Guarda el índice seleccionado actualmente
+    const selectedIndex = $servicesSelect.prop("selectedIndex");
+
+    // Limpia y agrega la opción por defecto
+    $servicesSelect
+        .empty()
+        .append('<option value="">Selecciona un servicio</option>');
 
     if (Array.isArray(services) && services.length) {
         services.forEach(service => {
-            $servicesSelect.append(`<option value="${service.nombre}">${service.nombre}</option>`);
+            const key = `nombre_${lang}`;
+            const value = service[key] || "";
+
+            $servicesSelect.append(
+                `<option value="${value}">${value}</option>`
+            );
         });
+    }
+
+    // Restaura el índice (si existe dentro del rango)
+    const totalOptions = $servicesSelect.find("option").length;
+    if (selectedIndex >= 0 && selectedIndex < totalOptions) {
+        $servicesSelect.prop("selectedIndex", selectedIndex);
     }
 }

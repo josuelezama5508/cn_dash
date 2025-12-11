@@ -4,7 +4,6 @@ require_once __DIR__ . '/../repositories/ControlRepository.php';
 class BookingControllerService
 {
     private $control_repo;
-    
     public function __construct()
     {
         $this->control_repo = new ControlRepository();
@@ -36,17 +35,21 @@ class BookingControllerService
         $date = $date ?? date('Y-m-d');
         return $this->control_repo->getByDate($date);
     }
-    public function getByDateLatest()
+    public function getByDateLatest($whereEnterprises = "")
     {
-        return $this->control_repo->getByDateLatest();
+        return $this->control_repo->getByDateLatest($whereEnterprises);
     }
-    public function getByDateLatestProcess()
+    public function getByDateLatestProcess($whereEnterprises)
     {
-        return $this->control_repo->getByDateLatestProcess();
+        return $this->control_repo->getByDateLatestProcess($whereEnterprises);
     }
     public function getRawPickupData($startDate, $endDate)
     {
         return $this->control_repo->getRawPickupData($startDate, $endDate);
+    }
+    public function getRawPickupDataUser($startDate, $endDate, $whereEnterprises)
+    {
+        return $this->control_repo->getRawPickupDataUser($startDate, $endDate, $whereEnterprises);
     }
     public function getByDatePickup($startDate = null, $endDate = null)
     {
@@ -63,7 +66,6 @@ class BookingControllerService
         for ($i = 0; $i < 10; $i++) {
             $key .= $pattern[random_int(0, strlen($pattern) - 1)];
         }
-
         $exists = $this->getByNogV2($key);
         return count($exists) > 0 ? $this->getReference() : $key;
     }
@@ -82,13 +84,13 @@ class BookingControllerService
         }
         return $this->control_repo->getCombosByNog($nog);
     }
-    public function searchreservations($search)
+    public function searchreservations($search, $whereEnterprises = "")
     {
-        return $this->control_repo->searchreservations($search);
+        return $this->control_repo->searchreservations($search, $whereEnterprises);
     }
-    public function searchreservationsprocess($search)
+    public function searchreservationsprocess($search, $whereEnterprises)
     {
-        return $this->control_repo->searchreservationsprocess($search);
+        return $this->control_repo->searchreservationsprocess($search, $whereEnterprises);
     }
     public function getByDateDispo($date = null)
     {
@@ -100,15 +102,12 @@ class BookingControllerService
     public function getByDispoBuildService($date){
         $reservas = $this->getByDateDispo($date);
         $conteoPorHora = [];
-    
         foreach ($reservas as $reserva) {
             $hora = $reserva->horario;
             $items = json_decode($reserva->items_details, true);
-    
             if (!isset($conteoPorHora[$hora])) {
                 $conteoPorHora[$hora] = 0;
             }
-    
             foreach ($items as $item) {
                 // Contar solo items con tipo 'tour'
                 if (isset($item['tipo']) && $item['tipo'] === 'tour') {
@@ -116,7 +115,6 @@ class BookingControllerService
                 }
             }
         }
-    
         $resultado = [];
         foreach ($conteoPorHora as $hora => $ocupado) {
             $horaFormateada = date('g:i A', strtotime($hora));
@@ -125,11 +123,9 @@ class BookingControllerService
                 'ocupado' => $ocupado
             ];
         }
-    
         usort($resultado, function($a, $b) {
             return strtotime($a['hora']) <=> strtotime($b['hora']);
         });
-    
         return $resultado;
     }
     public function getByDispoBuildService2($search, $product_service, $companies_service, $disponibilidad_service){
@@ -232,12 +228,48 @@ class BookingControllerService
             'dispoenterprise' => $disponibilidadPorEmpresa
         ];
     }
-    public function getByDatePickupService($canal_service, $rep_service, $startDate = null, $endDate = null)
+    public function getByDatePickupService($canal_service, $rep_service, $userData, $startDate = null, $endDate = null)
     {
         if ($startDate === null) $startDate = date('Y-m-d');
         if ($endDate === null)   $endDate   = $startDate;
-
-        $rows = $this->getRawPickupData($startDate, $endDate);
+        $raw = $userData->productos_empresas;
+         // Caso 1: acceso total → no filtramos
+        if ($raw === 'all') {
+            $enterprises = null; // null indica que no se aplica filtro
+            // error_log("Acceso total: no se filtra por empresas");
+        }
+        // Caso 2: vacío o null → error
+        elseif ($raw === null || $raw === '') {
+            throw new Exception("El usuario no tiene empresas asignadas.");
+        }
+        // Caso 3: JSON o CSV
+        else {
+            // Intentamos decodificar JSON
+            $enterprises = json_decode($raw, true);
+    
+            // Si no es JSON válido, lo tratamos como CSV
+            if (!is_array($enterprises)) {
+                if (strpos($raw, ',') !== false) {
+                    $enterprises = array_map('trim', explode(',', $raw));
+                } else {
+                    // un solo valor
+                    $enterprises = [trim($raw)];
+                }
+            }
+            // error_log("Enterprises array: " . print_r($enterprises, true));
+        }
+        $whereEnterprises = null;
+        if (is_array($enterprises) && count($enterprises) > 0) {
+            $cleanList = array_map(fn($e) => "'" . trim($e) . "'", $enterprises);
+            $whereEnterprises = implode(",", $cleanList);
+           
+        } else {
+            // error_log("No se aplica filtro por empresas");
+        }
+      
+        $rows = $this->getRawPickupDataUser($startDate, $endDate, $whereEnterprises);
+        // error_log("getRawPickupDataUser");
+        // error_log($rows);
 
         $canalesMap = [];
         foreach ($canal_service->getAll() as $c) $canalesMap[(int)$c->id_channel] = $c->nombre;
@@ -343,19 +375,101 @@ class BookingControllerService
     
         return $reservas;
     }
-    public function searchReservationService($search){
-        if ($search === '') {
-            return $this->getByDateLatest();
+    public function searchReservationService($search, $userData)
+    {
+        // error_log("USUARIO GET");
+        // error_log($userData->productos_empresas);
+    
+        $raw = $userData->productos_empresas;
+    
+        // Caso 1: acceso total → no filtramos
+        if ($raw === 'all') {
+            $enterprises = null; // null indica que no se aplica filtro
+            // error_log("Acceso total: no se filtra por empresas");
+        }
+        // Caso 2: vacío o null → error
+        elseif ($raw === null || $raw === '') {
+            throw new Exception("El usuario no tiene empresas asignadas.");
+        }
+        // Caso 3: JSON o CSV
+        else {
+            // Intentamos decodificar JSON
+            $enterprises = json_decode($raw, true);
+    
+            // Si no es JSON válido, lo tratamos como CSV
+            if (!is_array($enterprises)) {
+                if (strpos($raw, ',') !== false) {
+                    $enterprises = array_map('trim', explode(',', $raw));
+                } else {
+                    // un solo valor
+                    $enterprises = [trim($raw)];
+                }
+            }
+            // error_log("Enterprises array: " . print_r($enterprises, true));
         }
     
-        return $this->searchreservations($search);
+        // Generamos el string para usar en IN() si aplica
+        $whereEnterprises = null;
+        if (is_array($enterprises) && count($enterprises) > 0) {
+            $cleanList = array_map(fn($e) => "'" . trim($e) . "'", $enterprises);
+            $whereEnterprises = implode(",", $cleanList);
+           
+        } else {
+            // error_log("No se aplica filtro por empresas");
+        }
+        // error_log("WHERE IN string: " . $whereEnterprises);
+        // Llamada a searchreservations con filtro si aplica
+        if ($search === '') {
+            return $this->getByDateLatest($whereEnterprises);
+        }
+    
+        return $this->searchreservations($search, $whereEnterprises);
     }
-    public function searchReservationProcessService($search){
-        if ($search === '') {
-            return $this->getByDateLatestProcess();
+    
+    public function searchReservationProcessService($search,$userData)
+    {    
+        $raw = $userData->productos_empresas;
+    
+        // Caso 1: acceso total → no filtramos
+        if ($raw === 'all') {
+            $enterprises = null; // null indica que no se aplica filtro
+            // error_log("Acceso total: no se filtra por empresas");
+        }elseif ($raw === null || $raw === '') {
+            throw new Exception("El usuario no tiene empresas asignadas.");
+        }else {
+            // Intentamos decodificar JSON
+            $enterprises = json_decode($raw, true);
+    
+            // Si no es JSON válido, lo tratamos como CSV
+            if (!is_array($enterprises)) {
+                if (strpos($raw, ',') !== false) {
+                    $enterprises = array_map('trim', explode(',', $raw));
+                } else {
+                    // un solo valor
+                    $enterprises = [trim($raw)];
+                }
+            }
+            // error_log("Enterprises array: " . print_r($enterprises, true));
         }
     
-        return $this->searchreservationsprocess($search);
+        // Generamos el string para usar en IN() si aplica
+        $whereEnterprises = null;
+        if (is_array($enterprises) && count($enterprises) > 0) {
+            $cleanList = array_map(fn($e) => "'" . trim($e) . "'", $enterprises);
+            $whereEnterprises = implode(",", $cleanList);
+           
+        } else {
+            // error_log("No se aplica filtro por empresas");
+        }
+        // Llamada a searchreservations con filtro si aplica
+        $searchOriginal = $search;
+        $search = trim($search);
+
+        if ($search === '') {
+            return $this->getByDateLatestProcess($whereEnterprises);
+        }
+        return $this->searchreservationsprocess($search, $whereEnterprises);
+
     }
     private function obtenerDominioLimpioService($url) {
         // Asegúrate de que tenga esquema para que parse_url funcione bien
@@ -372,7 +486,7 @@ class BookingControllerService
     }
     private function buildLocationService($search, $locationports_service){
         $data= $locationports_service->find($search);
-        error_log("DATA buildLocationService " . json_encode($data));
+        // error_log("DATA buildLocationService " . json_encode($data));
         return ['name' =>  $data ? $data->name : "Marina Punta Norte",
             'addr' => $data ? $data->addr : "Carretera Puerto Juarez - Punta Sam Km 2,+ 050 sm 86",
             'map'  => $data ? $data->map : "https://www.totalsnorkelcancun.com/dash/sources/img/mapa.png",
@@ -426,7 +540,7 @@ class BookingControllerService
             ],
         ];
     }
-    public function crearReservaPrincipalService(array $data) 
+    public function crearReservaPrincipalService(array $data, $ippermission_service) 
     {
         $nog = $this->getReference();
         $dataControl = [
@@ -442,6 +556,8 @@ class BookingControllerService
             'hotel' => $data['hotel'] ?? null,
             'habitacion' => $data['habitacion'] ?? null,
             'referencia' => ($data['metodo'] === "paymentrequest") ? $nog : ($data['referencia'] ?? null),
+            'ip_client'  => $ippermission_service->getClientIP(),
+            'ua_client'  => $ippermission_service->getUserAgent(),
             'total' => $data['total'] ?? null,
             'status' => $data['status'] ?? null,
             'procesado' => $data['procesado'] ?? 0,
@@ -652,7 +768,7 @@ class BookingControllerService
 
                     $controlHijo = $this->crearControlHijo($controlInsert, $productoHijo, $controlPrincipalNog);
                     if (!$controlHijo || empty($controlHijo->id)) {
-                        error_log("[crearReservasHijasService] Control hijo no creado o sin ID para clave $clave.");
+                        // error_log("[crearReservasHijasService] Control hijo no creado o sin ID para clave $clave.");
                         continue;
                     }
 
@@ -861,7 +977,7 @@ class BookingControllerService
             ];
 
             $notificationResult = $notificationservice_service->procesarEnvioNotificacion(['payload' => $payload]);
-            error_log("🔔 Notificación enviada: " . json_encode($notificationResult));
+            // error_log("🔔 Notificación enviada: " . json_encode($notificationResult));
         } catch (Exception $e) {
             error_log("❌ Error enviando notificación: " . $e->getMessage());
         }

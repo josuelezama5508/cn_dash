@@ -219,11 +219,11 @@ class TransportationControllerService
             return ['error' => 'El campo hotel es obligatorio.', 'status' => 400];
         }
 
-        error_log('Antes del update(id): ' . $transportId);
-        error_log('Antes del update(updateData): ' . var_export($updateData, true));
+        // error_log('Antes del update(id): ' . $transportId);
+        // error_log('Antes del update(updateData): ' . var_export($updateData, true));
         // Actualizar transportación
         $response = $this->update($transportId, $updateData);
-        error_log('Resultado de update(): ' . var_export($response, true));
+        // error_log('Resultado de update(): ' . var_export($response, true));
 
         if(!$response){
             return ['error' => 'No se pudo actualizar la transportacion.',  'id' => $transportId, 'data' => $updateData, 'status' => 400];

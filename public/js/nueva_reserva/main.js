@@ -9,6 +9,7 @@ let productid = 0;
 let currentLangId = 1;
 let isProductPreloaded = false;
 let voucherSource = "";
+let services = "";
 $(document).ready(async function () {
     if (wasPageReloaded()) {
         resetFormOnReload();
@@ -166,6 +167,7 @@ function syncLanguageSelect(langId) {
     $("#language").val(lang).trigger("change");
 }
 async function initBookingForm(initialCompany, initialProduct) {
+    await getServices();
     const companies = await fetch_companies_by_user(window.userInfo.user_id);
     render_companies(companies, "#companySelect");
     setSelectLanguage(languagecode);
@@ -404,6 +406,7 @@ async function handleLanguageChange() {
             
         });
     }
+    render_typeServices(services, languagecode);
 }
 async function loadHorarios(companycode, productid,dateStr) {
     try {
@@ -656,14 +659,14 @@ async function conditionalData(companycode, productcode, languagecode) {
     // 🔹 Cargar empresa, productos e items
     
 }
-
+async function getServices() {
+    services = await fetch_typeServices();
+}
 async function loadCommonData() {
     try {
         const hotels = await fetch_hoteles();
         render_hotels(hotels);
-
-        const services = await fetch_typeServices();
-        render_typeServices(services);
+        render_typeServices(services, languagecode);
 
         const channels = await fetch_channels();
         render_channels(channels);

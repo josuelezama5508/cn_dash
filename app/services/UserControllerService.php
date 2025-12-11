@@ -62,26 +62,26 @@ class UserControllerService
         if (!isset($token['Authorization'])) {
             return ['status' => 'ERROR', 'message' => 'NO TIENES PERMISOS PARA ACCEDER AL RECURSO'];
         }
-    
+
         // Extraer el token (esperando formato "Bearer <token>")
         $authHeader = $token['Authorization'];
         if (strpos($authHeader, 'Bearer ') !== 0) {
             return ['status' => 'ERROR', 'message' => 'NO TIENES PERMISOS PARA ACCEDER AL RECURSO'];
         }
-    
+
         $auth = substr($authHeader, 7); // quitar "Bearer "
         $validation = $this->tokenValidator->validateToken($auth);
-    
+
         if ($validation['status'] !== 'SUCCESS') {
             return ['status' => 'ERROR', 'message' => 'NO TIENES PERMISOS PARA ACCEDER AL RECURSO'];
         }
-    
+
         // Buscar usuario
-        $user = $this-searchUserWhitPass($validation['password'], $validation['username']);   
+        $user = $this-searchUserWhitPass($validation['password'], $validation['username']);
         if (empty($user)) {
             return ['status' => 'ERROR', 'message' => 'NO TIENES PERMISOS PARA ACCEDER AL RECURSO'];
         }
-    
+
         return ['status' => 'SUCCESS', 'data' => $user[0]];
     }
     public function postLogin($data)
@@ -102,7 +102,7 @@ class UserControllerService
             "status" => 200
         ];
     }
-    
+
     private function asignationDataPost($data)
     {
         $name        = isset($data['name'])        ? trim($data['name'])        : '';
@@ -129,11 +129,11 @@ class UserControllerService
         } else {
             $password = null;
         }
-    
+
         return [$name, $lastname, $username, $email, $password, $level, $ip_user, $enterprises, $module];
     }
-    
-    
+
+
     public function postCreate($data, $userData, $history_service)
     {
         [$name, $lastname, $username, $email, $password, $level, $ip_user, $enterprises, $module] = $this->asignationDataPost($data);
@@ -158,8 +158,8 @@ class UserControllerService
     }
     private function asignationDataPut($data, $dataUser)
     {
-        error_log("=== asignationDataPut() START ===");
-    
+        // error_log("=== asignationDataPut() START ===");
+
         $id         = trim($data['id']);
         $name       = trim($data['name'] ?? $dataUser->name);
         $lastname   = trim($data['lastname'] ?? $dataUser->lastname);
@@ -183,20 +183,20 @@ class UserControllerService
         }
 
         $module     = trim($data['module'] ?? 'users');
-        error_log("[INPUT DATA] " . print_r($data, true));
-        error_log("[USER DATA BEFORE UPDATE] " . print_r($dataUser, true));
-    
+        // error_log("[INPUT DATA] " . print_r($data, true));
+        // error_log("[USER DATA BEFORE UPDATE] " . print_r($dataUser, true));
+
         // PASSWORD (con log)
         if (isset($data['password']) && trim($data['password']) !== "") {
             $rawPassword = trim($data['password']);
             $password = md5($rawPassword);
-    
-            error_log("[PASSWORD] Nueva contraseña recibida. RAW: {$rawPassword} | MD5: {$password}");
+
+            // error_log("[PASSWORD] Nueva contraseña recibida. RAW: {$rawPassword} | MD5: {$password}");
         } else {
             $password = $dataUser->password;
-            error_log("[PASSWORD] No se envió nueva contraseña. Se mantiene la existente.");
+            // error_log("[PASSWORD] No se envió nueva contraseña. Se mantiene la existente.");
         }
-    
+
         // LOG de datos finales
         $assembled = [
             "id" => $id,
@@ -210,17 +210,17 @@ class UserControllerService
             "enterprises" => $enterprises,
             "module" => $module
         ];
-    
-        error_log("[FINAL ASSEMBLED DATA] " . print_r($assembled, true));
-        error_log("=== asignationDataPut() END ===");
-    
+
+        // error_log("[FINAL ASSEMBLED DATA] " . print_r($assembled, true));
+        // error_log("=== asignationDataPut() END ===");
+
         return [
-            $id, $name, $lastname, $username, 
-            $email, $password, $level, $ip_user, 
+            $id, $name, $lastname, $username,
+            $email, $password, $level, $ip_user,
             $enterprises, $module
         ];
     }
-    
+
 
     public function putUpdate($data, $userData, $history_service)
     {

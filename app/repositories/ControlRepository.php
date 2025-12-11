@@ -45,7 +45,7 @@ class ControlRepository
         return $this->model->consult($fields, $join, $cond, ['fecha' => $date]);
     }
 
-    public function getByDateLatest()
+    public function getByDateLatest($whereEnterprises)
     {
         $fields = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, 
@@ -53,9 +53,10 @@ class ControlRepository
             'B.*', 'CO.company_name, CO.primary_color',
             'S.name AS status, S.color AS statuscolor'
         ];
+        $companyCondition = $whereEnterprises ? "AND CO.company_code IN ($whereEnterprises)" : "";
 
         $join = "C
-            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
             INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
             INNER JOIN estatus AS S ON C.status = S.id_status";
 
@@ -63,7 +64,7 @@ class ControlRepository
 
         return $this->model->consult($fields, $join, $cond);
     }
-    public function getByDateLatestProcess()
+    public function getByDateLatestProcess($whereEnterprises)
     {
         $fields = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, 
@@ -71,15 +72,53 @@ class ControlRepository
             'B.*', 'CO.company_name, CO.primary_color',
             'S.name AS status, S.color AS statuscolor'
         ];
-
+    
+        // Aquí metes el IN dentro del ON
+        $companyFilter = $whereEnterprises ? 
+            "AND CO.company_code IN ($whereEnterprises)" : "";
+        // error_log("CONTENIDO DE WHERE ENTERPRISES: " . $whereEnterprises);
         $join = "C
-            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN companies AS CO 
+                ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyFilter
             INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
             INNER JOIN estatus AS S ON C.status = S.id_status";
-
-        $cond = "CO.statusD = '1' AND C.procesado = 1 AND C.status != 2 ORDER BY C.idpago DESC LIMIT 100";
-
+    
+        // Esto se queda tal cual
+        $cond = "CO.statusD = '1' 
+            AND C.procesado = 1 
+            AND C.status != 2 
+            ORDER BY C.idpago DESC LIMIT 100";
+    
         return $this->model->consult($fields, $join, $cond);
+    }
+    
+    
+    public function getRawPickupDataUser($startDate, $endDate, $whereEnterprises)
+    {
+        $companyCondition = $whereEnterprises ? "AND CO.company_code IN ($whereEnterprises)" : "";
+        $sql = "
+            SELECT 
+                C.idpago, C.actividad, C.datepicker, C.horario, C.procesado,
+                C.cliente_name, C.cliente_lastname, C.nog, C.code_company, 
+                C.balance, C.checkin, C.noshow, C.canal,
+                B.items_details, B.*,
+                CO.company_name, CO.primary_color as colorCompany, S.name AS status,
+                U.name AS username
+            FROM control C
+            INNER JOIN bookingdetails B ON C.idpago = B.idpago
+            INNER JOIN companies CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
+            INNER JOIN estatus S ON C.status = S.id_status
+            INNER JOIN users U ON B.usuario = U.user_id
+            WHERE DATE(C.datepicker) BETWEEN :startDate AND :endDate 
+              AND C.status NOT IN (0,2) AND C.procesado = 1
+            ORDER BY C.datepicker, C.horario, C.actividad
+        ";
+
+        return $this->model->SqlQuery(
+            ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
+            $sql,
+            ['startDate' => $startDate, 'endDate' => $endDate]
+        );
     }
     public function getRawPickupData($startDate, $endDate)
     {
@@ -224,16 +263,17 @@ class ControlRepository
         
         return  $this->model->consult($fields, $join, "C.referencia = :nog", ['nog' => $nog]);
     }
-    public function searchreservations($search){
+    public function searchreservations($search, $whereEnterprises){
         $campos = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.procesado, C.checkin, C.noshow, C.moneda',
             'B.*',
             'CO.company_name, CO.primary_color, CO.statusD',
             'S.name AS status, S.color AS statuscolor'
         ];
-    
+        $companyCondition = $whereEnterprises ? "AND CO.company_code IN ($whereEnterprises)" : "";
+
         $join = "C 
-            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
             INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
             INNER JOIN estatus AS S ON C.status = S.id_status";
     
@@ -250,16 +290,16 @@ class ControlRepository
     
         return $this->model->consult($campos, $join, $cond, $params, false);
     }
-    public function searchreservationsprocess($search){
+    public function searchreservationsprocess($search, $whereEnterprises){
         $campos = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.nog, C.code_company, C.procesado, C.checkin, C.noshow, C.moneda',
             'B.*',
             'CO.company_name, CO.primary_color, CO.statusD',
             'S.name AS status, S.color AS statuscolor'
         ];
-    
+        $companyCondition = $whereEnterprises ? "AND CO.company_code IN ($whereEnterprises)" : "";
         $join = "C 
-            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
             INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
             INNER JOIN estatus AS S ON C.status = S.id_status";
     

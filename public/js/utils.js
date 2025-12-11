@@ -32,19 +32,15 @@ function convert_to_price(value) {
 // PARA DATOS TIMESTAMP
 function formatFechas(datestamp) {
     const fecha = new Date(datestamp);
-
     const mesesCortos = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const mesesLargos = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
     const dia = fecha.getDate();
     const mesNum = fecha.getMonth();
     const año = fecha.getFullYear();
-
     let horas = fecha.getHours();
     let minutos = String(fecha.getMinutes()).padStart(2, "0");
     const ampm = horas >= 12 ? "PM" : "AM";
     horas = horas % 12 || 12;
-
     return {
         f1: `${dia} ${mesesCortos[mesNum]}, ${año} - ${horas}:${minutos} ${ampm}`,
         f2: `${dia} ${mesesLargos[mesNum]}, ${año} - ${horas}:${minutos} ${ampm}`,
@@ -63,20 +59,15 @@ function getDaySuffix(day) {
     default: return "th";
     }
 }
-    
 function formatDate(dateString, lang = "en") {
     if (!dateString) return null;
-
     // Parse manual para evitar problemas de zona horaria
     const [y, m, d] = dateString.split("-").map(Number);
     const date = new Date(y, m - 1, d);
-
     if (isNaN(date)) return null;
-
     const day = date.getDate();
     const month = date.getMonth();
     const year = date.getFullYear();
-
     // Diccionarios por idioma
     const MONTHS_SHORT = {
         en: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
@@ -111,11 +102,9 @@ function formatDate(dateString, lang = "en") {
             default: return "th";
         }
     }
-
     const shortMonths = MONTHS_SHORT[lang];
     const longMonths = MONTHS_LONG[lang];
     const weekdays = WEEKDAYS[lang];
-
     return {
         default: dateString,
         f1: `${String(day).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`,
@@ -129,11 +118,8 @@ function formatDate(dateString, lang = "en") {
         f9: date.toISOString(),
         f10: `${day} ${longMonths[month]} ${year}`,
         f11: `${day} ${FIRSTCONECTOR[lang]} ${longMonths[month]} ${SECONDCONECTOR[lang]} ${year}`
-
     };
 }
-
-
 // Toast flotante
 function mostrarToast(mensaje, tipo = "success") {
     const toast = $(`
@@ -144,14 +130,12 @@ function mostrarToast(mensaje, tipo = "success") {
         </div>
         </div>
     `);
-
     let container = $("#toast-container");
     if (!container.length) {
         container = $('<div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>');
         $("body").append(container);
     }
     container.append(toast);
-
     const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
     bsToast.show();
     toast.on('hidden.bs.toast', () => toast.remove());
@@ -165,14 +149,12 @@ function mostrarToastMail(mensaje, tipo = "success") {
         </div>
       </div>
     `);
-  
     let container = $("#toast-container");
     if (!container.length) {
       container = $('<div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>');
       $("body").append(container);
     }
     container.append(toast);
-  
     const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
     bsToast.show();
     toast.on('hidden.bs.toast', () => toast.remove());

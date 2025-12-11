@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/../../app/core/Controller.php";
 require_once __DIR__ . "/../models/UserModel.php";
+require_once(__DIR__ . "/../core/ServiceContainer.php");
 class MailerController extends Controller
 {
     public function index()
@@ -14,10 +15,16 @@ class MailerController extends Controller
         if ($userInfo['status'] !== 'SUCCESS') {
             die($userInfo['message']); // o redirigir a login
         }
+        $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
+        $ip = $ippermission_service->getClientIP();
+        if($userInfo['data']['ip_user'] != $ip){
+            Auth::logout();
+        }
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
             $this->view('dashboard/view_mailer',[
                 'user_id' => $userInfo['data']['user_id'],
                 'level'   => $userInfo['data']['level'],
+                'ip_user'   => $userInfo['data']['ip_user'],
             ]);
         }else{
             header("Location: cn_dash/inicio"); // URL que apunta al HomeController@index

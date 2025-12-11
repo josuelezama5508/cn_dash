@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . "/../../app/core/Controller.php";
 require_once __DIR__ . "/../models/UserModel.php";
+require_once(__DIR__ . "/../core/ServiceContainer.php");
 class DisponibilidadController extends Controller
 {
     private $active_days;
@@ -29,10 +30,16 @@ class DisponibilidadController extends Controller
         if ($userInfo['status'] !== 'SUCCESS') {
             die($userInfo['message']); // o redirigir a login
         }
+        $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
+        $ip = $ippermission_service->getClientIP();
+        if($userInfo['data']['ip_user'] != $ip){
+            Auth::logout();
+        }
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
             $this->view('dashboard/view_disponibilidad', [
             'user_id' => $userInfo['data']['user_id'],
             'level'   => $userInfo['data']['level'],
+            'ip_user'   => $userInfo['data']['ip_user'],
             'active_days' => $this->active_days]);
         }else{
             header("Location: cn_dash/inicio"); // URL que apunta al HomeController@index
@@ -53,10 +60,16 @@ class DisponibilidadController extends Controller
         if ($userInfo['status'] !== 'SUCCESS') {
             die($userInfo['message']); // o redirigir a login
         }
+        $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
+        $ip = $ippermission_service->getClientIP();
+        if($userInfo['data']['ip_user'] != $ip){
+            Auth::logout();
+        }
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
             $this->view('dashboard/view_disponibilidad_i', [
             'user_id' => $userInfo['data']['user_id'],
             'level'   => $userInfo['data']['level'],
+            'ip_user'   => $userInfo['data']['ip_user'],
             "companycode" => $param, 
             'active_days' => $this->active_days]);
         }else{

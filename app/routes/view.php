@@ -38,6 +38,8 @@ return [
          "camioneta" => ["controller" => "CamionetaController", "method" => "index"],
          //Usuarios
          "usuarios" => ["controller" => "UserController", "method" => "index"],
+        //Usuarios
+        "prospectos" => ["controller" => "ProspectosController", "method" => "index"],
 
         //Detalles Reserva
         "detalles-reserva/view" =>["controller" => "DetallesReservaController", "method" => "viewdetails"],

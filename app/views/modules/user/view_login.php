@@ -80,9 +80,13 @@
                         <div class="form-group">
                             <input type="text" name="username" class="form-control ds-input" placeholder="Usuario" autocomplete="username">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group position-relative">
                             <input type="password" name="password" class="form-control ds-input" placeholder="Contraseña" autocomplete="current-password">
+                            <span class="position-absolute top-50 end-0 translate-middle-y pe-3" style="cursor:pointer;" id="togglePassword">
+                                <i class="bi bi-eye"></i>
+                            </span>
                         </div>
+
                     </form>
                     <!--  -->
                     <button class="btn btn-light" style="width: 100%;" id="sendButton">Entrar</button>

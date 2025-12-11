@@ -82,8 +82,7 @@ $(document).ready(function () {
 
     function validateUser() {
         const nombre = $("#name").val().trim();
-        const lastname = $("#lastname").val().trim();
-        if (!nombre || !lastname) {
+        if (!nombre) {
             alert("Nombre y apellido son obligatorios.");
             return false;
         }
@@ -349,7 +348,7 @@ try {
         fetchAPI('user', method, payload)
         .then(() => {
             showSuccessModal("Se ha agregado un nuevo usuario");
-            // location.reload();
+            location.reload();
         })
         .catch(() => {
             showErrorModal("Error al guardar el hotel.");
@@ -402,18 +401,34 @@ try {
                 if (timer) clearTimeout(timer);
 
                 timer = setTimeout(() => {
-                    const val = $(self).val();
-                    const [ban, msg] = validate_data(val, regex);
-
-                    result_validate_data(self, selector.replace("#", ""), ban, msg);
-
+                    const val = $(self).val().trim();
                     const field = selector.replace("#", "");
+
+                    // Campos opcionales: lastname y email
+                    if ((field === "lastname" || field === "email")) {
+                        if (val === "") {
+                            // vacío => válido
+                            window.userFormValid[field] = true;
+                            result_validate_data(self, field, "correcto", "");
+                            return;
+                        }
+                        // tiene algo => validar normalmente
+                        const [ban, msg] = validate_data(val, regex);
+                        result_validate_data(self, field, ban, msg);
+                        window.userFormValid[field] = (ban === "correcto");
+                        return;
+                    }
+
+                    // 🔥 Campos obligatorios (name, username, password)
+                    const [ban, msg] = validate_data(val, regex);
+                    result_validate_data(self, field, ban, msg);
                     window.userFormValid[field] = (ban === "correcto");
 
-                }, 700);
+                }, 500);
             });
         }
     }
+
 
     function isUserFormValid() {
         return Object.values(window.userFormValid).every(v => v === true);

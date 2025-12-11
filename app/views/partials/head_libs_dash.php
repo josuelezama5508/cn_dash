@@ -73,7 +73,8 @@
     window.url_web = window.location.origin + '/cn_dash';
     window.userInfo = {
         user_id: <?= json_encode($user_id) ?>,
-        level:   <?= json_encode($level) ?>
+        level:   <?= json_encode($level) ?>,
+        ip_user:   <?= json_encode($ip_user) ?>
     };
     
     console.log("User info global:", window.userInfo); // debug

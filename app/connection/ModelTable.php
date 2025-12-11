@@ -101,20 +101,23 @@ class ModelTable
         return $this->_delete($id);
     }
 
-    public function consult(array $campos = [], string $innerjoin = '', string $condicion = '1', array $replace =  [], bool $removeId = true)
+    public function consult(array $campos = [], string $innerjoin = '', string $condicion = '1', array $replace = [], bool $removeId = true)
     {
-        $response = array();
-        foreach ($this->_get($campos, "WHERE $condicion", $replace, $innerjoin) as $result_) {
-
+        $data = $this->_get($campos, "WHERE $condicion", $replace, $innerjoin);
+        // Aquí imprimes el SQL en error_log
+        // error_log("SQL CONSULT: " . $this->sql);
+        $response = [];
+        foreach ($data as $result_) {
             $result_ = (object)$result_;
             $id = $this->id_table;
             if ($removeId && isset($result_->$id)) {
                 unset($result_->$id);
             }
-            array_push($response, $result_);
+            $response[] = $result_;
         }
-        return  $response;
+        return $response;
     }
+    
 
     /**
      * Funcion GET, Obtiene un arreglo de registros de una tabla en especifico

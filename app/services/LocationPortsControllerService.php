@@ -16,7 +16,6 @@ class LocationPortsControllerService
     }
     public function find($id)
     {
-        error_log("FIND SERVICE" . $id);
         return $this->locationports_repo->find($id);
     }
     public function delete($id)

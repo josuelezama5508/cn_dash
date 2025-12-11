@@ -35,7 +35,8 @@ class ControlController extends API
             'CancellationCategoriesControllerServices',
             'ComboControllerService',
             'LocationPortsControllerService',
-            'EmpresaInfoControllerService'
+            'EmpresaInfoControllerService',
+            'IPPermissionControllerService'
         ];
 
         foreach ($serviceList as $service) {
@@ -82,6 +83,8 @@ class ControlController extends API
     public function get($params = [])
     {
         try {
+            
+            $user = $this->validateToken();
             [$action, $data] = $this->resolveAction($params, [
                 'nog' => 'getByNog',
                 'getByDispo' => 'getByDispo',
@@ -96,6 +99,8 @@ class ControlController extends API
                 // 'getAllRep' => 'getAllRep'
             ]);
 
+            // error_log("USUARIO GET");
+            // error_log($user->productos_empresas);
             if (!$action) return $this->jsonResponse(['message' => 'Acción no reconocida'], 400);
 
             $booking = $this->service('BookingControllerService');
@@ -107,15 +112,19 @@ class ControlController extends API
                 'getByDispo2' => fn() => $booking->getByDispoBuildService2($data, $this->service('ProductControllerService'), $this->service('CompanyControllerService'), $this->service('DisponibilidadControllerService')),
                 'getLinked' => fn() => $booking->getLinkedReservationsService($data),
                 'getCombosByNog' => fn() => $booking->getCombosByNog($data),
-                'getByDatePickup' => fn() => $booking->getByDatePickupService($this->service('CanalControllerService'), $this->service('RepControllerService'), $data['startdate'], $data['enddate']),
-                'searchReservation' => fn() => $booking->searchReservationService($data),
-                'searchReservationProcess' => fn() => $booking->searchReservationProcessService($data),
+                'getByDatePickup' => fn() => $booking->getByDatePickupService($this->service('CanalControllerService'), $this->service('RepControllerService'), $user, $data['startdate'], $data['enddate']),
+                'searchReservation' => fn() => $booking->searchReservationService($data, $user),
+                'searchReservationProcess' => fn() => $booking->searchReservationProcessService($data, $user),
                 'getTagId' => fn() => $tag->find($data),
                 'idlocation' => fn()=> $this->service('LocationPortsControllerService')->find("8"),
                 // 'getAllRep' => fn() => $this->service('CanalControllerService')->getAll()
             ];
 
             $result = $map[$action]();
+            if($action == "searchReservationProcess"){
+                // error_log("RESULTADO DE " . $action);
+                // error_log(json_encode($result));
+            }
             if (empty($result)) return $this->jsonResponse(['message' => 'No se encontró el recurso ' . json_encode($result)], 404);
             $resultadata = ($action === 'getByDispo2') ? $result : ['data' => $result];
             return $this->jsonResponse($resultadata, 200);
@@ -139,11 +148,11 @@ class ControlController extends API
                 'nog' => 'getByNog'
             ]);
 
-            $booking = $this->services['BookingControllerService'];
-           
+            $booking = $this->service('BookingControllerService');
             switch ($action) {
                 case 'create':
-                    $control = $booking->crearReservaPrincipalService($data);
+                    $ippermission = $this->service('IPPermissionControllerService');
+                    $control = $booking->crearReservaPrincipalService($data, $ippermission);
                     if (!$control) throw new Exception('Error al crear reserva', 500);
                     $details = $this->service('BookingDetailsControllerService');
                     $history = $this->service('HistoryControllerService');
@@ -165,7 +174,7 @@ class ControlController extends API
                     $booking->crearMensajeNotaService($control, $data, $user, $bookingmessage, $history);
                     $history->registrarHistorial('Reservas', $control->id, 'create', 'Reserva creada', $user->id, [], [$booking->getTableName() => $control, $details->getTableNameBookingDetail() => $detailsInsert] );
 
-                    list($combosArray, $productosHijos, $productoHijoLang, $itemsTags) = $booking->crearReservasHijasService($data, $control, $detailsInsert, $user, $tag, $details, $product, $bookingmessage, $history, $combo);
+                    list($combosArray, $productosHijos, $productoHijoLang, $itemsTags) = $booking->crearReservasHijasService($data, $control, $detailsInsert, $user, $tag, $details, $product, $bookingmessage, $history, $combo, );
 
                     return $this->jsonResponse([
                         'message' => 'Reserva creada exitosamente',

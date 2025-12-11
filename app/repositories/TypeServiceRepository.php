@@ -27,7 +27,7 @@ class TypeServiceRepository
         return $this->model->insert($data);
     }
     public function getAllData(){
-        return $this->model->where('1=1 ORDER BY nombre ASC');
+        return $this->model->where('1=1 ORDER BY nombre_es ASC');
     }
 
 }

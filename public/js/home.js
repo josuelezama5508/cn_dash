@@ -299,18 +299,35 @@ function initBookingForm(input) {
 
 function createSelectCompany() {
     fetchAPI_AJAX(`company?byUser=${window.userInfo.user_id}`, "GET")
-      .done((response, textStatus, jqXHR) => {
+    .done((response, textStatus, jqXHR) => {
         const status = jqXHR.status;
         if (status == 200) {
-            let options = '<option value="0">Selecciona una empresa</option>';
-            (response.data).forEach(element => {
+            let options = '';
+            const companies = response.data;
+
+            if (companies.length === 1) {
+                // Solo una empresa → seleccionada por defecto
+                const element = companies[0];
                 let data = ` data-src="${element.company_logo}" data-alt="${element.company_name}"`;
-                options += `<option value="${element.company_code}"${data}>${element.company_name}</option>`;
-            });
+                options += `<option value="${element.company_code}"${data} selected>${element.company_name}</option>`;
+            } else {
+                // Varias opciones → agregar opción default
+                options += '<option value="0">Selecciona una empresa</option>';
+                companies.forEach(element => {
+                    let data = ` data-src="${element.company_logo}" data-alt="${element.company_name}"`;
+                    options += `<option value="${element.company_code}"${data}>${element.company_name}</option>`;
+                });
+            }
+
             $("#modalBooking #company").html(options);
+
+            // 🔹 Si hay selección, disparar el cambio para cargar productos
+            $("#modalBooking #company").trigger('change');
         }
-      })
-      .fail((error) => {});
+    })
+    .fail((error) => {
+        console.error("Error cargando empresas:", error);
+    });
 }
 
 function selectedCompany(input) {

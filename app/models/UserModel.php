@@ -62,7 +62,8 @@ class UserModel extends ModelTable
             'status' => 'SUCCESS',
             'data' => [
                 'user_id' => $user->user_id,
-                'level'   => $user->level
+                'level'   => $user->level,
+                'ip_user' => $user->ip_user
             ]
         ];
     }

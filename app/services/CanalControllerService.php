@@ -62,7 +62,7 @@ class CanalControllerService
     public function searchChannelService($search, $rep_service)
     {
         $channels = $this->searchChannels($search);
-        error_log('searchChannels devuelve: ' . print_r($channels, true));
+        // error_log('searchChannels devuelve: ' . print_r($channels, true));
 
         foreach ($channels as $i => $row) {
             // Capitalizar tipo

@@ -12,8 +12,10 @@
                     <ul class="left">
                         <li><a class="row-content-center" href="<?= route('inicio') ?>">Inicio</a></li>
                         <li><a class="row-content-center" href="<?= route('canales') ?>">Canales</a></li>
+                        <?php if($level === 'master' || $level === 'administrador' || $level === 'reservaciones'){?>
+                        <li><a class="row-content-center" href="<?= $level === 'reservaciones' ? route('prospectos') : route('productos')?>">Productos</a></li>
+                        <?php } ?>
                         <?php if($level === 'master' || $level === 'administrador'){?>
-                        <li><a class="row-content-center" href="<?= route('productos') ?>">Productos</a></li>
                         <li><a class="row-content-center" href="<?= route('dispo_test') ?>">Horarios</a></li>
                         <li><a class="row-content-center" href="<?= route('transportation') ?>">Hoteles</a></li>
                         <li><a class="row-content-center" href="<?= route('mailer') ?>">Mailer</a></li>

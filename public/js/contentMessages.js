@@ -160,7 +160,7 @@ function initSuccessModal() {
 }
 
 // Mostrar modal de éxito
-function showSuccessModal(data) {
+function showSuccessModal(data, $title = '') {
   initSuccessModal();
 
   const modal = document.getElementById('genericSuccessModal');
@@ -168,7 +168,8 @@ function showSuccessModal(data) {
   const msg = document.getElementById('genericSuccessMessage');
 
   let messageText = 'Se ha completado el envío.';
-  let titleText = 'Éxito';
+  let titleText = ($title && $title.trim() !== '') ? $title : '';
+
 
   if (typeof data === 'string') {
     messageText = data;

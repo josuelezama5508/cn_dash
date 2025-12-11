@@ -51,10 +51,12 @@ class TypeServiceController extends API
         try {
             [$action, $search] = $this->resolveAction($params, [
                 'getAllData' => 'getAllData',
+                'getAllDataLang' => 'getAllDataLang',
             ]);
             $service = $this->service('TypeServiceControllerService'); 
             $map = [
                 'getAllData' => fn() => $service->getAllData(),
+                'getAllDataLang' => fn() => $service->getAllDataLang($lang)
             ];
             $response = $map[$action]();
             if (isset($response['error'])) {

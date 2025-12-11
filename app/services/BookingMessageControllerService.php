@@ -1,5 +1,4 @@
 <?php
-
 require_once __DIR__ . '/../repositories/BookingMessageRepository.php';
 class BookingMessageControllerService
 {
@@ -38,7 +37,6 @@ class BookingMessageControllerService
     public function searchNotesByIdPagoUser($id, $user){
         return $this->bookingmessage_repo->searchNotesByIdPagoUser($id, $user);
     }
-    
     // ---------------------------
     // Helpers
     // ---------------------------
@@ -51,13 +49,11 @@ class BookingMessageControllerService
         }
         return null;
     }
-    
     public function replicarMensajeEnCombos($nog, $mensaje, $usuario_id, $tipomessage, $modulo, $booking, $history)
     {
         $mensajes = [];
         $linked = $booking->getLinkedReservationsService($nog);
         if (!is_array($linked)) return [];
-
         foreach ($linked as $combo) {
             if (intval($combo->id) === intval($nog)) continue;
             $campos = [

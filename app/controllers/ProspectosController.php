@@ -2,7 +2,7 @@
 require_once __DIR__ . "/../../app/core/Controller.php";
 require_once __DIR__ . "/../models/UserModel.php";
 require_once(__DIR__ . "/../core/ServiceContainer.php");
-class TransportationController extends Controller
+class ProspectosController extends Controller
 {
     public function index()
     {
@@ -20,11 +20,17 @@ class TransportationController extends Controller
         if($userInfo['data']['ip_user'] != $ip){
             Auth::logout();
         }
-        $this->view('dashboard/view_transportation',[
-            'user_id' => $userInfo['data']['user_id'],
-            'level'   => $userInfo['data']['level'],
-            'ip_user'   => $userInfo['data']['ip_user'],
-        ]);
+        if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador" || $userInfo['data']['level'] === "reservaciones"){
+            $this->view('dashboard/view_prospectos',[
+                'user_id' => $userInfo['data']['user_id'],
+                'level'   => $userInfo['data']['level'],
+                'ip_user'   => $userInfo['data']['ip_user'],
+            ]);
+        }else{
+            header("Location: cn_dash/inicio"); // URL que apunta al HomeController@index
+            exit;
+        }
+        
     }
 
     public function read($param)
@@ -43,9 +49,9 @@ class TransportationController extends Controller
         if($userInfo['data']['ip_user'] != $ip){
             Auth::logout();
         }
-        if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
-            $this->view('dashboard/view_transportation_i', [
-                "id" => $param,
+        if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador" || $userInfo['data']['level'] === "reservaciones"){
+            $this->view('dashboard/view_prospectos', [
+                "tagid" => $param,
                 'user_id' => $userInfo['data']['user_id'],
                 'level'   => $userInfo['data']['level'],
                 'ip_user'   => $userInfo['data']['ip_user'],

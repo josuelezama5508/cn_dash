@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/../../app/core/Controller.php";
 require_once __DIR__ . "/../models/UserModel.php";
-
+require_once(__DIR__ . "/../core/ServiceContainer.php");
 class HomeController extends Controller
 {
     public function index()
@@ -17,6 +17,11 @@ class HomeController extends Controller
         if ($userInfo['status'] !== 'SUCCESS') {
             die($userInfo['message']); // o redirigir a login
         }
+        $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
+        $ip = $ippermission_service->getClientIP();
+        if($userInfo['data']['ip_user'] != $ip){
+            Auth::logout();
+        }
         // echo "<pre>";
         // print_r($userInfo['data']);
         // echo "</pre>";
@@ -24,7 +29,8 @@ class HomeController extends Controller
         // Pasar los datos a la vista
         $this->view('dashboard/view_home', [
             'user_id' => $userInfo['data']['user_id'],
-            'level'   => $userInfo['data']['level']
+            'level'   => $userInfo['data']['level'],
+            'ip_user'   => $userInfo['data']['ip_user'],
         ]);
     }
     
