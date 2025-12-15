@@ -35,7 +35,13 @@
                         <img class="background" src="https://www.totalsnorkelcancun.com/dash/sources/img/background1.jpg" alt="Fondo decorativo del menú lateral">
                     </li>
                 </ul>
-                <ul class="center menu-options"></ul>
+                
+                <?php if($level === 'master' || $level === 'administrador' || $level === 'contabilidad'){?>
+                    <ul class="center menu-options">    
+                        <li><a class="row-content-left" href="<?= route('reportes') ?>"><i class="material-icons">input</i>Reportes</a></li>
+                    </ul>
+                <?php } ?>
+                
                 <ul class="bottom menu-options">
                     <li><a class="row-content-left" href="<?= route('logout') ?>"><i class="material-icons">input</i>Cerrar sesión</a></li>
                 </ul>

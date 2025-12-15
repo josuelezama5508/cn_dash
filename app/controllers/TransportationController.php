@@ -20,11 +20,16 @@ class TransportationController extends Controller
         if($userInfo['data']['ip_user'] != $ip){
             Auth::logout();
         }
-        $this->view('dashboard/view_transportation',[
-            'user_id' => $userInfo['data']['user_id'],
-            'level'   => $userInfo['data']['level'],
-            'ip_user'   => $userInfo['data']['ip_user'],
-        ]);
+        if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
+            $this->view('dashboard/view_transportation',[
+                'user_id' => $userInfo['data']['user_id'],
+                'level'   => $userInfo['data']['level'],
+                'ip_user'   => $userInfo['data']['ip_user'],
+            ]);
+        }else{
+            header("Location: cn_dash/inicio"); // URL que apunta al HomeController@index
+            exit;
+        }
     }
 
     public function read($param)

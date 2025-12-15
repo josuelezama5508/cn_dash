@@ -4,6 +4,7 @@ return [
     "prod" => [
         // Auth
         "login" => ["controller" => "UserController", "method" => "login"],
+        "reportes" => ["controller" => "ReportesController", "method" => "index"],
         "logout" => ["controller" => "UserController", "method" => "logout"],
         // Inicios
         "inicio" => ["controller" => "HomeController", "method" => "index"],
@@ -40,7 +41,6 @@ return [
          "usuarios" => ["controller" => "UserController", "method" => "index"],
         //Usuarios
         "prospectos" => ["controller" => "ProspectosController", "method" => "index"],
-
         //Detalles Reserva
         "detalles-reserva/view" =>["controller" => "DetallesReservaController", "method" => "viewdetails"],
         "detalles-reserva/form_sapa" => ["controller" => "DetallesReservaController","method" => "formSapa"],

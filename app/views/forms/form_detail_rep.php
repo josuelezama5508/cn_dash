@@ -365,16 +365,13 @@
         itemCount++;
 
     }
-
     function validate_form_add_rep() {
         if ($("#FNewReps tr").length == 0) return true;
-
         let booleanArray = [];
         $("#FNewReps :input").each(function() {
             let boolean = test(this);
             booleanArray.push(boolean);
         });
-
         return booleanArray.every((valor) => valor === true);
     }
 
@@ -387,18 +384,15 @@
 
         return booleanArray.every((valor) => valor === true);
     }
-
     function test(input) {
         let ban, msg;
         let field = $(input).attr("name");
         let text = $(input).val();
-
         switch (field) {
             case 'repname[]':
             case 'repname':
                 [ban, msg] = validate_data(text, regexName);
                 break;
-
             case 'repemail[]':
             case 'repemail':
                 if (text.length === 0) {
@@ -408,7 +402,6 @@
                     [ban, msg] = validate_data(text, regexEmail);
                 }
                 break;
-
             case 'repphone[]':
             case 'repphone':
                 if (text.length === 0) {
@@ -418,18 +411,13 @@
                     [ban, msg] = validate_data(text, regexPhoneRep);
                 }
                 break;
-
             case 'repcommission[]':
             case 'repcommission':
                 [ban, msg] = validate_data(text, regexInt);
                 break;
         }
-
         return result_validate_data(input, field, ban, msg);
     }
-
-
-
     function cancelEvent(widget = null) {
         if (updateView) location.reload();
         widget.close();
