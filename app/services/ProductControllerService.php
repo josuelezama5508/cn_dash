@@ -238,7 +238,7 @@ class ProductControllerService
     
     public function getCompanyProductsByPlatformAndLanguage($company_code, $language_id, $platform, $company_service) {
         // 1. Validar empresa activa y con disponibilidad_api=1
-        $companyData = $company_service->getActiveCompanyAndDispoByCode($company_code);
+        $companyData = $company_service->getActiveCompanyAndDispoByCode(strtolower($company_code));
     
         if (!count($companyData)) {
             return $this->errorResponse('No se encontro información de la compania.', 404);
@@ -305,7 +305,22 @@ class ProductControllerService
 
         return $result;
     }
+    public function getAllDataLangV2($company_code, $company_service, $lang = "en", $platform = "dash")
+    {
 
+        if (!$company_code) {
+            return null;
+        }
+
+        $langId = ($lang === 'en') ? 1 : 2;
+        $result = $this->getCompanyProductsByPlatformAndLanguage($company_code, $langId, $platform, $company_service);
+
+        if (empty($result)) {
+            return $this->errorResponse('No se encontraron productos para la empresa.', 404);
+        }
+
+        return $result;
+    }
     private function asginationData($data)
     {
         $company_id = isset($data['company']) ? validate_id($data['company']) : 0;

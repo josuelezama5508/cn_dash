@@ -26,6 +26,7 @@ return [
         "notificationservice" => ["controller" => "NotificationServiceController", "methods" => array("POST")],
         "mail" => ["controller" => "MailHistoryController", "methods" => array("GET")],
         "notificationmail" => ["controller" => "NotificationMailController", "methods" => array("GET")],
+        "history" => ["controller" => "HistoryController", "methods" => array("GET")],
         // "rep" => ["controller" => "RepController", "methods" => array("GET", "POST", "PUT", "DELETE")],
 
         // "empresas" => ["controller" => "EmpresaController", "methods" => array("GET", "POST", "PUT", "PATCH")],

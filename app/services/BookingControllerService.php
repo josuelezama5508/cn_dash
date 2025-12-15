@@ -725,7 +725,7 @@ class BookingControllerService
             ];
             $responseMessageHijo = $bookingmessage_service->insert($camposMesaggeHijo);
             if ($responseMessageHijo && isset($responseMessageHijo->id)) {
-                $history_service->registrarOActualizar('Reservas', $dataControlHijo->id, 'create', 'Se creó mensaje hijo', $userData->id, null, $camposMesaggeHijo);
+                $history_service->registrarOActualizar('Reservas', $dataControlHijo->id, 'create', 'Se creó mensaje hijo', $userData->id, [], $camposMesaggeHijo);
                 // $history_service->insert([
                 //     "module"    => 'Reservas',
                 //     "row_id"    => $dataControlHijo->id,

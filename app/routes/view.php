@@ -5,6 +5,7 @@ return [
         // Auth
         "login" => ["controller" => "UserController", "method" => "login"],
         "reportes" => ["controller" => "ReportesController", "method" => "index"],
+        "bitacora" => ["controller" => "BitacoraController", "method" => "index"],
         "logout" => ["controller" => "UserController", "method" => "logout"],
         // Inicios
         "inicio" => ["controller" => "HomeController", "method" => "index"],

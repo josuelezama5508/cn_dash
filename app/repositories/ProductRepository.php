@@ -118,6 +118,6 @@ class ProductRepository
     }
     public function getProductCompanyByDashOrLang($idcompany)
     {
-        return $this->model->where("company_id = :idcompany AND active ='1' AND (show_dash = '1' OR lang_id = 1)", ['idcompany' => $idcompany]);
+        return $this->model->where("company_id = :idcompany AND active ='1' AND (show_dash = '1' OR lang_id = 1) ", ['idcompany' => $idcompany]);
     }
 }

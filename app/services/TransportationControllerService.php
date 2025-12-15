@@ -123,7 +123,7 @@ class TransportationControllerService
             // error_log('Tipo de $responseTransportation: ' . gettype($responseTransportation));
             // error_log('Tipo de $find: ' . gettype($this->find($responseTransportation->id)));
 
-            $history_service->registrarOActualizar($this->getTableName(), $responseTransportation->id, 'create', "Se creó transportacion", $userData->id, null, $this->find($responseTransportation->id));
+            $history_service->registrarOActualizar($this->getTableName(), $responseTransportation->id, 'create', "Se creó transportacion", $userData->id, [], $this->find($responseTransportation->id));
             // $this->registrarHistorial(
             //     'transportacion',
             //     $responseTransportation->id,

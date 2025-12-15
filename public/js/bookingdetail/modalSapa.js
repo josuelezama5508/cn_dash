@@ -39,7 +39,7 @@ window.confirmSapa = async function () {
         nota: document.getElementById("comentario")?.value.trim(),
         traslado_tipo: document.querySelector('input[name="traslado_tipo"]:checked')?.value,
         estatus_sapa: 1,
-        module: "DetalleReserva"
+        module: "DetalleReservas"
       }
     };
   

@@ -28,6 +28,121 @@ class HistoryControllerService
     {
         return $this->history_repo->getHistoryByIdRowAndModuleAndType($id, $module, $action);
     }
+    public function searchByModuleChunk(string $module, int $limit = 500, ?int $lastId = null)
+    {
+        return $this->history_repo->searchByModuleChunk($module, $limit, $lastId);
+    }
+    
+    public function getAllPaged(int $limit = 500, ?int $lastId = null)
+    {
+        return $this->history_repo->getAllPaged($limit, $lastId);
+    }
+    
+    // Agrupador de los resultados por módulo y row_id
+    private function groupByModuleAndRow(array $items)
+    {
+        $grouped = [];
+
+        foreach ($items as $item) {
+            $module = $item->module;
+            $rowId  = $item->row_id;
+
+            if (!isset($grouped[$module][$rowId])) {
+                $grouped[$module][$rowId] = [
+                    'row_id' => $rowId,
+                    'items'  => []
+                ];
+            }
+
+            $grouped[$module][$rowId]['items'][] = $item;
+        }
+
+        // Ordenamos por id de manera descendente
+        foreach ($grouped as &$modules) {
+            uksort($modules, function ($a, $b) use ($modules) {
+                $idA = $modules[$a]['items'][0]->id;
+                $idB = $modules[$b]['items'][0]->id;
+                return $idB <=> $idA;
+            });
+
+            // Ordenamos los items dentro de cada grupo
+            foreach ($modules as &$group) {
+                usort(
+                    $group['items'],
+                    fn($x, $y) => $y->id <=> $x->id
+                );
+            }
+        }
+
+        return $grouped;
+    }
+    private function mergeGrouped(array &$base, array $incoming)
+    {
+        foreach ($incoming as $module => $rows) {
+            foreach ($rows as $rowId => $group) {
+                if (!isset($base[$module][$rowId])) {
+                    $base[$module][$rowId] = $group;
+                } else {
+                    $base[$module][$rowId]['items'] = array_merge(
+                        $base[$module][$rowId]['items'],
+                        $group['items']
+                    );
+                }
+            }
+        }
+    }
+
+    public function searchService($search)
+    {
+        $limit  = 500;
+        $lastId = null;
+        $data   = [];
+
+        // CASO 1: search vacío
+        if ($search === '') {
+            do {
+                $items = $this->getAllPaged($limit, $lastId);
+                $count = count($items);
+
+                if ($count > 0) {
+                    $this->mergeGrouped(
+                        $data,
+                        $this->groupByModuleAndRow($items)
+                    );
+
+                    // 👇 tomamos el último id del chunk
+                    $lastId = end($items)->id;
+                }
+            } while ($count === $limit);
+
+            return $data;
+        }
+
+        // CASO 2: search con módulo
+        $lastId = null;
+
+        do {
+            $items = $this->searchByModuleChunk(
+                $search,
+                $limit,
+                $lastId
+            );
+
+            $count = count($items);
+
+            if ($count > 0) {
+                $this->mergeGrouped(
+                    $data,
+                    $this->groupByModuleAndRow($items)
+                );
+
+                // 👇 avanzamos por id
+                $lastId = end($items)->id;
+            }
+        } while ($count === $limit);
+
+        return $data;
+    }
 
     public function registrarHistorial($module, $row_id, $action, $details, $user_id, $oldData, $newData)
     {

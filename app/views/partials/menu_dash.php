@@ -35,6 +35,11 @@
                         <img class="background" src="https://www.totalsnorkelcancun.com/dash/sources/img/background1.jpg" alt="Fondo decorativo del menú lateral">
                     </li>
                 </ul>
+                <?php if($level === 'master'){?>
+                    <ul class="center menu-options">    
+                        <li><a class="row-content-left" href="<?= route('bitacora') ?>"><i class="material-icons">input</i>Bitacora</a></li>
+                    </ul>
+                <?php } ?>
                 
                 <?php if($level === 'master' || $level === 'administrador' || $level === 'contabilidad'){?>
                     <ul class="center menu-options">    

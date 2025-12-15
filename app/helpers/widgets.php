@@ -68,15 +68,37 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
         global $company_service, $languagecodes_service, $prices_service, $currencycodes_service, $product_service, $canal_service, $rep_service, $estatussapa_service, $rol_service, $user_service;
         switch ($category) {
             case 'companies':
-                $companies = $company_service->getAllCompaniesActiveService($id_user);
-                $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon"]];
+                $companies = $company_service->getAllCompaniesActiveService($id_user, $user_service);
+                $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon", "companycode" => ""]];
                 $base = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/cn_dash';
                 foreach ($companies as $row) {
-                    $default[] = ["id" => $row->id, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name"];
+                    $default[] = ["id" => $row->id, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name", "companycode" => $row->company_code];
                 }
                 return [$default, fn($item) => $item->name];
+            case 'companiesv2':
+                $companies = $company_service->getAllCompaniesActiveService($id_user, $user_service);
+                $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon", "companycode" => ""]];
+                $base = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/cn_dash';
+                foreach ($companies as $row) {
+                    $default[] = ["id" => $row->company_code, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name", "idcompany" => $row->id];
+                }
+                return [$default, fn($item) => $item->name];
+                case 'productscompany':
+                    $products = $product_service->getAllDataLangV2($search, $company_service, "en", "dash");
+                    // Primer opción obligatoria
+                    $default = [["id" => 0, "name" => "Seleccione un producto"]];
+                
+                    // Solo agregar productos si hay resultados
+                    if (!empty($products)) {
+                        foreach ($products as $row) {
+                            $default[] = ["id" => $row->id, "name" => $row->productname];
+                        }
+                    }
+                
+                    return [$default, fn($item) => $item->name];
+                
             case 'products':
-                $products = $company_service->getProductCompanyByDashOrLang($search);
+                $products = $product_service->getProductCompanyByDashOrLang($search);
                 $default = [["id" => 0, "name" => "Seleccione un producto"]];
                 foreach ($products as $row) {
                     $default[] = ["id" => $row->id, "name" => $row->product_name];
@@ -161,7 +183,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 $channels = $canal_service->getChannelList();
                 $default = [["id" => 0, "name" => "Selecciona un Canal"]];
                 foreach ($channels as $row) {
-                    $default[] = ["id" => $row->id, "name" => $row->channel_name];
+                    $default[] = ["id" => $row->id, "name" => $row->nombre];
                 }
                 return [$default, fn($item) => $item->name];
 
