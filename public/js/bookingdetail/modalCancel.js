@@ -7,7 +7,7 @@ window.handleMailCancel = async function(modalData) {
 
     const porcentajeReembolso = parseFloat($('#porcentaje_reembolso').val()) || 0;
     const descuentoDinero = parseFloat($('#descuento_dinero').val()) || 0;
-    const descripcion = $('#comentario_cancelacion').val().trim() || '';
+    const comentario = $('#comentario_cancelacion').val().trim() || '';
     const idpago = modalData.id;
     const nombreCliente = $('#nombre_cliente').text() || '';
     const correoCliente = $('#email_cliente').text() || '';
@@ -27,7 +27,7 @@ window.handleMailCancel = async function(modalData) {
         porcentaje_reembolso,
         descuento_porcentaje: 0,
         descuento_dinero,
-        descripcion,
+        comentario,
         nombre_cliente: nombreCliente,
         correo_cliente: correoCliente,
         total,

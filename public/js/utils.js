@@ -158,4 +158,114 @@ function mostrarToastMail(mensaje, tipo = "success") {
     const bsToast = new bootstrap.Toast(toast[0], { delay: 3000 });
     bsToast.show();
     toast.on('hidden.bs.toast', () => toast.remove());
-  }   
+} 
+function parseItems(itemsDetails) {
+    try {
+        return JSON.parse(itemsDetails) || [];
+    } catch (e) {
+        console.error("items_details inválido", itemsDetails);
+        return [];
+    }
+}
+
+function formatPaxTotal(itemsDetails, field = 'todos') {
+    const items = parseItems(itemsDetails);
+
+    return items.reduce((total, row) => {
+        const qty = Number(row.item ?? 0);
+        if (qty <= 0) return total;
+
+        // modo todos → no filtra por tipo
+        if (field === 'todos') {
+            return total + qty;
+        }
+
+        // tour o addon
+        if (row.tipo === field) {
+            return total + qty;
+        }
+
+        return total;
+    }, 0);
+}
+
+
+function formatPaxByField(itemsDetails, moneda = "USD", field = 'reference', comision = 0) {
+    const items = parseItems(itemsDetails);
+
+    const grouped = items.reduce((acc, row) => {
+        const qty = Number(row.item ?? 0);
+        if (qty <= 0) return acc;
+
+        // 💰 SOLO precios
+        if (field === 'price') {
+            const priceNum = Number(row.price);
+            if (!priceNum || priceNum <= 0) return acc;
+
+            acc[row.price] = true;
+            return acc;
+        }
+
+        // 💸 COMISIÓN TOTAL
+        if (field === 'comision_total') {
+            const priceNum = Number(row.price);
+            if (!priceNum || priceNum <= 0) return acc;
+
+            acc[row.price] = true; // solo precios distintos
+            return acc;
+        }
+
+        // 📦 reference + name
+        const key = row.reference ?? 'Sin referencia';
+
+        if (!acc[key]) {
+            acc[key] = {
+                name: row.name ?? '',
+                qty: 0
+            };
+        }
+
+        acc[key].qty += qty;
+        return acc;
+    }, {});
+
+    // 💰 precios con moneda
+    if (field === 'price') {
+        return Object.keys(grouped)
+            .map(price => `$${price} ${moneda}`)
+            .join(', ');
+    }
+
+    // 💸 comisión total (precio * comisión)
+    if (field === 'comision_total') {
+        return comision > 0 ? Object.keys(grouped)
+            .map(price => {
+                const total = (Number(price) * (comision > 0 ? comision/100 : 1)).toFixed(2);
+                return `$${total} ${moneda}`;
+            })
+            .join(', ') : '$0 ' + moneda;
+    }
+
+    // 📦 reference + cantidad acumulada
+    return Object.entries(grouped)
+        .map(([_, data]) => `${data.name ? data.name + ' ' : ''}x${data.qty}`)
+        .join(', ');
+}
+
+function formatPax(itemsDetails, moneda = "USD", mode = 'total', comision = 0) {
+    switch (mode) {
+        case 'reference':
+            return formatPaxByField(itemsDetails, moneda, mode, comision);
+        case 'price':
+            return formatPaxByField(itemsDetails, moneda, mode, comision);
+        case 'comision_total':
+            return formatPaxByField(itemsDetails, moneda, mode, comision);
+        case 'totalp':
+            return formatPaxTotal(itemsDetails, 'tour');
+        case 'totala':
+            return formatPaxTotal(itemsDetails, 'addon');
+        case 'total':
+        default:
+            return formatPaxTotal(itemsDetails, 'todos');
+    }
+}

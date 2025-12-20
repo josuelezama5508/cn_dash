@@ -65,6 +65,9 @@ class CompanyControllerService
     public function getCompaniesByCodes($where){
         return $this->companies_repo->getCompaniesByCodes($where);
     }
+    public function getCompaniesByCodesWhereIn($where){
+        return $this->companies_repo->getCompaniesByCodesWhereIn($where);
+    }
     public function getClave()
     {
         $cadena = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

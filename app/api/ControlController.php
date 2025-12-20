@@ -95,7 +95,8 @@ class ControlController extends API
                 'searchReservation' => 'searchReservation',
                 'searchReservationProcess' => 'searchReservationProcess',
                 'getTagId' => 'getTagId',
-                'idlocation' => 'idlocation'
+                'idlocation' => 'idlocation',
+                'searchConta' => 'searchConta'
                 // 'getAllRep' => 'getAllRep'
             ]);
 
@@ -115,6 +116,7 @@ class ControlController extends API
                 'getByDatePickup' => fn() => $booking->getByDatePickupService($this->service('CanalControllerService'), $this->service('RepControllerService'), $user, $data['startdate'], $data['enddate']),
                 'searchReservation' => fn() => $booking->searchReservationService($data, $user),
                 'searchReservationProcess' => fn() => $booking->searchReservationProcessService($data, $user),
+                'searchConta' => fn() => $booking->searchContaDataService($data, $user),
                 'getTagId' => fn() => $tag->find($data),
                 'idlocation' => fn()=> $this->service('LocationPortsControllerService')->find("8"),
                 // 'getAllRep' => fn() => $this->service('CanalControllerService')->getAll()
@@ -124,6 +126,11 @@ class ControlController extends API
             if($action == "searchReservationProcess"){
                 // error_log("RESULTADO DE " . $action);
                 // error_log(json_encode($result));
+            }
+            if($action == "searchConta"){
+                error_log("SEARCH CONTA");
+                error_log(print_r($result, true));
+
             }
             if (empty($result)) return $this->jsonResponse(['message' => 'No se encontró el recurso ' . json_encode($result)], 404);
             $resultadata = ($action === 'getByDispo2') ? $result : ['data' => $result];
@@ -256,10 +263,10 @@ class ControlController extends API
                         }
                         $historyMail->registrarOActualizarHistorialCorreoService($data, $user, $dataMail);
                     }
-                    if (!empty($data['descripcion'])) {
+                    if (!empty($data['comentario'])) {
                         $msg = [
                             'idpago' => $data['idpago'],
-                            'mensaje' => $data['descripcion'],
+                            'mensaje' => $data['comentario'],
                             'usuario' => $user->id,
                             'tipomessage' => $action,
                         ];

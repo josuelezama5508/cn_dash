@@ -20,7 +20,7 @@ class ReportesController extends Controller
         if($userInfo['data']['ip_user'] != $ip){
             Auth::logout();
         }
-        if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
+        if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador" || $userInfo['data']['level'] === "contabilidad"){
             $this->view('dashboard/view_reportes',[
                 'user_id' => $userInfo['data']['user_id'],
                 'level'   => $userInfo['data']['level'],

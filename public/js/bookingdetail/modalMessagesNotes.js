@@ -28,11 +28,11 @@ window.openMessagesNotesModal = async function (messageData = null, modalData) {
     $("#modalGenericTitle").text("Modulo Para Crear Notas");
     // 3. INYECTAR BOTONES EN EL FOOTER
     $("#modal_generic_footer").html(`
-        <button id="btnCancelarMessage" type="button" class="btn btn-danger py-1 px-3 rounded-1" data-bs-dismiss="modal">
-            Cancelar
-        </button>
         <button id="btnGuardarMeesage" type="button" class="btn btn-primary background-green-custom py-1 px-3 rounded-1">
             Enviar
+        </button>
+        <button id="btnCancelarMessage" type="button" class="btn btn-danger py-1 px-3 rounded-1" data-bs-dismiss="modal">
+            Cancelar
         </button>
     `);
     // 4. Abrir modal

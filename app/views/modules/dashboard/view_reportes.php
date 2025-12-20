@@ -14,31 +14,84 @@
                     <div class="row g-3 align-items-end">
 
                         <!-- Empresa -->
-                        <div class="col-md-3 d-flex flex-column">
-                            <div id="companyLogoContainerReportes">
-                                <img id="logocompanyReportes" src="http://localhost/cn_dash/public/img/no-fotos.png" alt="No icon">
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Empresa</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <img
+                                    id="logocompanyReportes"
+                                    src="http://localhost/cn_dash/public/img/no-fotos.png"
+                                    alt="No icon"
+                                    class="img-fluid"
+                                    style="max-height:32px; width:auto;"
+                                >
+                                <div class="flex-grow-1" id="divCompany"></div>
                             </div>
-                            <label class="form-label">Empresa</label>
-                            <div id="divCompany"></div>
                         </div>
 
                         <!-- Actividad -->
-                        <div class="col-md-3 d-flex flex-column">
-                            <label class="form-label">Actividad</label>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Actividad</label>
                             <div id="divActivity"></div>
                         </div>
 
                         <!-- Canal -->
-                        <div class="col-md-3 d-flex flex-column">
-                            <label class="form-label">Canal</label>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Canal</label>
                             <div id="divChannel"></div>
                         </div>
 
                         <!-- Rango de fechas -->
-                        <div class="col-md-3">
-                            <label class="form-label">Rango de fechas</label>
-                            <input type="text" id="rango_fechas" class="form-control" placeholder="Selecciona fechas" readonly>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Rango de fechas</label>
+                            <input
+                                type="text"
+                                id="rango_fechas"
+                                class="form-control"
+                                placeholder="Selecciona fechas"
+                                readonly
+                            >
                         </div>
+                        <!-- Fecha de -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Fecha de</label>
+                            <div class="d-flex gap-2 align-items-center" style="height:38px;">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipo_fecha" value="actividad" id="radioActividad" checked>
+                                    <label class="form-check-label" for="radioActividad" >Actividad</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipo_fecha" value="compra" id="radioCompra" >
+                                    <label class="form-check-label" for="radioCompra" >Compra</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Exportar -->
+                        <div class="col-md-1">
+                            <label class="form-label fw-semibold">Exportar</label>
+                            <div class="d-flex gap-2">
+                                <button
+                                    type="button"
+                                    id="btnExcel"
+                                    class="btn btn-success d-flex align-items-center justify-content-center"
+                                    style="height:38px; width:38px;"
+                                    title="Exportar a Excel"
+                                >
+                                    <i class="bi bi-file-earmark-excel"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    id="btnGrafica"
+                                    class="btn btn-primary d-flex align-items-center justify-content-center"
+                                    style="height:38px; width:38px;"
+                                    title="Ver gráfica"
+                                >
+                                    <i class="bi bi-bar-chart-line"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        
 
                     </div>
                 </div>

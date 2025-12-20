@@ -63,6 +63,11 @@ class CompanyRepository
     public function getCompaniesByCodes($where){
         return $this->model->where($where . " ORDER BY company_name ASC", []);
     }
+    public function getCompaniesByCodesWhereIn($where){
+        
+        $cond = $where ? "AND company_code IN ($where)" : "";
+        return $this->model->where("active = '1' AND statusD = '1' $cond ORDER BY company_name ASC", []);
+    }
     // public function getClave()
     // {
     //     $cadena = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

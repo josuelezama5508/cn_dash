@@ -3,7 +3,7 @@ return [
     // Version de produccion
     "production" => [
         "slug" => ["controller" => "RoutesController", "methods" => array("POST", "GET", "PUT")],
-
+        "reporte" => ["controller" => "ReporteController", "methods" => array("POST")],
         "user/login" => ["controller" => "UserController", "methods" => array("POST")],
         "user" => ["controller" => "UserController", "methods" => array("GET", "POST", "PUT")],
         "rol" => ["controller" => "RolController", "methods" => array("GET")],

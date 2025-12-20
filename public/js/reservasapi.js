@@ -48,7 +48,7 @@ function getCustomerInfo() {
         hotel: $("#hotelInput").val().trim() || 'PENDIENTE',
         habitacion: $('input[placeholder="Numero Hotel"]').val() || null,
         email: $('input[placeholder="Correo Cliente"]').val() || null,
-        nota: $("textarea.ds-input").val() || null
+        comentario: $("textarea.ds-input").val() || null
     };
 }
 function getChannelInfo() {

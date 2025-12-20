@@ -92,6 +92,13 @@ class BookingControllerService
     {
         return $this->control_repo->searchreservationsprocess($search, $whereEnterprises);
     }
+    public function countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises){
+        return $this->control_repo->countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises);
+    }
+    public function searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises)
+    {
+        return $this->control_repo->searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises);
+    }
     public function getByDateDispo($date = null)
     {
         if ($date === null) {
@@ -228,10 +235,8 @@ class BookingControllerService
             'dispoenterprise' => $disponibilidadPorEmpresa
         ];
     }
-    public function getByDatePickupService($canal_service, $rep_service, $userData, $startDate = null, $endDate = null)
+    public function getWhereEnterprisesByUser($userData)
     {
-        if ($startDate === null) $startDate = date('Y-m-d');
-        if ($endDate === null)   $endDate   = $startDate;
         $raw = $userData->productos_empresas;
          // Caso 1: acceso total → no filtramos
         if ($raw === 'all') {
@@ -266,7 +271,14 @@ class BookingControllerService
         } else {
             // error_log("No se aplica filtro por empresas");
         }
-      
+        return $whereEnterprises;
+    }
+    public function getByDatePickupService($canal_service, $rep_service, $userData, $startDate = null, $endDate = null)
+    {
+        if ($startDate === null) $startDate = date('Y-m-d');
+        if ($endDate === null)   $endDate   = $startDate;
+       
+        $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
         $rows = $this->getRawPickupDataUser($startDate, $endDate, $whereEnterprises);
         // error_log("getRawPickupDataUser");
         // error_log($rows);
@@ -377,46 +389,7 @@ class BookingControllerService
     }
     public function searchReservationService($search, $userData)
     {
-        // error_log("USUARIO GET");
-        // error_log($userData->productos_empresas);
-    
-        $raw = $userData->productos_empresas;
-    
-        // Caso 1: acceso total → no filtramos
-        if ($raw === 'all') {
-            $enterprises = null; // null indica que no se aplica filtro
-            // error_log("Acceso total: no se filtra por empresas");
-        }
-        // Caso 2: vacío o null → error
-        elseif ($raw === null || $raw === '') {
-            throw new Exception("El usuario no tiene empresas asignadas.");
-        }
-        // Caso 3: JSON o CSV
-        else {
-            // Intentamos decodificar JSON
-            $enterprises = json_decode($raw, true);
-    
-            // Si no es JSON válido, lo tratamos como CSV
-            if (!is_array($enterprises)) {
-                if (strpos($raw, ',') !== false) {
-                    $enterprises = array_map('trim', explode(',', $raw));
-                } else {
-                    // un solo valor
-                    $enterprises = [trim($raw)];
-                }
-            }
-            // error_log("Enterprises array: " . print_r($enterprises, true));
-        }
-    
-        // Generamos el string para usar en IN() si aplica
-        $whereEnterprises = null;
-        if (is_array($enterprises) && count($enterprises) > 0) {
-            $cleanList = array_map(fn($e) => "'" . trim($e) . "'", $enterprises);
-            $whereEnterprises = implode(",", $cleanList);
-           
-        } else {
-            // error_log("No se aplica filtro por empresas");
-        }
+        $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
         // error_log("WHERE IN string: " . $whereEnterprises);
         // Llamada a searchreservations con filtro si aplica
         if ($search === '') {
@@ -428,39 +401,8 @@ class BookingControllerService
     
     public function searchReservationProcessService($search,$userData)
     {    
-        $raw = $userData->productos_empresas;
-    
-        // Caso 1: acceso total → no filtramos
-        if ($raw === 'all') {
-            $enterprises = null; // null indica que no se aplica filtro
-            // error_log("Acceso total: no se filtra por empresas");
-        }elseif ($raw === null || $raw === '') {
-            throw new Exception("El usuario no tiene empresas asignadas.");
-        }else {
-            // Intentamos decodificar JSON
-            $enterprises = json_decode($raw, true);
-    
-            // Si no es JSON válido, lo tratamos como CSV
-            if (!is_array($enterprises)) {
-                if (strpos($raw, ',') !== false) {
-                    $enterprises = array_map('trim', explode(',', $raw));
-                } else {
-                    // un solo valor
-                    $enterprises = [trim($raw)];
-                }
-            }
-            // error_log("Enterprises array: " . print_r($enterprises, true));
-        }
-    
-        // Generamos el string para usar en IN() si aplica
-        $whereEnterprises = null;
-        if (is_array($enterprises) && count($enterprises) > 0) {
-            $cleanList = array_map(fn($e) => "'" . trim($e) . "'", $enterprises);
-            $whereEnterprises = implode(",", $cleanList);
-           
-        } else {
-            // error_log("No se aplica filtro por empresas");
-        }
+        
+        $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
         // Llamada a searchreservations con filtro si aplica
         $searchOriginal = $search;
         $search = trim($search);
@@ -471,6 +413,66 @@ class BookingControllerService
         return $this->searchreservationsprocess($search, $whereEnterprises);
 
     }
+    public function countContaDataService($data, $userData)
+    {
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+        }
+
+        $company = ($data['company'] ?? '0') !== '0' ? $data['company'] : null;
+        $product = ($data['product'] ?? '0') !== '0' ? $data['product'] : null;
+        $channel = ($data['channel'] ?? '0') !== '0' ? $data['channel'] : null;
+        $typedate = $data['typedate'] ?? 'actividad';
+
+        $dateFrom = $data['date_from'] ?? date('Y-m-d');
+        $dateTo   = $data['date_to'] ?? date('Y-m-d');
+
+        $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
+
+        return $this->countContaData($dateFrom, $dateTo, $company, $product, $channel, $typedate, $whereEnterprises);
+    }
+    public function searchContaDataService($data, $userData)
+    {
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+        }
+    
+        if (!is_array($data)) {
+            throw new Exception('Datos inválidos', 400);
+        }
+    
+        $company  = ($data['company'] ?? '0') !== '0' ? $data['company'] : null;
+        $product  = ($data['product'] ?? '0') !== '0' ? $data['product'] : null;
+        $channel  = ($data['channel'] ?? '0') !== '0' ? $data['channel'] : null;
+        $typedate = $data['typedate'] ?? 'actividad';
+    
+        $dateFrom = $data['date_from'] ?? date('Y-m-d');
+        $dateTo   = $data['date_to'] ?? date('Y-m-d');
+    
+        // 🔑 cursor params
+        $lastId = !empty($data['last_id']) ? (int) $data['last_id'] : null;
+        $limit  = min(100, max(10, (int)($data['per_page'] ?? 25)));
+    
+        $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
+    
+        $rows = $this->searchContaData(
+            $dateFrom,
+            $dateTo,
+            $company,
+            $product,
+            $channel,
+            $typedate,
+            $whereEnterprises,
+            $limit,
+            $lastId
+        );
+    
+        // 👇 contrato intacto: SOLO el array
+        return $rows;
+    }
+    
+    
+
     private function obtenerDominioLimpioService($url) {
         // Asegúrate de que tenga esquema para que parse_url funcione bien
         if (!preg_match('#^https?://#i', $url)) {
@@ -570,7 +572,7 @@ class BookingControllerService
             'email' => $data['email'] ?? null,
             'codepromo' => $data['codepromo'] ?? null,
             'code_company' => $data['code_company'] ?? null,
-            'nota' => $data['nota'] ?? null,
+            'comentario' => $data['comentario'] ?? null,
             'metodo' => $data['metodo'] ?? 'manual',
         ];
 
@@ -841,7 +843,9 @@ class BookingControllerService
             'balance'    => $data['balance'] ?? $controlOld->balance,
             'total'    => $data['total'] ?? $controlOld->total,
             'referencia'    => $data['referencia'] ?? $controlOld->referencia,
-        ]);
+            'nota'      => $data['nota'] ?? $controlOld->nota,
+            'comentario' => $data['mensaje'] ?? $data['comentario' ?? $controlOld->comentario
+            ]]);
 
         $this->update($controlOld->id, $dataUpdateControl);
         // Verificar si 'items_details' está presente en los datos entrantes
@@ -895,7 +899,9 @@ class BookingControllerService
                 'balance'    => $data['balance'] ?? $combo->balance,
                 'total'    => $data['total'] ?? $combo->total,
                 'referencia' => $data['referencia'] ?? $combo->referencia,
-            ]);
+                'nota'      => $data['nota'] ?? $combo->nota,
+                'comentario' => $data['descripcion'] ?? $data['comentario' ?? $combo->comentario
+            ]]);
 
             $this->update($combo->id, $dataUpdateControlCombo);
             if(!empty($data['descripcion'])){
@@ -984,10 +990,10 @@ class BookingControllerService
     }
     // Función para crear mensaje con nota si existe
     public function crearMensajeNotaService($controlInsert, $data, $userData, $bookingmessage_service, $history_service) {
-        if (!empty($data['nota'])) {
+        if (!empty($data['comentario'])) {
             $camposMesagge = [
                 'idpago' => $controlInsert->id,
-                'mensaje' => $data['nota'],
+                'mensaje' => $data['comentario'],
                 'usuario' => $userData->id,
                 'tipomessage' => 'nota',
             ];

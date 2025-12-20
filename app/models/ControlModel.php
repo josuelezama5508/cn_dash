@@ -10,7 +10,7 @@ class ControlModel extends ModelTable
             'actividad', 'code_company', 'product_id', 'datepicker', 'horario', 'tipo', 
             'cliente_name', 'statusCliente', 'cliente_lastname', 'nog', 'codepromo', 
             'telefono', 'hotel', 'habitacion', 'referencia', 'total', 'status', 
-            'procesado', 'checkin', 'noshow', 'accion', 'nota', 'canal', 'balance', 'moneda', 'email',
+            'procesado', 'checkin', 'noshow', 'accion', 'nota', 'comentario','canal', 'balance', 'moneda', 'email',
             'metodo'
         ];
     }

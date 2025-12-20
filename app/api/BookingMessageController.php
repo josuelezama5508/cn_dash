@@ -103,7 +103,7 @@ class BookingMessageController extends API
                 'usuario' => $userData->id,
                 'tipomessage' => $tipomessage
             ], $postData['module'], $userData->id,
-            $history);
+            $history, $booking);
             if($tipomessage != 'sapa'){
                 $mensajesCombinados = $service->replicarMensajeEnCombos($controlData->nog, $mensaje, $userData->id, $tipomessage, $postData['module'], $booking, $history);
             }

@@ -118,6 +118,10 @@ class ProductRepository
     }
     public function getProductCompanyByDashOrLang($idcompany)
     {
-        return $this->model->where("company_id = :idcompany AND active ='1' AND (show_dash = '1' OR lang_id = 1) ", ['idcompany' => $idcompany]);
+        return $this->model->where("company_id = :idcompany AND active ='1' AND (show_dash = '1' OR lang_id = 1)", ['idcompany' => $idcompany]);
+    }
+    public function getProductExistingInEnterprises($where_in){
+        $condition = $where_in ? "AND product_code IN ($where_in)" : "";
+        return $this->model->where("active = '1' AND (show_dash = '1' OR lang_id = 1) $condition", array(), ["product_name AS name", "product_code AS productcode"]);
     }
 }

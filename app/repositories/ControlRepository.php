@@ -253,7 +253,7 @@ class ControlRepository
     {
         $fields = [
             'C.idpago, C.actividad, C.datepicker, C.horario, C.cliente_name, C.cliente_lastname, C.total, C.accion, C.moneda, C.balance,
-             C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion, C.checkin, C.noshow, C.metodo',
+             C.nog, C.referencia, C.procesado, C.status, C.canal, C.tipo, C.email, C.telefono, C.hotel, C.habitacion, C.checkin, C.noshow, C.metodo, C.nota, C.comentario',
             'S.name AS statusname'
         ];
     
@@ -316,5 +316,129 @@ class ControlRepository
     
         return $this->model->consult($campos, $join, $cond, $params, false);
     }
+    private function buildContaConditions(
+        $startDate,
+        $endDate,
+        $companycode,
+        $product_id,
+        $canal_id,
+        $typedate
+    ): array {
+    
+        $typedate = $typedate ?: 'actividad';
+    
+        if ($typedate === "compra") {
+            $cond = "DATE(B.fecha_details) BETWEEN :startdate AND :enddate";
+        } else {
+            $cond = "DATE(C.datepicker) BETWEEN :startdate AND :enddate";
+        }
+    
+        $params = [
+            'startdate' => $startDate,
+            'enddate'   => $endDate,
+        ];
+    
+        if (!empty($companycode)) {
+            $cond .= " AND CO.company_code = :empresa";
+            $params['empresa'] = $companycode;
+        }
+    
+        if (!empty($canal_id)) {
+            $cond .= " AND CH.id_channel = :canal";
+            $params['canal'] = $canal_id;
+        }
+    
+        if (!empty($product_id)) {
+            $cond .= " AND P.product_id = :product_id";
+            $params['product_id'] = $product_id;
+        }
+    
+        return [$cond, $params];
+    }
+    
+    public function searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises, int $limit = 100, ?int $lastId = null) {
+        $campos = [
+            'C.idpago, C.actividad, C.datepicker, C.cliente_name, C.cliente_lastname, C.nog, C.moneda, C.referencia, C.metodo, C.accion, C.horario, C.nota',
+            'B.*',
+            'CO.company_name, CO.primary_color, CO.statusD',
+            'S.name AS status, S.color AS statuscolor',
+            'P.product_name AS producto, P.product_code',
+            'U.username',
+            'CH.nombre AS canal',
+            'R.nombre AS rep',
+            'CMS.comision_productos AS cmsproductos, CMS.comision_empresa'
+        ];
+    
+        $companyCondition = $whereEnterprises
+            ? "AND CO.company_code IN ($whereEnterprises)"
+            : "";
+    
+        $canalJson = "JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].canal'))";
+        $repJson   = "JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].rep'))";
+    
+        $join = "C
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
+            INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
+            INNER JOIN estatus AS S ON C.status = S.id_status
+            INNER JOIN products AS P ON C.product_id = P.product_id
+            LEFT JOIN users AS U ON B.usuario = U.user_id
+            LEFT JOIN channel AS CH ON $canalJson = CH.id_channel
+            LEFT JOIN rep AS R ON $repJson = R.idrep
+            LEFT JOIN comisiones AS CMS ON CO.company_id = CMS.empresa_id";
+    
+        [$cond, $params] = $this->buildContaConditions(
+            $startDate,
+            $endDate,
+            $companycode,
+            $product_id,
+            $canal_id,
+            $typedate
+        );
+    
+        // 🔥 CURSOR
+        if ($lastId) {
+            $cond .= " AND C.idpago < :lastId";
+            $params['lastId'] = $lastId;
+        }
+        $limit = (int) $limit;
+        // ORDEN + LIMITE
+        $cond .= " ORDER BY C.idpago DESC LIMIT $limit";
+    
+        return $this->model->consult($campos, $join, $cond, $params, false);
+    }
+    
+    public function countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises) {
+        $campos = ['COUNT(DISTINCT C.idpago) AS total'];
+    
+        $companyCondition = $whereEnterprises
+            ? "AND CO.company_code IN ($whereEnterprises)"
+            : "";
+    
+        $canalJson = "JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].canal'))";
+        $repJson   = "JSON_UNQUOTE(JSON_EXTRACT(C.canal, '$[0].rep'))";
+    
+        $join = "C
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
+            INNER JOIN bookingdetails AS B ON C.idpago = B.idpago
+            INNER JOIN estatus AS S ON C.status = S.id_status
+            INNER JOIN products AS P ON C.product_id = P.product_id
+            LEFT JOIN channel AS CH ON $canalJson = CH.id_channel
+            LEFT JOIN rep AS R ON $repJson = R.idrep
+            LEFT JOIN comisiones AS CMS ON CO.company_id = CMS.empresa_id";
+    
+        [$cond, $params] = $this->buildContaConditions(
+            $startDate,
+            $endDate,
+            $companycode,
+            $product_id,
+            $canal_id,
+            $typedate
+        );
+    
+        $result = $this->model->consult($campos, $join, $cond, $params, true);
+    
+        return (int) ($result[0]['total'] ?? 0);
+    }
+        
     
 }

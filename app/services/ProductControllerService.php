@@ -109,6 +109,9 @@ class ProductControllerService
         $where = ($search != "") ? "AND CONCAT(P.product_name,' ',P.product_code,' ',P.productdefine) LIKE '%$search%'" : "";
         return $this->products_repo->search($where);
     }
+    public function getProductExistingInEnterprises($where_in){
+        return $this->products_repo->getProductExistingInEnterprises($where_in);
+    }
     private function errorResponse($message, $status = 404)
     {
         return [
@@ -307,19 +310,75 @@ class ProductControllerService
     }
     public function getAllDataLangV2($company_code, $company_service, $lang = "en", $platform = "dash")
     {
-
         if (!$company_code) {
             return null;
         }
-
         $langId = ($lang === 'en') ? 1 : 2;
-        $result = $this->getCompanyProductsByPlatformAndLanguage($company_code, $langId, $platform, $company_service);
-
-        if (empty($result)) {
-            return $this->errorResponse('No se encontraron productos para la empresa.', 404);
+        $result = $this->getCompanyProductsByPlatformAndLanguage($company_code, $langId, $platform, $company_service);  
+        if (empty($result) || !is_array($result) || isset($result['error']) || isset($result['status'])) {
+            return null;
         }
-
+    
         return $result;
+    }
+    
+    private function getWhereProductsEnterprises($userData, $booking_service, $company_service)
+    {
+        // primero respetamos el acceso por empresa
+        $whereEnterprises = $booking_service->getWhereEnterprisesByUser($userData);
+        // acceso total → no filtramos productos
+        if ($whereEnterprises === null) {
+            return null;
+        }
+        // obtenemos empresas permitidas
+        $dataEnterprises = $company_service->getCompaniesByCodesWhereIn($whereEnterprises);
+        error_log("EMPRESA:");
+        error_log(print_r($dataEnterprises, true));
+
+        if (empty($dataEnterprises)) {
+            return null;
+        }
+    
+        // recolectar productos únicos
+        $products = [];
+    
+        foreach ($dataEnterprises as $empresa) {
+            if (empty($empresa->productos)) continue;
+        
+            $productosEmpresa = json_decode($empresa->productos, true);
+            
+            error_log("PRODUCTOS EMPRESA");
+            error_log(print_r($productosEmpresa, true));
+
+            if (!is_array($productosEmpresa)) continue;
+        
+            foreach ($productosEmpresa as $producto) {
+                if (!empty($producto['codigoproducto'])) {
+                    $products[$producto['codigoproducto']] = true;
+                }
+            }
+        }
+        error_log("PRODUCTOS:");
+        error_log(print_r($products, true));
+        // si no hay productos, no filtramos
+        if (empty($products)) {
+            return null;
+        }
+    
+        // mismo formato que enterprises
+        $cleanList = array_map(
+            fn($p) => "'" . $p . "'",
+            array_keys($products)
+        );
+    
+        return implode(',', $cleanList);
+    }
+    public function getProductsEnterprises($userData, $booking_service, $company_service)
+    {
+        $where_in = $this->getWhereProductsEnterprises($userData, $booking_service, $company_service);
+        error_log("PRODUCTOS");
+        error_log($where_in);
+        return $this->getProductExistingInEnterprises($where_in);
     }
     private function asginationData($data)
     {

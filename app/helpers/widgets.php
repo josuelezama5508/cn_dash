@@ -15,7 +15,8 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
     $rep_service            = ServiceContainer::get('RepControllerService'); 
     $estatussapa_service    = ServiceContainer::get('EstatusSapaControllerService');
     $rol_service            = ServiceContainer::get('RolControllerService');
-    $user_service            = ServiceContainer::get('UserControllerService');
+    $user_service           = ServiceContainer::get('UserControllerService');
+    $booking_service        = ServiceContainer::get('BookingControllerService');
     function get_request_param($key, $default = null) {
         return $_REQUEST[$key] ?? $default;
     }
@@ -65,7 +66,7 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
     }
     
     function get_category_data($category, $search, $selected_id, $id_user) {
-        global $company_service, $languagecodes_service, $prices_service, $currencycodes_service, $product_service, $canal_service, $rep_service, $estatussapa_service, $rol_service, $user_service;
+        global $company_service, $languagecodes_service, $prices_service, $currencycodes_service, $product_service, $canal_service, $rep_service, $estatussapa_service, $rol_service, $user_service, $booking_service;
         switch ($category) {
             case 'companies':
                 $companies = $company_service->getAllCompaniesActiveService($id_user, $user_service);
@@ -83,20 +84,71 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                     $default[] = ["id" => $row->company_code, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name", "idcompany" => $row->id];
                 }
                 return [$default, fn($item) => $item->name];
-                case 'productscompany':
-                    $products = $product_service->getAllDataLangV2($search, $company_service, "en", "dash");
-                    // Primer opción obligatoria
-                    $default = [["id" => 0, "name" => "Seleccione un producto"]];
-                
-                    // Solo agregar productos si hay resultados
-                    if (!empty($products)) {
-                        foreach ($products as $row) {
-                            $default[] = ["id" => $row->id, "name" => $row->productname];
-                        }
+            case 'productscompany':
+                $products = $product_service->getAllDataLangV2($search, $company_service, "en", "dash");
+                // Primer opción obligatoria
+                $default = [["id" => 0, "name" => "Seleccione un producto"]];
+            
+                // Solo agregar productos si hay resultados
+                if (!empty($products)) {
+                    foreach ($products as $row) {
+                        $default[] = ["id" => $row->id, "name" => $row->productname];
                     }
-                
+                }
+            
+                return [$default, fn($item) => $item->name];
+            case 'productscompanyv2':
+                $products = $product_service->getAllDataLangV2($search, $company_service, "en", "dash");
+                // Primer opción obligatoria
+                $default = [["id" => 0, "name" => "Seleccione un producto"]];
+            
+                // Solo agregar productos si hay resultados
+                if (!empty($products)) {
+                    foreach ($products as $row) {
+                        $default[] = ["id" => $row->id, "name" => $row->productname];
+                    }
+                }
+            
+                return [$default, fn($item) => $item->name];
+            case 'productscompanyv3':
+                $products = $product_service->getProductsEnterprises($user_service->find($id_user), $booking_service, $company_service);
+                // Primer opción obligatoria
+                $default = [["id" => 0, "name" => "Seleccione un producto"]];
+            
+                // Solo agregar productos si hay resultados
+                if (!empty($products)) {
+                    foreach ($products as $row) {
+                        $default[] = ["id" => $row->id, "name" => $row->name];
+                    }
+                }
+            
                     return [$default, fn($item) => $item->name];
-                
+            case 'productscompanyv4':
+                $products = $product_service->getProductsEnterprises($user_service->find($id_user), $booking_service, $company_service);
+                // Primer opción obligatoria
+                $default = [["id" => 0, "name" => "Todos los productos"]];
+            
+                // Solo agregar productos si hay resultados
+                if (!empty($products)) {
+                    foreach ($products as $row) {
+                        $default[] = ["id" => $row->id, "name" => $row->name];
+                    }
+                }
+            
+                    return [$default, fn($item) => $item->name];   
+            case 'productscompanyv5':
+                $products = $product_service->getAllDataLangV2($search, $company_service, "en", "dash");
+                // Primer opción obligatoria
+                $default = [["id" => 0, "name" => "Todos los productos"]];
+            
+                // Solo agregar productos si hay resultados
+                if (!empty($products)) {
+                    foreach ($products as $row) {
+                        $default[] = ["id" => $row->id, "name" => $row->productname];
+                    }
+                }
+            
+                return [$default, fn($item) => $item->name];    
             case 'products':
                 $products = $product_service->getProductCompanyByDashOrLang($search);
                 $default = [["id" => 0, "name" => "Seleccione un producto"]];
