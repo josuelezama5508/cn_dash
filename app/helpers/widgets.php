@@ -78,10 +78,10 @@ if (in_array($_SERVER['REQUEST_METHOD'], ['post', 'POST'])) {
                 return [$default, fn($item) => $item->name];
             case 'companiesv2':
                 $companies = $company_service->getAllCompaniesActiveService($id_user, $user_service);
-                $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "alt" => "No icon", "companycode" => ""]];
+                $default = [["id" => 0, "name" => "Seleccione una empresa", "logo" => asset("/img/no-fotos.png"), "companycode" => "", "alt" => "No icon", "companycode" => ""]];
                 $base = (isset($_SERVER['HTTPS']) ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/cn_dash';
                 foreach ($companies as $row) {
-                    $default[] = ["id" => $row->company_code, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name", "idcompany" => $row->id];
+                    $default[] = ["id" => $row->company_code, "name" => $row->company_name, "logo" => $base . $row->company_logo, "alt" => "Logo de $row->company_name", "idcompany" => $row->id, "companycode" => $row->company_code];
                 }
                 return [$default, fn($item) => $item->name];
             case 'productscompany':

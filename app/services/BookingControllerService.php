@@ -99,6 +99,180 @@ class BookingControllerService
     {
         return $this->control_repo->searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises);
     }
+    public function getBookingDetailsByRange( $empresa, $fecha_inicio, $fecha_fin, $whereEnterprises, $tipo_fecha){
+        return $this->control_repo->getBookingDetailsByRange( $empresa, $fecha_inicio, $fecha_fin, $whereEnterprises, $tipo_fecha );
+    }
+    private function monthName(string $month): string
+    {
+        $months = [
+            '01' => 'Enero',
+            '02' => 'Febrero',
+            '03' => 'Marzo',
+            '04' => 'Abril',
+            '05' => 'Mayo',
+            '06' => 'Junio',
+            '07' => 'Julio',
+            '08' => 'Agosto',
+            '09' => 'Septiembre',
+            '10' => 'Octubre',
+            '11' => 'Noviembre',
+            '12' => 'Diciembre',
+        ];
+
+        return $months[$month] ?? $month;
+    }
+
+    private function groupAndCount(array $rows, string $periodo, string $combos, string $tipo): array
+    {
+        $result = [];
+
+        $tipoFecha = $tipo == 'actividad' ? 'datepicker' : 'fecha_details';
+        foreach ($rows as $row) {
+            $fecha = isset($row[$tipoFecha])
+                ? date('Y-m-d', strtotime($row[$tipoFecha]))
+                : null;
+
+            if (!$fecha) continue;
+
+            $year  = date('Y', strtotime($fecha));
+            $month = date('m', strtotime($fecha));
+            $day   = $fecha;
+
+            $itemsRaw = json_decode($row['items_details'], true);
+            if (!is_array($itemsRaw)) continue;
+
+            // si viene un solo objeto, lo envuelvo
+            $items = isset($itemsRaw['tipo'])
+                ? [ $itemsRaw ]
+                : $itemsRaw;
+
+            foreach ($items as $item) {
+
+
+                if (($item['tipo'] ?? '') !== 'tour') continue;
+
+                $qty   = (int)($item['item'] ?? 0);
+                $price = (float)($item['price'] ?? 0);
+
+                if ($qty <= 0) continue;
+
+                // SOLO filtras cuando es "sin"
+                if ($combos === 'sin' && $price <= 0) {
+                    continue;
+                }
+
+                // aquí ya cuentas siempre
+
+                if ($periodo === 'anio') {
+
+                    $monthName = $this->monthName($month);
+                    $result[$year][$monthName][$day] =
+                        ($result[$year][$monthName][$day] ?? 0) + $qty;
+                
+                } elseif ($periodo === 'mes') {
+                
+                    $result[$year][$month][$day] =
+                        ($result[$year][$month][$day] ?? 0) + $qty;
+                
+                } else { // dia
+                
+                    $result[$day] =
+                        ($result[$day] ?? 0) + $qty;
+                }
+                
+            }
+        }
+
+        return $result;
+    }
+    public function countGroupedPaxService($data, $userData)
+    {
+        error_log("========== countGroupedPaxService START ==========");
+    
+        try {
+            $data = json_decode($data, true);
+            error_log("[RAW DATA] " . json_encode($data));
+            $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
+            if (!is_array($data)) {
+                error_log("[ERROR] data no es array");
+                return [];
+            }
+    
+            if (!isset($data['periodo'], $data['company'], $data['tipo_fecha'], $data['combos'])) {
+                error_log("[ERROR] Faltan llaves obligatorias");
+                error_log("[DATA KEYS] " . implode(',', array_keys($data)));
+                return [];
+            }
+    
+            $periodo   = (string)$data['periodo'];
+            $empresa   = ($data['company'] !== '' && $data['company'] !== 'Todas_Las_Empresas')
+                ? $data['company']
+                : null;
+            $tipoFecha = (string)$data['tipo_fecha'];
+            $combos    = (string)$data['combos'];
+    
+            error_log("[PARSED] periodo=$periodo | empresa=" . var_export($empresa, true)
+                . " | tipo_fecha=$tipoFecha | combos=$combos"
+            );
+    
+            $anio = (int)date('Y');
+    
+            if ($periodo === 'anio') {
+                $fecha_inicio = ($anio - 3) . '-01-01';
+                $fecha_fin    = $anio . '-12-31';
+            } elseif ($periodo === 'mes') {
+                $fecha_inicio = $anio . '-01-01';
+                $fecha_fin    = $anio . '-12-31';
+            } elseif ($periodo === 'dia') {
+                if (empty($data['fecha_i']) || empty($data['fecha_f'])) {
+                    error_log("[ERROR] Falta fecha_i o fecha_f");
+                    return [];
+                }
+                $fecha_inicio = $data['fecha_i'];
+                $fecha_fin    = $data['fecha_f'];
+            } else {
+                error_log("[ERROR] periodo inválido: $periodo");
+                return [];
+            }
+    
+            error_log("[RANGE] $fecha_inicio -> $fecha_fin");
+    
+            $rows = $this->getBookingDetailsByRange(
+                $empresa,
+                $fecha_inicio,
+                $fecha_fin,
+                $whereEnterprises,
+                $tipoFecha,
+            );
+    
+            error_log("[ROWS TYPE] " . gettype($rows));
+            error_log("[ROWS COUNT] " . (is_array($rows) ? count($rows) : 'N/A'));
+    
+            if (!is_array($rows)) {
+                error_log("[ERROR] getBookingDetailsByRange no regresó array");
+                return [];
+            }
+    
+            $result = $this->groupAndCount($rows, $periodo, $combos, $tipoFecha);
+    
+            error_log("[RESULT ROWS] " . print_r($result, true));
+            error_log("[RESULT TYPE] " . gettype($result));
+            error_log("========== countGroupedPaxService END (OK) ==========");
+    
+            return $result;
+    
+        } catch (Throwable $e) {
+    
+            error_log("========== countGroupedPaxService EXCEPTION ==========");
+            error_log("[MESSAGE] " . $e->getMessage());
+            error_log("[FILE] " . $e->getFile() . ':' . $e->getLine());
+            error_log("[TRACE] " . $e->getTraceAsString());
+            error_log("========== countGroupedPaxService END (FAIL) ==========");
+    
+            return [];
+        }
+    }
+    
     public function getByDateDispo($date = null)
     {
         if ($date === null) {
@@ -844,8 +1018,8 @@ class BookingControllerService
             'total'    => $data['total'] ?? $controlOld->total,
             'referencia'    => $data['referencia'] ?? $controlOld->referencia,
             'nota'      => $data['nota'] ?? $controlOld->nota,
-            'comentario' => $data['mensaje'] ?? $data['comentario' ?? $controlOld->comentario
-            ]]);
+            'comentario' => $data['mensaje'] ?? $data['comentario'] ?? $controlOld->comentario
+            ]);
 
         $this->update($controlOld->id, $dataUpdateControl);
         // Verificar si 'items_details' está presente en los datos entrantes
@@ -900,8 +1074,8 @@ class BookingControllerService
                 'total'    => $data['total'] ?? $combo->total,
                 'referencia' => $data['referencia'] ?? $combo->referencia,
                 'nota'      => $data['nota'] ?? $combo->nota,
-                'comentario' => $data['descripcion'] ?? $data['comentario' ?? $combo->comentario
-            ]]);
+                'comentario' => $data['descripcion'] ?? $data['comentario'] ?? $combo->comentario
+            ]);
 
             $this->update($combo->id, $dataUpdateControlCombo);
             if(!empty($data['descripcion'])){

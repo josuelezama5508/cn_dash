@@ -394,19 +394,19 @@ class ControlRepository
             $canal_id,
             $typedate
         );
-    
-        // 🔥 CURSOR
         if ($lastId) {
             $cond .= " AND C.idpago < :lastId";
             $params['lastId'] = $lastId;
         }
         $limit = (int) $limit;
-        // ORDEN + LIMITE
         $cond .= " ORDER BY C.idpago DESC LIMIT $limit";
     
         return $this->model->consult($campos, $join, $cond, $params, false);
     }
-    
+    public function searchGroupGraficData($periodo, $company, $tipofecha, $combos, $fecha = null){
+        
+
+    }
     public function countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises) {
         $campos = ['COUNT(DISTINCT C.idpago) AS total'];
     
@@ -439,6 +439,79 @@ class ControlRepository
     
         return (int) ($result[0]['total'] ?? 0);
     }
-        
+    public function getBookingDetailsByRange(
+        $empresa,
+        $fecha_inicio,
+        $fecha_fin,
+        $whereEnterprises,
+        $tipo_fecha = 'compra'
+    ) {
+        error_log("========== getBookingDetailsByRange START ==========");
+    
+        error_log("[INPUT] empresa=" . var_export($empresa, true)
+            . " | fecha_inicio=$fecha_inicio"
+            . " | fecha_fin=$fecha_fin"
+            . " | tipo_fecha=$tipo_fecha"
+        );
+    
+        $fechaCampo = ($tipo_fecha != 'compra')
+            ? 'C.datepicker'
+            : 'B.fecha_details';
+        $filtroempresa= $empresa ? "AND C.code_company = '$empresa'" : '';
+        $companyCondition = $whereEnterprises
+            ? "AND CO.company_code IN ($whereEnterprises)"
+            : "";
+        $sql = "
+            SELECT C.datepicker,
+                B.*
+            FROM control C
+            INNER JOIN bookingdetails B ON B.idpago = C.idpago
+            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
+            WHERE DATE($fechaCampo) BETWEEN :fecha_inicio AND :fecha_fin
+                AND C.status NOT IN (0,2)
+                $filtroempresa
+        ";
+    
+        $params = [
+            'fecha_inicio' => $fecha_inicio,
+            'fecha_fin'    => $fecha_fin
+        ];
+    
+        error_log("[SQL] " . trim($sql));
+        error_log("[PARAMS] " . json_encode($params));
+    
+        try {
+    
+            $rows = $this->model->SqlQuery(
+                ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
+                $sql,
+                $params
+            );
+    
+            if (!is_array($rows)) {
+                error_log("[ERROR] SqlQuery no devolvió array");
+                error_log("========== getBookingDetailsByRange END (FAIL) ==========");
+                return [];
+            }
+    
+            error_log("[RESULT] filas=" . count($rows));
+            error_log("[RESULT ROWS] " . print_r($rows, true));
+
+            error_log("========== getBookingDetailsByRange END (OK) ==========");
+    
+            return $rows;
+    
+        } catch (Throwable $e) {
+    
+            error_log("========== getBookingDetailsByRange EXCEPTION ==========");
+            error_log("[MESSAGE] " . $e->getMessage());
+            error_log("[FILE] " . $e->getFile() . ':' . $e->getLine());
+            error_log("[TRACE] " . $e->getTraceAsString());
+            error_log("========== getBookingDetailsByRange END (EXCEPTION) ==========");
+    
+            return [];
+        }
+    }
+    
     
 }

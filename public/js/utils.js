@@ -59,6 +59,23 @@ function getDaySuffix(day) {
     default: return "th";
     }
 }
+function formatMonth(mes, type = "long", lang = "en") {
+    const MONTHS = {
+        short: {
+            en: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+            es: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
+        },
+        long: {
+            en: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+            es: ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+        }
+    };
+
+    const index = mes - 1;
+
+    return MONTHS[type]?.[lang]?.[index] ?? '';
+}
+
 function formatDate(dateString, lang = "en") {
     if (!dateString) return null;
     // Parse manual para evitar problemas de zona horaria

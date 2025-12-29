@@ -104,11 +104,11 @@ async function sendExcelData() {
     const typedate = $(`[name='tipo_fecha']:checked`);
     const companyName = companyOption.val() !== '0'
         ? companyOption.text().trim().replace(/\s+/g, '_')
-        : 'Todas_Las_Empresas';
+        : '';
 
     const channelName = channelOption.val() !== '0'
         ? channelOption.text().trim().replace(/\s+/g, '_')
-        : 'Todos_Los_Canales';
+        : '';
 
     const from = dateRange.from ?? todayYMD();
     const to   = dateRange.to   ?? todayYMD();
@@ -254,9 +254,7 @@ function obtenerComisionFinal(codigoProducto, comisionEmpresaJson, comisionEmpre
                 for (const empresa of empresas) {
                     if (!Array.isArray(empresa.productos)) continue;
 
-                    const producto = empresa.productos.find(
-                        p => p.codigoproducto === codigoProducto
-                    );
+                    const producto = empresa.productos.find(p => p.codigoproducto === codigoProducto);
 
                     if (producto && !isNaN(producto.comision)) {
                         console.log(Math.round(producto.comision * 1000) / 10)

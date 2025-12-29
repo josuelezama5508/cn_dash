@@ -21,8 +21,7 @@
                                     id="logocompanyReportes"
                                     src="http://localhost/cn_dash/public/img/no-fotos.png"
                                     alt="No icon"
-                                    class="img-fluid"
-                                    style="max-height:32px; width:auto;"
+                                    class="img-fluid company-logo-grafics"
                                 >
                                 <div class="flex-grow-1" id="divCompany"></div>
                             </div>
@@ -79,7 +78,7 @@
                                     <i class="bi bi-file-earmark-excel"></i>
                                 </button>
 
-                                <button
+                                <!-- <button
                                     type="button"
                                     id="btnGrafica"
                                     class="btn btn-primary d-flex align-items-center justify-content-center"
@@ -87,7 +86,7 @@
                                     title="Ver gráfica"
                                 >
                                     <i class="bi bi-bar-chart-line"></i>
-                                </button>
+                                </button> -->
                             </div>
                         </div>
 

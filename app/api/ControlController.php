@@ -96,7 +96,8 @@ class ControlController extends API
                 'searchReservationProcess' => 'searchReservationProcess',
                 'getTagId' => 'getTagId',
                 'idlocation' => 'idlocation',
-                'searchConta' => 'searchConta'
+                'searchConta' => 'searchConta',
+                'searchContaGrafics' => 'searchContaGrafics'
                 // 'getAllRep' => 'getAllRep'
             ]);
 
@@ -119,6 +120,7 @@ class ControlController extends API
                 'searchConta' => fn() => $booking->searchContaDataService($data, $user),
                 'getTagId' => fn() => $tag->find($data),
                 'idlocation' => fn()=> $this->service('LocationPortsControllerService')->find("8"),
+                'searchContaGrafics' => fn() => $booking->countGroupedPaxService($data, $user),
                 // 'getAllRep' => fn() => $this->service('CanalControllerService')->getAll()
             ];
 

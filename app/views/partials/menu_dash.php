@@ -45,6 +45,9 @@
                     <ul class="center menu-options">    
                         <li><a class="row-content-left" href="<?= route('reportes') ?>"><i class="material-icons">input</i>Reportes</a></li>
                     </ul>
+                    <ul class="center menu-options">    
+                        <li><a class="row-content-left" href="<?= route('grafics') ?>"><i class="material-icons">input</i>Grafics</a></li>
+                    </ul>
                 <?php } ?>
                 
                 <ul class="bottom menu-options">
