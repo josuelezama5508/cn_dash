@@ -52,9 +52,7 @@ class BookingController extends Controller
         $productCode = $param[1];
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador" || $userInfo['data']['level'] === "reservaciones"){
             $this->view('dashboard/view_booking', [
                 "company" => $companyCode,

@@ -117,7 +117,7 @@
                         <div class="container" style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; flex-direction: row; gap: 10px;"> 
                                 <div id="toursBlock" class="container" style="display: flex; flex-direction: column; gap: 10px; border-color: transparent; padding: 0px;">
-                                    <div style="padding: 5px 0px; border-bottom: 2px solid #D70000;">
+                                    <div style="padding: 5px 0px; border-bottom: 1px solid #D70000;">
                                         <span class="row-content-left" style="height: 22px; margin-left: 10px;">
                                             <i class="bi bi-ticket-detailed row-content-left"></i> Tickets
                                         </span>
@@ -127,7 +127,7 @@
                                     </div>
                                 </div>
                                 <div id="addonsBlock" class="container" style="display: flex; flex-direction: column; gap: 10px; border-color: transparent; padding: 0px;">
-                                    <div  style="padding: 5px; border-bottom: 2px solid #D70000;">
+                                    <div  style="padding: 5px; border-bottom: 1px solid #D70000;">
                                         <span class="row-content-left" style="height: 22px; margin-left: 10px;">
                                             <i class="bi bi-ticket-detailed-fill row-content-left"></i> Addons
                                         </span>
@@ -141,7 +141,7 @@
   
                                 <!-- 📅 Fecha disponible (ocupa 2) -->
                                 <article style="flex:1; display:flex; flex-direction:column; gap:10px;">
-                                    <header style="padding:5px; border-bottom:2px solid #D70000;">
+                                    <header style="padding:5px; border-bottom:1px solid #D70000;">
                                     <h2 style="font-size:14px; margin:0; display:flex; align-items:center; gap:5px;">
                                         <i class="bi bi-calendar4-range"></i> Fecha Disponible
                                     </h2>
@@ -153,7 +153,7 @@
 
                                 <!-- ⏰ Horario disponible (ocupa 1) -->
                                 <article style="flex:2; display:flex; flex-direction:column; gap:10px;">
-                                    <header style="padding:5px; border-bottom:2px solid #D70000;">
+                                    <header style="padding:5px; border-bottom:1px solid #D70000;">
                                     <h2 style="font-size:14px; margin:0; display:flex; align-items:center; gap:5px;">
                                         <i class="bi bi-alarm"></i> Horario Disponible
                                     </h2>

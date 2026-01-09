@@ -95,12 +95,15 @@ class BookingControllerService
     public function countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises){
         return $this->control_repo->countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises);
     }
-    public function searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises)
+    public function searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises, $limit, $lastId)
     {
-        return $this->control_repo->searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises);
+        return $this->control_repo->searchContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises, $limit, $lastId);
     }
-    public function getBookingDetailsByRange( $empresa, $fecha_inicio, $fecha_fin, $whereEnterprises, $tipo_fecha){
-        return $this->control_repo->getBookingDetailsByRange( $empresa, $fecha_inicio, $fecha_fin, $whereEnterprises, $tipo_fecha );
+    public function getBookingDetailsByRange( $empresa, $fecha_inicio, $fecha_fin, $whereEnterprises, $tipo_fecha, $lastId, $limit){
+        return $this->control_repo->getBookingDetailsByRange( $empresa, $fecha_inicio, $fecha_fin, $whereEnterprises, $tipo_fecha, $lastId, $limit);
+    }
+    public function getSapaByIdPagoActive($id){
+        return $this->control_repo->getSapaByIdPagoActive($id);
     }
     private function monthName(string $month): string
     {
@@ -122,7 +125,7 @@ class BookingControllerService
         return $months[$month] ?? $month;
     }
 
-    private function groupAndCount(array $rows, string $periodo, string $combos, string $tipo): array
+    private function groupAndCount(array $rows, string $periodo, string $combos, string $tipo, array $result = []): array
     {
         $result = [];
 
@@ -186,92 +189,87 @@ class BookingControllerService
         return $result;
     }
     public function countGroupedPaxService($data, $userData)
-    {
-        error_log("========== countGroupedPaxService START ==========");
-    
-        try {
-            $data = json_decode($data, true);
-            error_log("[RAW DATA] " . json_encode($data));
-            $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
-            if (!is_array($data)) {
-                error_log("[ERROR] data no es array");
+{
+    try {
+        $data = json_decode($data, true);
+        $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
+
+        if (!is_array($data)) {
+            return [];
+        }
+
+        if (!isset($data['periodo'], $data['company'], $data['tipo_fecha'], $data['combos'])) {
+            return [];
+        }
+
+        $periodo   = (string)$data['periodo'];
+        $empresa   = ($data['company'] !== '' && $data['company'] !== 'Todas_Las_Empresas')
+            ? $data['company']
+            : null;
+        $tipoFecha = (string)$data['tipo_fecha'];
+        $combos    = (string)$data['combos'];
+
+        $anio = (int)date('Y');
+
+        if ($periodo === 'anio') {
+            $fecha_inicio = ($anio - 3) . '-01-01';
+            $fecha_fin    = $anio . '-12-31';
+        } elseif ($periodo === 'mes') {
+            $fecha_inicio = $anio . '-01-01';
+            $fecha_fin    = $anio . '-12-31';
+        } elseif ($periodo === 'dia') {
+            if (empty($data['fecha_i']) || empty($data['fecha_f'])) {
                 return [];
             }
-    
-            if (!isset($data['periodo'], $data['company'], $data['tipo_fecha'], $data['combos'])) {
-                error_log("[ERROR] Faltan llaves obligatorias");
-                error_log("[DATA KEYS] " . implode(',', array_keys($data)));
-                return [];
-            }
-    
-            $periodo   = (string)$data['periodo'];
-            $empresa   = ($data['company'] !== '' && $data['company'] !== 'Todas_Las_Empresas')
-                ? $data['company']
-                : null;
-            $tipoFecha = (string)$data['tipo_fecha'];
-            $combos    = (string)$data['combos'];
-    
-            error_log("[PARSED] periodo=$periodo | empresa=" . var_export($empresa, true)
-                . " | tipo_fecha=$tipoFecha | combos=$combos"
-            );
-    
-            $anio = (int)date('Y');
-    
-            if ($periodo === 'anio') {
-                $fecha_inicio = ($anio - 3) . '-01-01';
-                $fecha_fin    = $anio . '-12-31';
-            } elseif ($periodo === 'mes') {
-                $fecha_inicio = $anio . '-01-01';
-                $fecha_fin    = $anio . '-12-31';
-            } elseif ($periodo === 'dia') {
-                if (empty($data['fecha_i']) || empty($data['fecha_f'])) {
-                    error_log("[ERROR] Falta fecha_i o fecha_f");
-                    return [];
-                }
-                $fecha_inicio = $data['fecha_i'];
-                $fecha_fin    = $data['fecha_f'];
-            } else {
-                error_log("[ERROR] periodo inválido: $periodo");
-                return [];
-            }
-    
-            error_log("[RANGE] $fecha_inicio -> $fecha_fin");
-    
+            $fecha_inicio = $data['fecha_i'];
+            $fecha_fin    = $data['fecha_f'];
+        } else {
+            return [];
+        }
+
+        $result = [];
+        $lastId = null;
+        $limit  = 1000;
+        
+        do {
             $rows = $this->getBookingDetailsByRange(
                 $empresa,
                 $fecha_inicio,
                 $fecha_fin,
                 $whereEnterprises,
                 $tipoFecha,
+                $lastId,
+                $limit
             );
-    
-            error_log("[ROWS TYPE] " . gettype($rows));
-            error_log("[ROWS COUNT] " . (is_array($rows) ? count($rows) : 'N/A'));
-    
-            if (!is_array($rows)) {
-                error_log("[ERROR] getBookingDetailsByRange no regresó array");
-                return [];
+        
+            if (empty($rows)) {
+                break;
             }
-    
-            $result = $this->groupAndCount($rows, $periodo, $combos, $tipoFecha);
-    
-            error_log("[RESULT ROWS] " . print_r($result, true));
-            error_log("[RESULT TYPE] " . gettype($result));
-            error_log("========== countGroupedPaxService END (OK) ==========");
-    
-            return $result;
-    
-        } catch (Throwable $e) {
-    
-            error_log("========== countGroupedPaxService EXCEPTION ==========");
-            error_log("[MESSAGE] " . $e->getMessage());
-            error_log("[FILE] " . $e->getFile() . ':' . $e->getLine());
-            error_log("[TRACE] " . $e->getTraceAsString());
-            error_log("========== countGroupedPaxService END (FAIL) ==========");
-    
-            return [];
-        }
+        
+            $result = $this->groupAndCount(
+                $rows,
+                $periodo,
+                $combos,
+                $tipoFecha,
+                $result
+            );
+        
+            $lastRow = end($rows);
+            $lastId  = $lastRow['id_details'];
+        
+        } while (count($rows) === $limit);
+        
+        return $result;
+        
+
+    } catch (Throwable $e) {
+        error_log("========== countGroupedPaxService EXCEPTION ==========");
+        error_log($e->getMessage());
+        error_log("========== END ==========");
+        return [];
     }
+}
+
     
     public function getByDateDispo($date = null)
     {
@@ -623,26 +621,42 @@ class BookingControllerService
         $dateFrom = $data['date_from'] ?? date('Y-m-d');
         $dateTo   = $data['date_to'] ?? date('Y-m-d');
     
-        // 🔑 cursor params
-        $lastId = !empty($data['last_id']) ? (int) $data['last_id'] : null;
-        $limit  = min(100, max(10, (int)($data['per_page'] ?? 25)));
-    
         $whereEnterprises = $this->getWhereEnterprisesByUser($userData);
     
-        $rows = $this->searchContaData(
-            $dateFrom,
-            $dateTo,
-            $company,
-            $product,
-            $channel,
-            $typedate,
-            $whereEnterprises,
-            $limit,
-            $lastId
-        );
+        $limit   = 500; // aquí decides cuánto duele
+        $lastId  = null;
+        $result  = [];
     
-        // 👇 contrato intacto: SOLO el array
-        return $rows;
+        do {
+            $rows = $this->searchContaData(
+                $dateFrom,
+                $dateTo,
+                $company,
+                $product,
+                $channel,
+                $typedate,
+                $whereEnterprises,
+                $limit,
+                $lastId
+            );
+    
+            if (empty($rows)) {
+                break;
+            }
+            $rows = array_map(fn($r) => (array) $r, $rows);
+
+            // acumulación limpia
+            foreach ($rows as $row) {
+                $result[] = $row;
+            }
+    
+            // cursor
+            $lastRow = end($rows);
+            $lastId  = $lastRow['idpago'];
+    
+        } while (count($rows) === $limit);
+    
+        return $result;
     }
     
     
@@ -769,7 +783,8 @@ class BookingControllerService
     
         return [$items, $total];
     }
-    public function getByBookingDataService($idpago, $bookingDetails_service, $product_service, $company_service, $empresainfo_service,$locationports_service){
+    public function getByBookingDataService($idpago, $bookingDetails_service, $product_service, $company_service, $empresainfo_service,$locationports_service, $is_whit_sapa)
+    {
         $dataControl = $this->find($idpago);
         $dataBooking = $bookingDetails_service->findByIdPago($idpago);
         $bookinDetail= $dataBooking[0] ?? null;
@@ -781,10 +796,32 @@ class BookingControllerService
         $empresaInfo = $dataEmpresaInfo[0] ?? null;
         $dataLocationPort = $this->buildLocationService($dataProduct->id_location, $locationports_service);
         // Devolver los datos necesarios para tiketConfirm
+        $base_url = (
+            (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http'
+        ) . '://' . $_SERVER['HTTP_HOST'] . '/cn_dash';
+        $logo = $empresa->company_logo ?? 'img/logo-default.png';
+        // si NO empieza con http, le pegamos el base_url
+        if (!preg_match('/^https?:\/\//', $logo)) {
+            $logo = rtrim($base_url, '/') . '/' . ltrim($logo, '/');
+        }
+        $sapaData = [];
+        if($is_whit_sapa)
+        {
+            $sapaData = $this->getSapaByIdPagoActive($idpago);
+
+            if (!empty($sapaData) && isset($sapaData[0])) {
+                $fechasapa = $sapaData[0]->datepicker;
+                $sapaData[0]->datepicker = $this->fechaConNombreService(
+                    $fechasapa,
+                    ($dataProduct->lang_id === 1) ? 'en' : 'es'
+                );
+            }
+            
+        }
         return [
             'website' => $empresa->website ?? 'http://www.totalsnorkelcancun.com',
             'webname' => $this->obtenerDominioLimpioService($empresa->website ?? 'http://www.totalsnorkelcancun.com'),
-            'company_logo' => $empresa->company_logo ?? "https://www.totalsnorkelcancun.com/img/logo-snorkel.png",
+            'company_logo' => $logo ?? "https://www.totalsnorkelcancun.com/img/logo-snorkel.png",
             'empresa_id' => $empresa->id,
             'empresaname' => $empresa->company_name,
             'datepicker' => $this->fechaConNombreService($dataControl->datepicker, ($dataProduct->lang_id === 1) ? 'en' : 'es'),
@@ -831,7 +868,14 @@ class BookingControllerService
                         <img src="https://www.totalsnorkelcancun.com/img/insta.png" style="height:29px">
                     </a>
                 ',
-            "address" => $dataLocationPort
+            "address" => $dataLocationPort,
+            "sapaData" => (
+    is_array($sapaData) &&
+    isset($sapaData[0]) &&
+    $sapaData[0] instanceof \stdClass
+) ? $sapaData[0] : null,
+
+
         ];
     }
     public function validateCreateBookingDetails($bookingDetailsInsert){
@@ -1008,7 +1052,6 @@ class BookingControllerService
             'telefono'   =>  $data['telefono'] ?? $controlOld->telefono,
             'cliente_name'   =>  $data['cliente_name'] ?? $controlOld->cliente_name,
             'cliente_lastname'   =>  $data['cliente_lastname'] ?? $controlOld->cliente_lastname,
-            'cliente_name'   =>  $data['cliente_name'] ?? $controlOld->cliente_name,
             'noshow'   =>  isset($data['noshow']) ? $data['noshow'] : $controlOld->noshow,
             'checkin'   =>  $data['checkin'] ?? $controlOld->checkin,
             'metodo'    => $data['metodo'] ?? $controlOld->metodo,

@@ -951,7 +951,7 @@ button.btn-back:hover i {
   
 @media (max-width: 1400px) {
     .content {
-      width: 90%; /* 1 columna en pantallas pequeñas */
+      width: 95%; /* 1 columna en pantallas pequeñas */
     }
 }
 /* Contenedor de cada item en el modal */
@@ -1860,4 +1860,19 @@ button.btn-back:hover i {
     width: 64px;
     max-width: 64px;
     object-fit: contain;
+}
+/* contenedor con scroll REAL */
+#reportes-resultados .card-body {
+    max-height: 70vh;          /* o px si quieres */
+    overflow-y: auto;
+    position: relative;
+    padding: 0;
+}
+
+/* sticky headers */
+#reservasTableHead th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #212529; /* table-dark */
 }

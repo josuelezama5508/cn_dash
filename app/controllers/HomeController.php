@@ -19,9 +19,7 @@ class HomeController extends Controller
         }
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         // echo "<pre>";
         // print_r($userInfo['data']);
         // echo "</pre>";

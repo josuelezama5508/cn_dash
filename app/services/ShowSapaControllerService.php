@@ -230,11 +230,48 @@ class ShowSapaControllerService
         }
         return $insertados;
     }
-    public function postCreate($data, $userData, $traveltypes_service, $booking_service, $sapadetails_service, $history_service, $bookingmessage_service)
+    private function sendMailSapaCase($data, $status, $idpago, $userData, $booking_service, $bookingDetails_service, $product_service, $company_service, $empresainfo_service, $locationports_service, $mailTemplate, $notificationMail, $historyMail)
+    {
+        $dataMail = $booking_service->getByBookingDataService($idpago, $bookingDetails_service, $product_service, $company_service, $empresainfo_service, $locationports_service, true);
+        $bodyMail = '';
+        switch ($status) {
+            case '1':
+                $bodyMail = $mailTemplate->mailCreateSapa($dataMail);
+                $dataMail['tipo'] = 'SAPA Notification';
+                # code...
+                break;
+            case '2':
+                $bodyMail = $mailTemplate->mailCancellationSapa($dataMail);
+                $dataMail['tipo'] = 'SAPA Cancellation';
+                # code...
+                break;
+            case '3':
+                $bodyMail = $mailTemplate->mailNoShowSapa($dataMail);
+                $dataMail['tipo'] = 'SAPA No Show';
+                # code...
+                break;
+            case '4':
+                $bodyMail = $mailTemplate->mailRescheduleSapa($dataMail);
+                $dataMail['tipo'] = 'SAPA Reagendation';
+                # code...
+                break;
+            default:
+                # MAIL INTERNO O NO SE K
+                # code...
+                break;
+        }
+        
+        $mailInsert = $notificationMail->insert(['nog' => $dataMail['nog'], 'accion' => $dataMail['tipo']]);
+        $dataMail['idMail'] = $mailInsert->id ?? null;
+        
+        $dataMail['module'] = $this->getTableName();
+        $dataMail['idpago'] = $idpago;
+        $historyMail->registrarOActualizarHistorialCorreoService($dataMail, $userData, $bodyMail);
+    }
+    public function postCreate($data, $userData, $traveltypes_service, $booking_service, $sapadetails_service, $history_service, $bookingmessage_service, $bookingDetails_service, $product_service, $company_service, $empresainfo_service, $locationports_service, $notificationMail, $mailTemplate, $historyMail)
     {
         [$idpago, $tipo, $cliente_name, $pax, $datepicker, $origen, $destino, 
         $origenV, $destinoV, $horarioV, $horario, $nota, $traslado_tipo, $estatus_sapa] = $this->asignationDataPost($data);
-
         $usuario = $userData->id;
         $dataTypeTravels = $traveltypes_service->getTypeByName($traslado_tipo);
         if (!empty($dataTypeTravels) && is_array($dataTypeTravels)) {
@@ -294,7 +331,7 @@ class ShowSapaControllerService
                 }
             }
         }
-
+        $this->sendMailSapaCase([], '1', $idpago, $userData, $booking_service, $bookingDetails_service, $product_service, $company_service, $empresainfo_service, $locationports_service, $mailTemplate, $notificationMail, $historyMail);
         return ['message' => 'Reservas creadas correctamente.', 'registros' => $insertados];
     }
     public function asignationDataShowPut($params, $data)
@@ -319,13 +356,15 @@ class ShowSapaControllerService
         $chofer_id =  (isset($params['chofer_id']) ? $params['chofer_id'] : $data->chofer_id);
         return [$horario, $start_point, $end_point, $cname, $type_transportation, $idsapa, $matricula, $chofer_id];
     }
-    public function putSapa($params, $userData, $sapadetails_service, $history_service)
+
+    public function putSapa($params, $userData, $sapadetails_service, $history_service, $booking_service, $bookingDetails_service, $product_service, $company_service, $empresainfo_service, $locationports_service, $mailTemplate, $notificationMail, $historyMail)
     {
         if (!isset($params['id'])) {
             return ['error' => 'ID del mensaje requerido.', 'status' => 400];
         }
         $dataFamily = $this->getFamilySapas($params['id']);
         $updator = false;
+
         foreach ($dataFamily as $sapashow) {
             // Revisamos si hay data enviada desde front para este id
             $frontData = null;
@@ -338,6 +377,7 @@ class ShowSapaControllerService
             // DataShow
             $dataShow = $this->find($sapashow->id);
             [$datepicker, $idpago, $folio, $status, $usuario, $type] = $this->asignationDataShowPut($currentParams, $dataShow);
+
             $camposShow = [
                 'datepicker'      => $datepicker,
                 'idpago'          => $idpago,
@@ -385,6 +425,20 @@ class ShowSapaControllerService
                         ]
                     );
                     $updator = true;
+                    if(isset($params['status_sapa'])){
+                        if($params['status_sapa'] != $dataShow->id_estatus_sapa){
+                            $extra = [];
+                            switch ($params['status_sapa']) {
+                                case '4':
+                                    break;
+                                
+                                default:
+                                    # code...
+                                    break;
+                            }
+                            $this->sendMailSapaCase($extra, $params['status_sapa'], $idpago, $userData, $booking_service, $bookingDetails_service, $product_service, $company_service, $empresainfo_service, $locationports_service, $mailTemplate, $notificationMail, $historyMail);
+                        }
+                    }
                 } else {
                     return [
                         'error' => 'No se pudo actualizar los detalles de la sapa',

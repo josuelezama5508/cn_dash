@@ -17,9 +17,7 @@ class MailerController extends Controller
         }
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador"){
             $this->view('dashboard/view_mailer',[
                 'user_id' => $userInfo['data']['user_id'],

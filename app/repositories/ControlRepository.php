@@ -364,7 +364,7 @@ class ControlRepository
             'S.name AS status, S.color AS statuscolor',
             'P.product_name AS producto, P.product_code',
             'U.username',
-            'CH.nombre AS canal',
+            'CH.nombre AS canal, CH.comision AS chcomision',
             'R.nombre AS rep',
             'CMS.comision_productos AS cmsproductos, CMS.comision_empresa'
         ];
@@ -403,10 +403,23 @@ class ControlRepository
     
         return $this->model->consult($campos, $join, $cond, $params, false);
     }
-    public function searchGroupGraficData($periodo, $company, $tipofecha, $combos, $fecha = null){
-        
-
+    public function getSapaByIdPagoActive($id)
+    {
+        $campos = [ "C.*",
+            "SS.*",
+            "SD.*"
+        ];
+    
+        $join = "C
+            INNER JOIN showsapa AS SS 
+                ON C.idpago = SS.idpago AND SS.id_estatus_sapa = 1
+            INNER JOIN sapa_details AS SD ON SD.id_sapa = SS.id";
+    
+        $cond = "C.idpago = :id ORDER BY SS.id ASC LIMIT 2";
+    
+        return $this->model->consult($campos, $join, $cond, ['id' => $id]);
     }
+    
     public function countContaData($startDate, $endDate, $companycode, $product_id, $canal_id, $typedate, $whereEnterprises) {
         $campos = ['COUNT(DISTINCT C.idpago) AS total'];
     
@@ -444,71 +457,76 @@ class ControlRepository
         $fecha_inicio,
         $fecha_fin,
         $whereEnterprises,
-        $tipo_fecha = 'compra'
+        $tipo_fecha = 'compra',
+        $lastId = null,
+        $limit = 1000
     ) {
-        error_log("========== getBookingDetailsByRange START ==========");
+        $isCompra = ($tipo_fecha === 'compra');
     
-        error_log("[INPUT] empresa=" . var_export($empresa, true)
-            . " | fecha_inicio=$fecha_inicio"
-            . " | fecha_fin=$fecha_fin"
-            . " | tipo_fecha=$tipo_fecha"
-        );
+        $fechaCondition = $isCompra
+            ? "B.fecha_details >= :fecha_inicio 
+               AND B.fecha_details < DATE_ADD(:fecha_fin, INTERVAL 1 DAY)"
+            : "DATE(C.datepicker) BETWEEN :fecha_inicio AND :fecha_fin";
     
-        $fechaCampo = ($tipo_fecha != 'compra')
-            ? 'C.datepicker'
-            : 'B.fecha_details';
-        $filtroempresa= $empresa ? "AND C.code_company = '$empresa'" : '';
+        $filtroEmpresa = $empresa
+            ? "AND C.code_company = :empresa"
+            : '';
+    
         $companyCondition = $whereEnterprises
             ? "AND CO.company_code IN ($whereEnterprises)"
-            : "";
+            : '';
+    
+        $lastIdCondition = $lastId !== null
+            ? "AND B.id_details > :lastId"
+            : '';
+    
+        $limit = (int) $limit;
+    
         $sql = "
-            SELECT C.datepicker,
+            SELECT 
+                B.id_details,
+                C.datepicker,
                 B.*
             FROM control C
             INNER JOIN bookingdetails B ON B.idpago = C.idpago
-            INNER JOIN companies AS CO ON C.code_company COLLATE utf8mb4_general_ci = CO.company_code COLLATE utf8mb4_general_ci $companyCondition
-            WHERE DATE($fechaCampo) BETWEEN :fecha_inicio AND :fecha_fin
+            INNER JOIN companies CO 
+                ON C.code_company COLLATE utf8mb4_general_ci 
+                = CO.company_code COLLATE utf8mb4_general_ci
+                $companyCondition
+            WHERE
+                $fechaCondition
                 AND C.status NOT IN (0,2)
-                $filtroempresa
+                $filtroEmpresa
+                $lastIdCondition
+            ORDER BY B.id_details ASC
+            LIMIT $limit
         ";
     
         $params = [
             'fecha_inicio' => $fecha_inicio,
-            'fecha_fin'    => $fecha_fin
+            'fecha_fin'    => $fecha_fin,
         ];
     
-        error_log("[SQL] " . trim($sql));
-        error_log("[PARAMS] " . json_encode($params));
+        if ($empresa) {
+            $params['empresa'] = $empresa;
+        }
+    
+        if ($lastId !== null) {
+            $params['lastId'] = (int) $lastId;
+        }
     
         try {
-    
             $rows = $this->model->SqlQuery(
                 ['host'=>'localhost','dbname'=>'cndash','user'=>'root','password'=>''],
                 $sql,
                 $params
             );
     
-            if (!is_array($rows)) {
-                error_log("[ERROR] SqlQuery no devolvió array");
-                error_log("========== getBookingDetailsByRange END (FAIL) ==========");
-                return [];
-            }
-    
-            error_log("[RESULT] filas=" . count($rows));
-            error_log("[RESULT ROWS] " . print_r($rows, true));
-
-            error_log("========== getBookingDetailsByRange END (OK) ==========");
-    
-            return $rows;
+            return is_array($rows) ? $rows : [];
     
         } catch (Throwable $e) {
-    
             error_log("========== getBookingDetailsByRange EXCEPTION ==========");
-            error_log("[MESSAGE] " . $e->getMessage());
-            error_log("[FILE] " . $e->getFile() . ':' . $e->getLine());
-            error_log("[TRACE] " . $e->getTraceAsString());
-            error_log("========== getBookingDetailsByRange END (EXCEPTION) ==========");
-    
+            error_log($e->getMessage());
             return [];
         }
     }

@@ -18,9 +18,7 @@ class DetallesReservaController extends Controller
         }
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         return $this->view("dashboard/view_details", [
         'nog' => $nog,
         'user_id' => $userInfo['data']['user_id'],
@@ -62,9 +60,7 @@ class DetallesReservaController extends Controller
         }
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         return $this->view("dashboard/view_details", [
             'nog' => $nog,
             'user_id' => $userInfo['data']['user_id'],

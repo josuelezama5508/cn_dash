@@ -2,14 +2,19 @@
 require_once __DIR__ . "/../../app/core/Api.php";
 require_once __DIR__ . "/../../app/core/ServiceContainer.php";
 require_once __DIR__ . '/../models/UserModel.php';
+require_once __DIR__ . '/../models/TemplatesMailModel.php';
+require_once __DIR__ . '/../mailerservice/Mailer.php';
 class ShowSapaController extends API
 {
     private $userModel;
     private $services = [];
+    private $mailTemplate;
+    private $mailer;
 
     function __construct()
     {
         $this->userModel = new UserModel();
+        $this->mailTemplate = new TemplatesMailModel();
 
         $services = [
             'ShowSapaControllerService',
@@ -19,7 +24,14 @@ class ShowSapaController extends API
             'ItemProductControllerService',
             'TravelTypesControllerService',
             'HistoryControllerService',
-            'BookingMessageControllerService'
+            'BookingMessageControllerService',
+            'BookingDetailsControllerService',
+            'CompanyControllerService',
+            'ProductControllerService',
+            'LocationPortsControllerService',
+            'EmpresaInfoControllerService',
+            'NotificationMailControllerService',
+            'HistoryMailControllerService'
         ];
         foreach ($services as $service) {
             $this->services[$service] = ServiceContainer::get($service);
@@ -108,8 +120,9 @@ class ShowSapaController extends API
 
             $service = $this->service('ShowSapaControllerService'); 
             $map = [
-                'create' => fn() => $service->postCreate($data, $userData, $this->service('TravelTypesControllerService'), $this->service('BookingControllerService'), $this->service('SapaDetailsControllerService'),$this->service('HistoryControllerService'), $this->service('BookingMessageControllerService')),
+                'create' => fn() => $service->postCreate($data, $userData, $this->service('TravelTypesControllerService'), $this->service('BookingControllerService'), $this->service('SapaDetailsControllerService'),$this->service('HistoryControllerService'), $this->service('BookingMessageControllerService'), $this->service('BookingDetailsControllerService'), $this->service('ProductControllerService'),$this->service('CompanyControllerService'), $this->service('EmpresaInfoControllerService'), $this->service('LocationPortsControllerService'), $this->service('NotificationMailControllerService'), $this->mailTemplate, $this->service('HistoryMailControllerService')),
             ];
+            
             $response = $map[$action]();
             if (isset($response['error'])) {
                 return $this->jsonResponse($response, $response['status']);
@@ -130,7 +143,7 @@ class ShowSapaController extends API
         try {
             $userData   = $this->validateToken();
             $params     = $this->parseJsonInput();
-            $response = $this->service('ShowSapaControllerService')->putSapa($params, $userData, $this->service('SapaDetailsControllerService'), $this->service('HistoryControllerService'));
+            $response = $this->service('ShowSapaControllerService')->putSapa($params, $userData, $this->service('SapaDetailsControllerService'), $this->service('HistoryControllerService'), $this->service('BookingControllerService'), $this->service('BookingDetailsControllerService'), $this->service('ProductControllerService'), $this->service('CompanyControllerService'), $this->service('EmpresaInfoControllerService'), $this->service('LocationPortsControllerService'), $this->mailTemplate, $this->service('NotificationMailControllerService'), $this->service('HistoryMailControllerService'));
             if (isset($response['error'])) {
                 return $this->jsonResponse($response, $response['status']);
             }

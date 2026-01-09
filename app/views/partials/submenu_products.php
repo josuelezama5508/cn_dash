@@ -21,10 +21,10 @@
                         </li>
                         <?php } ?>
                     
-                    <li>
+                    <!-- <li>
                         <a class="row-content-left" href="<?= route('prospectos') ?>">
                             <i class="small material-icons">more</i>
                             Prospectos
                         </a>
-                    </li>
+                    </li> -->
                 </ul>

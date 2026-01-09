@@ -74,7 +74,7 @@
                 const status = response.status;
                 // const text = await response.json();
 
-                if (status == 204) {
+                if (status == 200) {
                     updateView = true;
                     location.reload();
                 }

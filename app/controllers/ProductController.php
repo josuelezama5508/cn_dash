@@ -17,9 +17,7 @@ class ProductController extends Controller
         }
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador" || $userInfo['data']['level'] === "reservaciones"){
             $this->view('dashboard/view_products',[
                 'user_id' => $userInfo['data']['user_id'],
@@ -46,9 +44,7 @@ class ProductController extends Controller
         }
         $ippermission_service           = ServiceContainer::get('IPPermissionControllerService');
         $ip = $ippermission_service->getClientIP();
-        if($userInfo['data']['ip_user'] != $ip){
-            Auth::logout();
-        }
+
         if($userInfo['data']['level'] === "master" || $userInfo['data']['level'] === "administrador" || $userInfo['data']['level'] === "reservaciones"){
              $this->view('dashboard/view_products_i',[
                 "productcode" => $param,

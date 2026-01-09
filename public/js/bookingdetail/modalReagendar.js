@@ -11,11 +11,12 @@ window.confirmReagendar = async function () {
             datepicker: document.getElementById('datepicker').value,
             horario: document.getElementById('nuevo_horario').value,
             cliente_name: document.getElementById('cliente_name').value,
+            cliente_lastname: document.getElementById('cliente_lastname').value,
             cliente_email: document.getElementById('cliente_email').value,
             enviar_notificacion: parseInt(document.getElementById('enviar_notificacion').value),
             idioma: document.getElementById('idioma').value,
             hotel: document.getElementById('hoteles').value,
-            tipo: 'reagendacion',
+            tipo: 'Booking Reagendation',
             actioner: 'reagendar',
             module: 'DetalleReservas'
         }
@@ -97,15 +98,47 @@ window.openReagendarModal = async function(modalData, fecha_reagendar = "") {
             </div>
         </div>
         <div class="row g-2">
-            <div class="col">
+            <!-- CONTENEDOR CLIENTE (6) -->
+            <div class="col-6">
                 <label class="form-label fw-bold">Cliente</label>
-                <input type="text" id="cliente_name" class="form-control" value="${modalData.cliente_name || ''} ${modalData.cliente_lastname || ''}" required>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input
+                            type="text"
+                            id="cliente_name"
+                            class="form-control"
+                            placeholder="Nombre"
+                            value="${modalData.cliente_name || ''}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-6">
+                        <input
+                            type="text"
+                            id="cliente_lastname"
+                            class="form-control"
+                            placeholder="Apellido"
+                            value="${modalData.cliente_lastname || ''}"
+                        >
+                    </div>
+                </div>
             </div>
-            <div class="col">
+
+            <!-- CORREO (6) -->
+            <div class="col-6">
                 <label class="form-label fw-bold">Correo</label>
-                <input type="email" id="cliente_email" class="form-control" value="${modalData.email || ''}">
+                <input
+                    type="email"
+                    id="cliente_email"
+                    class="form-control"
+                    value="${modalData.email || ''}"
+                >
             </div>
         </div>
+
+
         <div class="row g-2">
             <div class="col">
                 <label class="form-label fw-bold">Idioma</label>

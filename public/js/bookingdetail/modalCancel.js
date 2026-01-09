@@ -34,7 +34,7 @@ window.handleMailCancel = async function(modalData) {
         moneda,
         status: 2,
         categoriaId,
-        tipo: 'cancelar',
+        tipo: 'Booking Cancelation',
         actioner: 'cancelar',
         module: 'DetalleReservas',
     };

@@ -646,5 +646,332 @@ class TemplatesMailModel
     
         return $message;
     }
+    public function mailCreateSapa($data)
+    {
+        $texto = [
+            'saludo' => [
+                'en' => 'Hi',
+                'es' => 'Hola'
+            ],
+            'titulo' => [
+                'en' => 'New SAPA has been created',
+                'es' => 'Se ha creado una nueva SAPA'
+            ],
+            'intro' => [
+                'en' => 'A new transportation service has been generated for the following booking:',
+                'es' => 'Se ha generado un nuevo servicio de transporte para la siguiente reservación:'
+            ],
+            'actividad' => [
+                'en' => 'Activity',
+                'es' => 'Actividad'
+            ],
+            'fecha' => [
+                'en' => 'Activity date',
+                'es' => 'Fecha de actividad'
+            ],
+            'cliente' => [
+                'en' => 'Client name',
+                'es' => 'Nombre del cliente'
+            ],
+            'hotel' => [
+                'en' => 'Hotel',
+                'es' => 'Hotel'
+            ],
+            'cierre' => [
+                'en' => 'Please follow up this service accordingly.',
+                'es' => 'Por favor dar seguimiento a este servicio.'
+            ]
+        ];
+    
+        $social = is_array($data['social']) ? implode('', $data['social']) : $data['social'];
+    
+        $callings = $this->getNumberPhoneEnterprise([
+            'tel' => $data['tel'],
+            'primary_color' => $data['primary_color'],
+            'secondary_color' => $data['secondary_color']
+        ]);
+        $sapa = $data['sapaData'] ?? null;
+
+        $message = "
+        <table border='0' align='center' style='border-collapse:collapse;max-width:600px;width:100%;font-family:sans-serif;'>
+            <tbody>
+                <tr>
+                    <td style='padding:10px;display:flex;align-items:center;'>
+                        <img src='{$data['company_logo']}' alt='{$data['empresaname']}' style='height:50px;'>
+                    </td>
+                </tr>
+    
+                <tr>
+                    <td style='padding:10px;'>
+                        <h1 style='font-size:22px;color:#37474F;'>
+                            {$texto['titulo'][$data['leng']]}
+                        </h1>
+                        <p>
+                            {$texto['saludo'][$data['leng']]} " . ($sapa->cname ?? $data['cliente_name']) . ",
+
+                            {$texto['intro'][$data['leng']]}
+                        </p>
+                    </td>
+                </tr>
+    
+                <tr>
+                    <td style='padding:10px;'>
+                        <p>
+                            <strong>{$texto['actividad'][$data['leng']]}:</strong> {$data['actividad']}<br>
+                            <strong>{$texto['fecha'][$data['leng']]}:</strong> " . ($sapa->datepicker ??  $data['datepicker'] ?? '') . "<br>
+                            <strong>{$texto['cliente'][$data['leng']]}:</strong> " . ($sapa->cname ?? $data['cliente_name'] ?? '') . "<br>
+
+                            <strong>{$texto['hotel'][$data['leng']]}:</strong> ". ($sapa->start_point?? $data['hotel'] ?? 'PENDIENTE') . "
+                        </p>
+    
+                        <p style='margin-top:15px;'>
+                            {$texto['cierre'][$data['leng']]}
+                        </p>
+                    </td>
+                </tr>
+    
+                <tr>
+                    <td style='background:{$data['primary_color']};padding:10px;color:#fff;'>
+                        <div style='text-align:center;margin-bottom:6px;'>
+                            <a href='{$data['website']}' style='color:#fff;text-decoration:none;'>
+                                <b style='font-size:1.1em'>{$data['webname']}</b>
+                            </a>
+                        </div>
+    
+                        {$callings}
+    
+                        <div style='text-align:center;margin-top:5px;'>
+                            {$social}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>";
+    
+        return $message;
+    }
+    public function mailRescheduleSapa($data)
+    {
+        $texto = [
+            'saludo' => [
+                'en' => 'Hi',
+                'es' => 'Hola'
+            ],
+            'titulo' => [
+                'en' => 'SAPA has been rescheduled',
+                'es' => 'La SAPA ha sido reagendada'
+            ],
+            'intro' => [
+                'en' => 'The transportation service scheduled for the following date has been rescheduled:',
+                'es' => 'El servicio de transporte programado para la siguiente fecha ha sido reagendado:'
+            ],
+            'actividad' => [
+                'en' => 'Activity',
+                'es' => 'Actividad'
+            ],
+            'fecha' => [
+                'en' => 'Scheduled date',
+                'es' => 'Fecha programada'
+            ],
+            'cliente' => [
+                'en' => 'Client name',
+                'es' => 'Nombre del cliente'
+            ],
+            'hotel' => [
+                'en' => 'Hotel / Pick-up point',
+                'es' => 'Hotel / Punto de salida'
+            ],
+            'nota' => [
+                'en' => 'This SAPA has been rescheduled. Please review and follow up accordingly.',
+                'es' => 'Esta SAPA ha sido reagendada. Por favor revisa y da seguimiento correspondiente.'
+            ],
+            'cierre' => [
+                'en' => 'Thank you.',
+                'es' => 'Gracias.'
+            ]
+        ];
+
+        $social = is_array($data['social']) ? implode('', $data['social']) : ($data['social'] ?? '');
+
+        $callings = $this->getNumberPhoneEnterprise([
+            'tel' => $data['tel'],
+            'primary_color' => $data['primary_color'],
+            'secondary_color' => $data['secondary_color']
+        ]);
+
+        /** @var stdClass|null $sapa */
+        $sapa = ($data['sapaData'] instanceof \stdClass) ? $data['sapaData'] : null;
+
+        $message = "
+        <table border='0' align='center' style='border-collapse:collapse;max-width:600px;width:100%;font-family:sans-serif;'>
+            <tbody>
+                <tr>
+                    <td style='padding:10px;'>
+                        <img src='{$data['company_logo']}' alt='{$data['empresaname']}' style='height:50px;'>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style='padding:15px;background:#E3F2FD;border-left:5px solid #1976D2;'>
+                        <h1 style='font-size:22px;color:#0D47A1;margin:0;'>
+                            {$texto['titulo'][$data['leng']]}
+                        </h1>
+                        <p style='margin-top:10px;color:#0D47A1;'>
+                            {$texto['saludo'][$data['leng']]} " . ($sapa->cname ?? $data['cliente_name']) . ",<br><br>
+                            {$texto['intro'][$data['leng']]}
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style='padding:15px;'>
+                        <p>
+                            <strong>{$texto['actividad'][$data['leng']]}:</strong> {$data['actividad']}<br>
+                            <strong>{$texto['fecha'][$data['leng']]}:</strong> " . ($sapa->datepicker ?? $data['datepicker'] ?? '—') . "<br>
+                            <strong>{$texto['cliente'][$data['leng']]}:</strong> " . ($sapa->cname ?? $data['cliente_name']) . "<br>
+                            <strong>{$texto['hotel'][$data['leng']]}:</strong> " . ($sapa->start_point ?? $data['hotel'] ?? 'PENDIENTE') . "
+                        </p>
+
+                        <div style='margin-top:20px;padding:12px;background:#FFF8E1;border-left:4px solid #FFB300;'>
+                            {$texto['nota'][$data['leng']]}
+                        </div>
+
+                        <p style='margin-top:20px;'>
+                            {$texto['cierre'][$data['leng']]}
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style='background:{$data['primary_color']};padding:10px;color:#fff;'>
+                        <div style='text-align:center;margin-bottom:6px;'>
+                            <a href='{$data['website']}' style='color:#fff;text-decoration:none;'>
+                                <b style='font-size:1.1em'>{$data['webname']}</b>
+                            </a>
+                        </div>
+
+                        {$callings}
+
+                        <div style='text-align:center;margin-top:5px;'>
+                            {$social}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>";
+
+        return $message;
+    }
+    public function mailCancellationSapa($data)
+    {
+        $texto = [
+            'saludo' => [
+                'es' => 'Hola',
+                'en' => 'Hi'
+            ],
+            'titulo' => [
+                'es' => 'SAPA cancelada',
+                'en' => 'SAPA cancelled'
+            ],
+            'intro' => [
+                'es' => 'El servicio de transporte programado ha sido cancelado:',
+                'en' => 'The scheduled transportation service has been cancelled:'
+            ],
+            'actividad' => [
+                'es' => 'Actividad',
+                'en' => 'Activity'
+            ],
+            'fecha' => [
+                'es' => 'Fecha programada',
+                'en' => 'Scheduled date'
+            ],
+            'cliente' => [
+                'es' => 'Cliente',
+                'en' => 'Client'
+            ],
+            'hotel' => [
+                'es' => 'Hotel / Punto de salida',
+                'en' => 'Hotel / Pick-up point'
+            ],
+            'nota' => [
+                'es' => 'Esta SAPA fue cancelada y no se llevará a cabo. No se requiere acción adicional.',
+                'en' => 'This SAPA has been cancelled and will not take place. No further action is required.'
+            ],
+            'cierre' => [
+                'es' => 'Si tienes dudas, por favor contacta al equipo de soporte.',
+                'en' => 'If you have questions, please contact the support team.'
+            ]
+        ];
+        $lang = $data['leng'] ?? 'es';
+        $social = is_array($data['social']) ? implode('', $data['social']) : ($data['social'] ?? '');
+        $callings = $this->getNumberPhoneEnterprise([
+            'tel' => $data['tel'],
+            'primary_color' => $data['primary_color'],
+            'secondary_color' => $data['secondary_color']
+        ]);
+        $sapa = null;
+        if (!empty($data['sapaData']) && is_array($data['sapaData'])) {
+            $sapa = $data['sapaData'][0] ?? null;
+        }
+        $message = "
+        <table border='0' align='center' style='border-collapse:collapse;max-width:600px;width:100%;font-family:sans-serif;'>
+            <tbody>
+                <tr>
+                    <td style='padding:10px;'>
+                        <img src='{$data['company_logo']}' alt='{$data['empresaname']}' style='height:50px;'>
+                    </td>
+                </tr>
+    
+                <tr>
+                    <td style='padding:15px;background:#FDECEA;border-left:5px solid #D32F2F;'>
+                        <h1 style='font-size:22px;color:#B71C1C;margin:0;'>
+                            {$texto['titulo'][$lang]}
+                        </h1>
+                        <p style='margin-top:10px;color:#B71C1C;'>
+                            {$texto['saludo'][$lang]} " . ($sapa->cname ?? $data['cliente_name'] ?? '') . ",<br><br>
+                            {$texto['intro'][$lang]}
+                        </p>
+                    </td>
+                </tr>
+    
+                <tr>
+                    <td style='padding:15px;'>
+                        <p>
+                            <strong>{$texto['actividad'][$lang]}:</strong> {$data['actividad']}<br>
+                            <strong>{$texto['fecha'][$lang]}:</strong> " . ($sapa->datepicker ?? $data['datepicker'] ?? '—') . "<br>
+                            <strong>{$texto['cliente'][$lang]}:</strong> " . ($sapa->cname ?? $data['cliente_name'] ?? '—') . "<br>
+                            <strong>{$texto['hotel'][$lang]}:</strong> " . ($sapa->start_point ?? $data['hotel'] ?? 'PENDIENTE') . "
+                        </p>
+    
+                        <div style='margin-top:20px;padding:12px;background:#FFF5F5;border-left:4px solid #E53935;color:#C62828;'>
+                            {$texto['nota'][$lang]}
+                        </div>
+    
+                        <p style='margin-top:20px;'>
+                            {$texto['cierre'][$lang]}
+                        </p>
+                    </td>
+                </tr>
+    
+                <tr>
+                    <td style='background:{$data['primary_color']};padding:10px;color:#fff;'>
+                        <div style='text-align:center;margin-bottom:6px;'>
+                            <a href='{$data['website']}' style='color:#fff;text-decoration:none;'>
+                                <b style='font-size:1.1em'>{$data['webname']}</b>
+                            </a>
+                        </div>
+    
+                        {$callings}
+    
+                        <div style='text-align:center;margin-top:5px;'>
+                            {$social}
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>";
+    
+        return $message;
+    }
     
 }

@@ -165,7 +165,8 @@ async function renderNotifications(search = '') {
                 let newData = {};
                 try { newData = JSON.parse(filtrados[0].new_data || '{}'); } catch {}
 
-                $("#modalCorreoBody").html(newData.body || "<em>Correo vacío</em>");
+                const html = decodeHtml(newData.body);
+                $("#modalCorreoBody").html(html || "<em>Correo vacío</em>");
                 new bootstrap.Modal("#modalCorreo").show();
             });
 

@@ -65,6 +65,8 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js" defer></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js" defer></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.4/jquery-confirm.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" defer></script>
 <!-- 3️⃣ Variable global de URL -->

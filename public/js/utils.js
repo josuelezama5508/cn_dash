@@ -286,3 +286,12 @@ function formatPax(itemsDetails, moneda = "USD", mode = 'total', comision = 0) {
             return formatPaxTotal(itemsDetails, 'todos');
     }
 }
+function decodeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/\\"/g, '"')
+        .replace(/\\\//g, '/')
+        .replace(/\\r\\n/g, '')
+        .replace(/\\n/g, '')
+        .replace(/\\t/g, '');
+}

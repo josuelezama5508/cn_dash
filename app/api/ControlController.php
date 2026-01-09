@@ -177,7 +177,7 @@ class ControlController extends API
                     $detailsInsert = $booking->validateCreateBookingDetails($details->crearBookingDetailsService($data, $control, $user));
                     $locationports = $this->service('LocationPortsControllerService');
                     $bodyMail = $booking->getByBookingDataService($control->id, $details, $product, $company, $empresainfo, $locationports);
-                    // $mailResults = $booking->gestionarNotificacionCorreoService($control, $data, $user, $bodyMail, $this->mailTemplate, $historyMail, $notificationmail);
+                    $mailResults = $booking->gestionarNotificacionCorreoService($control, $data, $user, $bodyMail, $this->mailTemplate, $historyMail, $notificationmail);
 
                     // $booking->enviarNotificacionService($control, $data, $notification,$company);
                     $booking->crearMensajeNotaService($control, $data, $user, $bookingmessage, $history);
@@ -245,6 +245,7 @@ class ControlController extends API
             $company = $this->service('CompanyControllerService');
             $empresainfo = $this->service('EmpresaInfoControllerService');
             $locationports = $this->service('LocationPortsControllerService');
+            $showsapa= $this->service('ShowSapaControllerService');
             if (!$action) return $this->jsonResponse(['message' => 'Acción PUT no reconocida'], 400);
             switch ($action) {
                 case 'reagendar':
@@ -254,9 +255,12 @@ class ControlController extends API
                     $bodyMail = $booking->getByBookingDataService($data['idpago'], $details, $product, $company, $empresainfo, $locationports);
                     $bodyMail['dataMail'] = $data;
                     $mailInsert = $notificationMail->insert(['nog' => $bodyMail['nog'], 'accion' => $tipo]);
-
+                    $data['idMail'] = $mailInsert->id ?? null;
                     if (!empty($mailInsert->id)) {
                         if ($tipo === "Booking Reagendation") {
+                            error_log("===== BODYMAIL DEBUG =====");
+                            error_log(print_r($data, true));
+                            error_log("==========================");
                             $dataMail = $this->mailTemplate->mailReproIngFromBooking($bodyMail);
                         } else {
                             $dataCancelation = $booking->getByCancellationDataService($data['motivo_cancelacion_id'], $data['categoriaId'], $this->service('CancellationTypesControllerService'),$this->service('CancellationCategoriesControllerService'));

@@ -52,19 +52,15 @@ function transformYearData(data) {
         }]
     };
 }
-
-
 // -------- MES --------
 function transformMonthData(data) {
     const months = [
         '01','02','03','04','05','06',
         '07','08','09','10','11','12'
     ];
-
     // Tomamos el primer (y único) año
     const year = Object.keys(data)[0];
     const yearData = data[year] || {};
-
     const totals = months.map(month => {
         if (!yearData[month]) return 0;
 
@@ -82,12 +78,9 @@ function transformMonthData(data) {
         }]
     };
 }
-
-
 // -------- DÍA --------
 function transformDayData(data) {
     const days = Object.keys(data).sort();
-
     return {
         categories: days,
         series: [{
@@ -98,7 +91,6 @@ function transformDayData(data) {
 }
 
 async function renderChart(chartData, periodo, selector) {
-
     const fecha = new Date().toISOString().slice(0, 10);
 
     let extra = '';

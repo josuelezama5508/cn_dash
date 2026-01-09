@@ -38,6 +38,7 @@ $(async function () {
         "Ganancia Bruta",
         "Ganancia Neta",
         "Canal",
+        "Descuento Canal",
         "Notas",
         "Empresa"
     ];
@@ -159,6 +160,7 @@ function buildRowData(row, index) {
     const addonsTotal = formatPax(row.items_details, row.moneda, 'totala');
     const paxRef     = formatPax(row.items_details, row.moneda, 'reference');
     const preciosBrutos = formatPax(row.items_details, row.moneda, 'price');
+    const chcomision= ((100 - row.chcomision) / 100) * row.total;
 
     const comision = obtenerComisionFinal(
         row.product_code,
@@ -201,6 +203,7 @@ function buildRowData(row, index) {
         preciosBrutos,
         preciosNetos,
         row.canal,
+        `${row.chcomision}%`,
         row.nota ?? '',
         row.company_name
     ];
@@ -302,7 +305,6 @@ function renderTable(data) {
 
         $tbody.append(`<tr>${html}</tr>`);
     });
-
     console.log('DATA GLOBAL LISTA:', tableData);
 }
 
@@ -313,7 +315,6 @@ function restoreProductSelection(productId) {
         $productSelect.val('0');
         return;
     }
-
     // ¿Existe el option?
     const exists = $productSelect.find(`option[value="${productId}"]`).length > 0;
 
@@ -333,7 +334,6 @@ function restoreProductSelection(productId) {
     });
     console.log( companyOption .length ? companyOption .val() : 0);
     if(companyOption.val() == '0'){
-        
         await create_select_widget("productscompanyv4", "product", 0, "divActivity");
     }else{
 

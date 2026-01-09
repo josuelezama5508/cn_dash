@@ -6,7 +6,7 @@
             </button>
         </div>
 
-        <nav style="width: 100%; position: fixed;z-index: 1050;" id="menu-container">
+        <nav style="width: 100%; position: fixed;z-index: 1052;" id="menu-container">
             <div id="horizontal-menu" class="bg-black">
                 <div class="content" style="height: 100%;">
                     <ul class="left">
@@ -36,20 +36,20 @@
                     </li>
                 </ul>
                 <?php if($level === 'master'){?>
-                    <ul class="center menu-options">    
-                        <li><a class="row-content-left" href="<?= route('bitacora') ?>"><i class="material-icons">input</i>Bitacora</a></li>
-                    </ul>
+                    <ul class="top menu-options">    
+                        <li><a class="row-content-left" href="<?= route('bitacora') ?>"><i class="material-icons">history</i>Bitacora</a></li>
+                    
                 <?php } ?>
                 
                 <?php if($level === 'master' || $level === 'administrador' || $level === 'contabilidad'){?>
-                    <ul class="center menu-options">    
-                        <li><a class="row-content-left" href="<?= route('reportes') ?>"><i class="material-icons">input</i>Reportes</a></li>
-                    </ul>
-                    <ul class="center menu-options">    
-                        <li><a class="row-content-left" href="<?= route('grafics') ?>"><i class="material-icons">input</i>Grafics</a></li>
-                    </ul>
+                     
+                        <li><a class="row-content-left" href="<?= route('reportes') ?>"><i class="material-icons">folder_open</i>Reportes</a></li>
+                    
+                      
+                        <li><a class="row-content-left" href="<?= route('grafics') ?>"><i class="material-icons">bar_chart</i>Grafics</a></li>
+                    
                 <?php } ?>
-                
+                </ul>
                 <ul class="bottom menu-options">
                     <li><a class="row-content-left" href="<?= route('logout') ?>"><i class="material-icons">input</i>Cerrar sesión</a></li>
                 </ul>

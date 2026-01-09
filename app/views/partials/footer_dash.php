@@ -1,5 +1,5 @@
-    <div id="overlay" style="background-color: rgba(0, 0, 0, 0.5);"></div>
-    <div id="overlay2" style="background-color: #444;"></div>
+    <div id="overlay" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1051;"></div>
+    <div id="overlay2" style="background-color: #444; z-index: 1051;"></div>
 
     <footer>
         <div style="background: #757575;">
